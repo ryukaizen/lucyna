@@ -40,7 +40,7 @@
     "envalid": "^7.3.1",
     "grammy": "^1.11.0",
     "mongodb": "^4.9.1",
-    "mongoose": "^6.6.5",
+    "mongoose": "^6.11.3",
     "winston": "^3.8.1"
   }
 }
