@@ -39,7 +39,7 @@
     "dotenv": "^16.0.1",
     "envalid": "^7.3.1",
     "grammy": "^1.11.0",
-    "mongodb": "^4.9.1",
+    "mongodb": "^4.17.0",
     "mongoose": "^6.6.5",
     "winston": "^3.8.1"
   }
