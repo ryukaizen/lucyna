@@ -1,14 +1,14 @@
 {
   "name": "faye",
   "version": "1.0.0",
-  "description": "Group management bot for Telegram. Specialized for anime & geek communities. Built using grammY, a NodeJS Telegram bot framework.",
+  "description": "A multi-featured, anime themed bot. Built with grammY.",
   "main": "dist/index.js",
   "scripts": {
     "start": "tsc && node dist/index.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Ryukaizen/Valentine.git"
+    "url": "git+https://github.com/Ryukaizen/Faye.git"
   },
   "keywords": [
     "anime",
@@ -25,9 +25,9 @@
   "author": "Ryukaizen",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Ryukaizen/Valentine/issues"
+    "url": "https://github.com/Ryukaizen/Faye/issues"
   },
-  "homepage": "https://github.com/Ryukaizen/Valentine#readme",
+  "homepage": "https://github.com/Ryukaizen/Faye#readme",
   "devDependencies": {
     "@types/node": "^18.6.4",
     "@types/winston": "^2.4.4",
