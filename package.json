@@ -29,18 +29,19 @@
   },
   "homepage": "https://github.com/Ryukaizen/Faye#readme",
   "devDependencies": {
-    "@types/node": "^18.6.4",
+    "@types/node": "^20.9.1",
     "@types/winston": "^2.4.4",
-    "typescript": "^4.7.4"
+    "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@grammyjs/runner": "^1.0.4",
-    "@grammyjs/transformer-throttler": "^1.1.2",
-    "dotenv": "^16.0.1",
-    "envalid": "^7.3.1",
-    "grammy": "^1.11.0",
-    "mongodb": "^4.9.1",
-    "mongoose": "^6.6.5",
-    "winston": "^3.8.1"
+    "@grammyjs/runner": "^2.0.3",
+    "@grammyjs/transformer-throttler": "^1.2.1",
+    "dotenv": "^16.3.1",
+    "envalid": "^8.0.0",
+    "grammy": "^1.19.2",
+    "mongodb": "^6.3.0",
+    "mongoose": "^8.0.1",
+    "npm-check-updates": "^16.14.6",
+    "winston": "^3.11.0"
   }
 }
