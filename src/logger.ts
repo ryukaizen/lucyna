@@ -7,11 +7,22 @@ export const logger: Logger = createLogger({
     transports: [ 
         new transports.Console(
             { 
-                format: format.combine( format.timestamp({format: 'DD-MM-YYYY HH:mm:ss'}),
-                format.printf(info => `[${info.timestamp}] [${info.level.toUpperCase()}] ${info.message}` 
+                format: format.combine(format.timestamp({format: 'DD-MM-YYYY HH:mm:ss'}),
+                        format.printf(info => `[${info.timestamp}] [${info.level.toUpperCase()}] ${info.message}` 
                 + (info.splat!==undefined?`${info.splat}`:" "))
-                )  
+                )
             }
+        ),
+
+        new transports.File(
+            {
+                filename: "logs.log",
+                format: format.combine(format.timestamp({format: 'DD-MM-YYYY HH:mm:ss'}),
+                        format.printf(info => `[${info.timestamp}] [${info.level.toUpperCase()}] ${info.message}` 
+                + (info.splat!==undefined?`${info.splat}`:" "))
+                )
+            }
+
         )
     ],
 
@@ -22,6 +33,9 @@ export const logger: Logger = createLogger({
 export async function channel_log(log: string) {
     try {
         if (constants.LOG_CHANNEL) {
+            if (log.length >= 4096) {
+                log = log.substring(0, 4096)
+            } 
             await bot.api.sendMessage(constants.LOG_CHANNEL, log, {parse_mode: "HTML"});           
         }
     }
