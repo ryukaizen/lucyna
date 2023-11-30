@@ -34,6 +34,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@grammyjs/menu": "^1.2.1",
     "@grammyjs/runner": "^2.0.3",
     "@grammyjs/transformer-throttler": "^1.2.1",
     "dotenv": "^16.3.1",

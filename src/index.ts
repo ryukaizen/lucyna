@@ -20,7 +20,6 @@ bot.api.config.use(throttler);
 var ALL_MODULES: string[] = [];
 
 (async function () {
-
     const modules = await fs.readdir("./dist/modules");
     for (const file of modules) {
         if (file.match(/.*\.(js)$/)) {
@@ -29,14 +28,12 @@ var ALL_MODULES: string[] = [];
         }
     }
 
-    await bot.api.deleteWebhook({ drop_pending_updates: true });
-    
+    await bot.api.deleteWebhook({ drop_pending_updates: true });    
 })();
 
 bot.init().then(async() => {
-
     var bot_info = (
-        `➲ ${bot.botInfo.first_name}\n` + 
+        `${bot.botInfo.first_name}\n` + 
         `\#LAUNCHED on ${new Date().toLocaleString()}\n\n` +
         `• Username: @${bot.botInfo.username}\n` +
         `• Bot ID: ${bot.botInfo.id}\n` +
@@ -47,7 +44,6 @@ bot.init().then(async() => {
     
     console.log(bot_info + `\nLoaded modules: [ ${ALL_MODULES.join(", ")} ]\n`);
     channel_log(bot_info + `\nLoaded modules: [ <code>${ALL_MODULES.join(", ")}</code> ]`);
-
 });
 
 async function exitSignal(signal: String) {

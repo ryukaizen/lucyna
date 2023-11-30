@@ -27,7 +27,6 @@ export const logger: Logger = createLogger({
     ],
 
     exitOnError: false
-
 }) 
 
 export async function channel_log(log: string) {

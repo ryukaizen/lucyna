@@ -4,14 +4,10 @@ import { Bot, BotError, GrammyError, HttpError } from "grammy"
 
 const bot = new Bot(constants.BOT_TOKEN)
 
-export const personal = bot.filter(ctx => ctx.chat?.type === 'private');
-export const group = bot.filter(ctx => ctx.chat?.type === 'group' || ctx.chat?.type === 'supergroup');
-export const channel = bot.filter(ctx => ctx.chat?.type === 'channel'); // For future use
-
 bot.catch((err) => {
     const ctx = err.ctx;
     const context = ctx;
-    let err_template = `While handling update ${ctx.update.update_id.toString()}`;
+    let err_template = `while handling update ${ctx.update.update_id.toString()}`;
     const e = err.error;
     if (e instanceof BotError) {
         logger.error(`${err_template} | ${e.ctx}`);

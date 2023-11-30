@@ -9,6 +9,7 @@ const constants = cleanEnv(process.env, {
     }),
     LOG_CHANNEL: str(),
     BOT_TOKEN: str(),
+    BOT_USERNAME: str(),
     MONGO_URL: str(),
 });
 
