@@ -1,17 +1,21 @@
 import fs from 'fs/promises';
 import bot from "./bot";
-import constants from "./config";
 import { run } from "@grammyjs/runner";
 import { apiThrottler } from "@grammyjs/transformer-throttler";
 import { logger } from "./logger"
 import { channel_log } from "./logger";
 import { connectDB, disconnectDB } from "./database";
 
-// Connect to the database  
-connectDB(constants.MONGO_URL);
-
 // Initialize grammY runner
-const runner = run(bot);
+const runner = run(bot,  
+    { runner: 
+        { fetch: 
+            { allowed_updates: ["callback_query", "message", "chat_member"] } 
+        } 
+});
+
+// Connect to the database  
+connectDB();
 
 // Flood control plugin
 const throttler = apiThrottler();
@@ -27,7 +31,6 @@ var ALL_MODULES: string[] = [];
             ALL_MODULES.push(`${file.replace(/\.[^\/.]+$/, "").toUpperCase()}`);
         }
     }
-
     await bot.api.deleteWebhook({ drop_pending_updates: true });    
 })();
 
@@ -47,8 +50,7 @@ bot.init().then(async() => {
 });
 
 async function exitSignal(signal: String) {
-    disconnectDB()
-    .catch(() => logger.warn(`[${signal}] - Exiting without closing MongoDB connection!`));
+    disconnectDB();
     runner.isRunning() && runner.stop();
     logger.info(`${signal} - Exiting...`);
 }

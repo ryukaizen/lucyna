@@ -9,7 +9,7 @@ const greets: string[] = [
     "What's cracking?", "How's life treating you?", "What's happening?", "How are you today?"    
 ];
 
-const menu = new Menu("start-menu")
+const menu = new Menu("start-menu", { onMenuOutdated: "Content updated, try now." })
     .url("Add me to your group!", `http://t.me/${constants.BOT_USERNAME}?startgroup=new&admin=change_info+post_messages+edit_messages+delete_messages+restrict_members+invite_users+pin_messages+manage_topics+promote_members+manage_video_chats+manage_chat`)    
     .row()
     .text("Help & instructions", (ctx) => ctx.reply("Bro wants help from a bot 💀"));

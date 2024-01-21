@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv'
-import { cleanEnv, str } from "envalid";
+import { cleanEnv, str, port } from "envalid";
 
 dotenv.config({ path: `${__dirname}/../.env` })
 
@@ -10,7 +10,11 @@ const constants = cleanEnv(process.env, {
     LOG_CHANNEL: str(),
     BOT_TOKEN: str(),
     BOT_USERNAME: str(),
-    MONGO_URL: str(),
+    DB_HOST: str(),
+    DB_PORT: port(),
+    DB_NAME: str(),
+    DB_USER: str(),
+    DB_PASS: str(),
 });
 
 export default constants;
