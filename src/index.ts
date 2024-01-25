@@ -7,12 +7,7 @@ import { channel_log } from "./logger";
 import { connectDB, disconnectDB } from "./database";
 
 // Initialize grammY runner
-const runner = run(bot,  
-    { runner: 
-        { fetch: 
-            { allowed_updates: ["callback_query", "message", "chat_member"] } 
-        } 
-});
+const runner = run(bot);
 
 // Connect to the database  
 connectDB();
