@@ -10,6 +10,7 @@ const constants = cleanEnv(process.env, {
     LOG_CHANNEL: str(),
     BOT_TOKEN: str(),
     BOT_USERNAME: str(),
+    START_GIF: str(),
     DB_HOST: str(),
     DB_PORT: port(),
     DB_NAME: str(),
