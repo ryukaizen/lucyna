@@ -1,27 +1,10 @@
-import { Client } from 'pg'
-import { logger } from "../logger"
-import constants from "../config"
+import { Pool } from 'pg'
+import { PrismaPg } from '@prisma/adapter-pg'
+import { PrismaClient } from '@prisma/client'
+import constants from '../config'
 
-export const database_client = new Client({
-  host: constants.DB_HOST,
-  port: constants.DB_PORT,
-  database: constants.DB_NAME,
-  user: constants.DB_USER,
-  password: constants.DB_PASS,
+const connectionString = constants.DATABASE_URL;
 
-});
-
-export const connectDB = async() => {
-  try {
-      await database_client.connect()
-      logger.info(`PostgreSQL connection established --> ${database_client.host}`)
-  } catch (error) {
-      logger.error(`while connecting to database: ${error}`)
-      process.exit(1)
-  }
-}
-
-export const disconnectDB = async() => {
-    await database_client.end()
-    logger.info(`PostgreSQL connection closed --> ${database_client.host}`)  
-  }
+const pool = new Pool({ connectionString })
+const adapter = new PrismaPg(pool)
+export const prisma = new PrismaClient({ adapter })

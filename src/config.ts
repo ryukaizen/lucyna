@@ -11,11 +11,7 @@ const constants = cleanEnv(process.env, {
     BOT_TOKEN: str(),
     BOT_USERNAME: str(),
     START_GIF: str(),
-    DB_HOST: str(),
-    DB_PORT: port(),
-    DB_NAME: str(),
-    DB_USER: str(),
-    DB_PASS: str(),
+    DATABASE_URL: str()
 });
 
 export default constants;

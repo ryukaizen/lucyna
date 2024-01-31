@@ -1,6 +1,8 @@
 import bot from "../bot"
 import constants from "../config"
+import { prisma } from "../database"
 import { Menu } from "@grammyjs/menu";
+import { InlineKeyboard } from "grammy";
 import { typingAction } from "../helpers/helper_func";
 
 const greets: string[] = [
@@ -8,7 +10,7 @@ const greets: string[] = [
     "Well, hello!", "Hola!", "Bonjour!", "Ciao!", "Namaste!", "Hi there!", "Howdy-do!", "Greetings and salutations!", "Hiya there!", "Aloha!", "Yo!",
     "How's it going?", "What's the good word?", "Well, hi!", "How are you doing?", "What's new?", "How's everything?", "What's the buzz?", 
     "What's cracking?", "What's happening?", "How are you today?", "Bazinga!", "D'oh!", "Pivot!", "This is the way,", "Wubba lubba dub dub!", "Booyah!", "Let's make some chaos,",
-    "Cheers, my love!", "Reporting in,", "I'm ready! How 'bout you?", "I would have been your daddy,", "I'm your huckleberry,", "I'm your worst nightmare,", "I'm your biggest fan,", "I'm your density,",
+    "Cheers, my love!", "Reporting in,", "I'm ready! How 'bout you?", "I would have been your daddy,", "I'm your huckleberry,", "I'm your worst nightmare,", "I'm your biggest fan,", "I'm your destiny,",
     "Hey! Listen!", "Hasta la vista, baby,", "I'm Batman,", "I'm the Doctor,", "I'm the king of the world!", "I'm the one who knocks,", "I'm the one who walks,", "I'm the one who waits,", "I'm the one who runs,",
     "I'm the one who lifts,", "I'm the one who cooks,", "What're you gonna do?", "A man must have a code,", "Sheeeeeit,", "Say my name,", "Tread lightly,", "Lando!", "Hold the door!",
     "You win or you die,", "Oh my God!", "Well, well, well, how the turntables...", "Better call", "The game is on,", "Hey dawg!", "Sup homie!", "Yo brah!", "Need something?", "What's it?",
@@ -17,7 +19,11 @@ const greets: string[] = [
 ];
 
 const start_text = `\n\nI happen to be your all-in-one bot for effortless community engagement and entertainment.
-\n☑️ Things I can do:
+
+Report to @Ryukaizen if I act clumsy.`;
+
+const help_text = `
+☑️ Things I can do:
 - Manage your Telegram group
 - Provide anime & movies
 - Guess, waifu-harem & group games
@@ -26,83 +32,95 @@ const start_text = `\n\nI happen to be your all-in-one bot for effortless commun
 - Teach your cat to dance
 - Do your homework
 - Help you get a new girlfriend or boyfriend
-- Make you rich
+- Make you rich`;
 
-Report to @Ryukaizen if I act clumsy.`;
+const helpButton = new InlineKeyboard()
+  .url("Please help me!", `http://telegram.me/${constants.BOT_USERNAME}?start=help_me_im_dumb`)
 
-const help_text = `This is the help menu.`;
-
+//--- Parent menu
 const start_menu = new Menu("start-menu", { onMenuOutdated: "Menu updated, try now." })
-    .url("Add to Chat", `http://t.me/${constants.BOT_USERNAME}?startgroup=new&admin=change_info+post_messages+edit_messages+delete_messages+restrict_members+invite_users+pin_messages+manage_topics+promote_members+manage_video_chats+manage_chat`)    
-    .submenu("Usage Guide", "help-menu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"}))
+    .url("Add to Chat", `http://telegram.me/${constants.BOT_USERNAME}?startgroup=new&admin=change_info+post_messages+edit_messages+delete_messages+restrict_members+invite_users+pin_messages+manage_topics+promote_members+manage_video_chats+manage_chat`)    
+    .submenu("Usage Guide", "help-submenu", (ctx) => 
+        ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"}))
+//---
 
-const help_menu = new Menu("help-menu", { onMenuOutdated: "Menu updated, try now." })
-    .submenu("Anime and Manga", "anime-manga-menu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()    
-    .submenu("Games and Quizzes", "games-menu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()
-    .submenu("Group Management", "group-management-menu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()
-    .back("◀️", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: `${greets[Math.floor(Math.random() * greets.length)]} ${ctx.from?.first_name}.${start_text}`, parse_mode: "HTML"}))
-    .submenu("▶️", "help-menu-2", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"}))
+//--- Parent menu submenus
+const help_submenu = new Menu("help-submenu", { onMenuOutdated: "Menu updated, try now." })
+    .submenu("Anime and Manga", "anime-manga-submenu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()    
+    .submenu("Games and Quizzes", "games-submenu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()
+    .submenu("Group Management", "group-management-submenu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()
+    .back("◀️ Menu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: `${greets[Math.floor(Math.random() * greets.length)]} ${ctx.from?.first_name}.${start_text}`, parse_mode: "HTML"}))
+    .submenu("More ▶️", "help-submenu-2", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"}))
+//---
 
-const anime_manga_menu = new Menu("anime-manga-menu", { onMenuOutdated: "Menu updated, try now." })
-    .text("Coming soon", (ctx) => ctx.reply("Coming soon")).row()
+//--- Help submenu submenus
+const anime_manga_submenu = new Menu("anime-manga-submenu", { onMenuOutdated: "Menu updated, try now." })
+    .submenu("AniList", "anilist-submenu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()
     .text("Coming soon", (ctx) => ctx.reply("Coming soon")).row()
     .text("Coming soon", (ctx) => ctx.reply(`Coming soon`)).row()
     .back("◀️ Go Back", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row();
 
-const games_menu = new Menu("games-menu", { onMenuOutdated: "Menu updated, try now." })
+const games_submenu = new Menu("games-submenu", { onMenuOutdated: "Menu updated, try now." })
     .text("Coming soon", (ctx) => ctx.reply("Coming soon")).row()
     .text("Coming soon", (ctx) => ctx.reply("Coming soon")).row()
     .text("Coming soon", (ctx) => ctx.reply(`Coming soon`)).row()
     .back("◀️ Go Back", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row();
    
-//--- This should be dynamic
-const group_management_menu = new Menu("group-management-menu", { onMenuOutdated: "Menu updated, try now." })
+const group_management_submenu = new Menu("group-management-submenu", { onMenuOutdated: "Menu updated, try now." })
     .text("Coming soon", (ctx) => ctx.reply("Coming soon")).row()
     .text("Coming soon", (ctx) => ctx.reply("Coming soon")).row()
     .text("Coming soon", (ctx) => ctx.reply(`Coming soon`)).row()
     .back("◀️ Go Back", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row();
-//---
 
-const help_menu_2 = new Menu("help-menu-2", { onMenuOutdated: "Menu updated, try now." })
-    .submenu("AI features", "ai-features-menu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()
-    .submenu("Music", "music-menu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()
-    .submenu("News and Feeds", "news-feeds-menu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()
+const help_submenu_2 = new Menu("help-submenu-2", { onMenuOutdated: "Menu updated, try now." })
+    .submenu("AI features", "ai-features-submenu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()
+    .submenu("Music", "music-submenu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()
+    .submenu("News and Feeds", "news-feeds-submenu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()
     .back("◀️ Go Back", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"}));
+//---    
 
-const ai_features_menu = new Menu("ai-features-menu", { onMenuOutdated: "Menu updated, try now." })
+//--- Help submenu 2 submenus
+const ai_features_submenu = new Menu("ai-features-submenu", { onMenuOutdated: "Menu updated, try now." })
     .text("Coming soon", (ctx) => ctx.reply("Coming soon")).row()
     .text("Coming soon", (ctx) => ctx.reply("Coming soon")).row()
     .text("Coming soon", (ctx) => ctx.reply(`Coming soon`)).row()
     .back("◀️ Go Back", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row();
 
-const music_menu = new Menu("music-menu", { onMenuOutdated: "Menu updated, try now." }) 
+const music_submenu = new Menu("music-submenu", { onMenuOutdated: "Menu updated, try now." }) 
     .text("Coming soon", (ctx) => ctx.reply("Coming soon")).row()
     .text("Coming soon", (ctx) => ctx.reply("Coming soon")).row()
     .text("Coming soon", (ctx) => ctx.reply(`Coming soon`)).row()
     .back("◀️ Go Back", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row();
 
-const news_feeds_menu = new Menu("news-feeds-menu", { onMenuOutdated: "Menu updated, try now." })
+const news_feeds_submenu = new Menu("news-feeds-submenu", { onMenuOutdated: "Menu updated, try now." })
     .text("Coming soon", (ctx) => ctx.reply("Coming soon")).row()
     .text("Coming soon", (ctx) => ctx.reply("Coming soon")).row()
     .text("Coming soon", (ctx) => ctx.reply(`Coming soon`)).row()
     .back("◀️ Go Back", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row();
-    
-start_menu.register(help_menu);
+//---    
+
+start_menu.register(help_submenu);
   
-help_menu.register(anime_manga_menu);
-help_menu.register(games_menu);
-help_menu.register(group_management_menu);
-help_menu.register(help_menu_2); 
+help_submenu.register(anime_manga_submenu);
+help_submenu.register(games_submenu);
+help_submenu.register(group_management_submenu);
+help_submenu.register(help_submenu_2); 
 
-help_menu_2.register(ai_features_menu);
-help_menu_2.register(music_menu);
-help_menu_2.register(news_feeds_menu);
+help_submenu_2.register(ai_features_submenu);
+help_submenu_2.register(music_submenu);
+help_submenu_2.register(news_feeds_submenu);
 
 bot.use(start_menu);  
 
 bot.chatType("private").command("start", typingAction(async(ctx: any) => { 
     let pm_start_text: string = (`${greets[Math.floor(Math.random() * greets.length)]} ${ctx.from?.first_name}.${start_text}`);
-    await ctx.api.sendAnimation(ctx.chat.id, constants.START_GIF, {caption: pm_start_text, reply_markup: start_menu, parse_mode: "HTML"});
+    let payload = ctx.match;
+    if (payload == "help_me_im_dumb"){
+        await ctx.api.sendAnimation(ctx.chat.id, constants.START_GIF, {caption: help_text, reply_markup: help_submenu, parse_mode: "HTML"});    
+    }
+    else {
+        await ctx.api.sendAnimation(ctx.chat.id, constants.START_GIF, {caption: pm_start_text, reply_markup: start_menu, parse_mode: "HTML"});
+    }
 }));
 
 bot.chatType("supergroup" || "group").command("start", typingAction(async(ctx: any) => {
@@ -111,9 +129,9 @@ bot.chatType("supergroup" || "group").command("start", typingAction(async(ctx: a
 }));
 
 bot.chatType("private").command("help", typingAction(async(ctx: any) => {
-    await ctx.api.sendMessage(ctx.chat.id, help_text, {reply_markup: help_menu});
+    await ctx.api.sendAnimation(ctx.chat.id, constants.START_GIF, {caption: help_text, reply_markup: help_submenu, parse_mode: "HTML"});
 }));
 
 bot.chatType("supergroup" || "group").command("help", typingAction(async(ctx: any) => {
-    await ctx.api.sendMessage(ctx.chat.id, "group help", {parse_mode: "HTML"});
+    await ctx.reply("Need help?", {reply_parameters: {message_id: ctx.message.message_id}, reply_markup: helpButton, parse_mode: "HTML"});
 }));

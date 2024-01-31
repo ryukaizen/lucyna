@@ -4,13 +4,9 @@ import { run } from "@grammyjs/runner";
 import { apiThrottler } from "@grammyjs/transformer-throttler";
 import { logger } from "./logger"
 import { channel_log } from "./logger";
-import { connectDB, disconnectDB } from "./database";
 
 // Initialize grammY runner
 const runner = run(bot);
-
-// Connect to the database  
-connectDB();
 
 // Flood control plugin
 const throttler = apiThrottler();
@@ -45,7 +41,6 @@ bot.init().then(async() => {
 });
 
 async function exitSignal(signal: String) {
-    disconnectDB();
     runner.isRunning() && runner.stop();
     logger.info(`${signal} - Exiting...`);
 }

@@ -1,0 +1,420 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model access_connection {
+  chat_id               String   @id @db.VarChar(14)
+  allow_connect_to_chat Boolean?
+}
+
+model afk_users {
+  user_id BigInt   @id @default(autoincrement())
+  is_afk  Boolean?
+  reason  String?
+}
+
+model antiflood {
+  chat_id String  @id @db.VarChar(14)
+  user_id BigInt?
+  count   BigInt?
+  limit   BigInt?
+}
+
+model antiflood_settings {
+  chat_id    String  @id @db.VarChar(14)
+  flood_type BigInt?
+  value      String?
+}
+
+model approval {
+  chat_id String @db.VarChar(14)
+  user_id BigInt
+
+  @@id([chat_id, user_id])
+}
+
+model autokicks_safemode {
+  chat_id String  @id @db.VarChar(14)
+  timeK   BigInt?
+}
+
+model bans_feds {
+  fed_id     String
+  user_id    String  @db.VarChar(14)
+  first_name String
+  last_name  String?
+  user_name  String?
+  reason     String?
+  time       BigInt?
+
+  @@id([fed_id, user_id])
+}
+
+model blacklist {
+  chat_id String @db.VarChar(14)
+  trigger String
+
+  @@id([chat_id, trigger])
+}
+
+model blacklist_settings {
+  chat_id        String  @id @db.VarChar(14)
+  blacklist_type BigInt?
+  value          String?
+}
+
+model blacklist_stickers {
+  chat_id String @db.VarChar(14)
+  trigger String
+
+  @@id([chat_id, trigger])
+}
+
+model blacklistusers {
+  user_id String  @id @db.VarChar(14)
+  reason  String?
+}
+
+model blsticker_settings {
+  chat_id        String  @id @db.VarChar(14)
+  blacklist_type BigInt?
+  value          String?
+}
+
+model cas_stats {
+  chat_id String   @id @db.VarChar(14)
+  status  Boolean?
+  autoban Boolean?
+}
+
+model chat_feds {
+  chat_id   String  @id @db.VarChar(14)
+  chat_name String?
+  fed_id    String?
+}
+
+model chat_members {
+  priv_chat_id BigInt @id @default(autoincrement())
+  chat         String @db.VarChar(14)
+  user         BigInt
+  chats        chats  @relation(fields: [chat], references: [chat_id], onDelete: Cascade)
+  users        users  @relation(fields: [user], references: [user_id], onDelete: Cascade)
+
+  @@unique([chat, user], map: "_chat_members_uc")
+}
+
+model chat_report_settings {
+  chat_id       String   @id @db.VarChar(14)
+  should_report Boolean?
+}
+
+model chatbot_chats {
+  chat_id String  @id @db.VarChar(14)
+  ses_id  String? @db.VarChar(70)
+  expires String? @db.VarChar(15)
+}
+
+model chats {
+  chat_id      String         @id @db.VarChar(14)
+  chat_name    String
+  chat_members chat_members[]
+}
+
+model clean_service {
+  chat_id       String   @id @db.VarChar(14)
+  clean_service Boolean?
+}
+
+model cleaner_bluetext_chat_ignore_commands {
+  chat_id String
+  command String
+
+  @@id([chat_id, command])
+}
+
+model cleaner_bluetext_chat_setting {
+  chat_id   String   @id
+  is_enable Boolean?
+}
+
+model cleaner_bluetext_global_ignore_commands {
+  command String @id
+}
+
+model connection {
+  user_id BigInt  @id @default(autoincrement())
+  chat_id String? @db.VarChar(14)
+}
+
+model connection_history {
+  user_id   BigInt
+  chat_id   String  @db.VarChar(14)
+  chat_name String?
+  conn_time BigInt?
+
+  @@id([user_id, chat_id])
+}
+
+model cust_filter_urls {
+  id        BigInt   @default(autoincrement())
+  chat_id   String   @db.VarChar(14)
+  keyword   String
+  name      String
+  url       String
+  same_line Boolean?
+
+  @@id([id, chat_id, keyword])
+}
+
+model cust_filters {
+  chat_id      String  @db.VarChar(14)
+  keyword      String
+  reply        String
+  is_sticker   Boolean
+  is_document  Boolean
+  is_image     Boolean
+  is_audio     Boolean
+  is_voice     Boolean
+  is_video     Boolean
+  has_buttons  Boolean
+  has_markdown Boolean
+  reply_text   String?
+  file_type    BigInt
+  file_id      String?
+
+  @@id([chat_id, keyword])
+}
+
+model defense_mode {
+  chat_id String   @id @db.VarChar(14)
+  status  Boolean?
+}
+
+model disabled_commands {
+  chat_id String @db.VarChar(14)
+  command String
+
+  @@id([chat_id, command])
+}
+
+model feds {
+  owner_id  String? @db.VarChar(14)
+  fed_name  String?
+  fed_id    String  @id
+  fed_rules String?
+  fed_log   String?
+  fed_users String?
+}
+
+model feds_settings {
+  user_id       BigInt   @id @default(autoincrement())
+  should_report Boolean?
+}
+
+model feds_subs {
+  fed_id   String
+  fed_subs String
+
+  @@id([fed_id, fed_subs])
+}
+
+model gban_settings {
+  chat_id String  @id @db.VarChar(14)
+  setting Boolean
+}
+
+model gbans {
+  user_id BigInt  @id @default(autoincrement())
+  name    String
+  reason  String?
+}
+
+model human_checks {
+  user_id     BigInt
+  chat_id     String   @db.VarChar(14)
+  human_check Boolean?
+
+  @@id([user_id, chat_id])
+}
+
+model last_fm {
+  user_id  String  @id @db.VarChar(14)
+  username String? @db.VarChar(15)
+}
+
+model leave_urls {
+  id        BigInt   @default(autoincrement())
+  chat_id   String   @db.VarChar(14)
+  name      String
+  url       String
+  same_line Boolean?
+
+  @@id([id, chat_id])
+}
+
+model locales {
+  chat_id     String  @id @db.VarChar(14)
+  locale_name String?
+}
+
+model log_channels {
+  chat_id     String @id @db.VarChar(14)
+  log_channel String @db.VarChar(14)
+}
+
+model note_urls {
+  id        BigInt   @default(autoincrement())
+  chat_id   String   @db.VarChar(14)
+  note_name String
+  name      String
+  url       String
+  same_line Boolean?
+
+  @@id([id, chat_id, note_name])
+}
+
+model notes {
+  chat_id     String   @db.VarChar(14)
+  name        String
+  value       String
+  file        String?
+  is_reply    Boolean?
+  has_buttons Boolean?
+  msgtype     BigInt?
+
+  @@id([chat_id, name])
+}
+
+model nsfw_chats {
+  chat_id String @id @db.VarChar(14)
+}
+
+model permissions {
+  chat_id  String   @id @db.VarChar(14)
+  audio    Boolean?
+  voice    Boolean?
+  contact  Boolean?
+  video    Boolean?
+  document Boolean?
+  photo    Boolean?
+  sticker  Boolean?
+  gif      Boolean?
+  url      Boolean?
+  bots     Boolean?
+  forward  Boolean?
+  game     Boolean?
+  location Boolean?
+  rtl      Boolean?
+  button   Boolean?
+  egame    Boolean?
+  inline   Boolean?
+}
+
+model restrictions {
+  chat_id  String   @id @db.VarChar(14)
+  messages Boolean?
+  media    Boolean?
+  other    Boolean?
+  preview  Boolean?
+}
+
+model rss_feed {
+  id             BigInt  @id @default(autoincrement())
+  chat_id        String
+  feed_link      String?
+  old_entry_link String?
+}
+
+model rules {
+  chat_id String  @id @db.VarChar(14)
+  rules   String?
+}
+
+model sessions {
+  key   String  @unique(map: "idx_sessions") @db.VarChar
+  value String?
+}
+
+model spotifycreds {
+  user_id               BigInt  @id @default(autoincrement())
+  spotify_id            String?
+  spotify_access_token  String?
+  spotify_refresh_token String?
+}
+
+model user_report_settings {
+  user_id       BigInt   @id @default(autoincrement())
+  should_report Boolean?
+}
+
+model userbio {
+  user_id BigInt  @id @default(autoincrement())
+  bio     String?
+}
+
+model userinfo {
+  user_id BigInt  @id @default(autoincrement())
+  info    String?
+}
+
+model users {
+  user_id      BigInt         @id @default(autoincrement())
+  username     String?
+  chat_members chat_members[]
+}
+
+model warn_filters {
+  chat_id String @db.VarChar(14)
+  keyword String
+  reply   String
+
+  @@id([chat_id, keyword])
+}
+
+model warn_settings {
+  chat_id    String   @id @db.VarChar(14)
+  warn_limit BigInt?
+  soft_warn  Boolean?
+}
+
+model warns {
+  user_id   BigInt
+  chat_id   String   @db.VarChar(14)
+  num_warns BigInt?
+  reasons   String[]
+
+  @@id([user_id, chat_id])
+}
+
+model welcome_mutes {
+  chat_id      String  @id @db.VarChar(14)
+  welcomemutes String?
+}
+
+model welcome_pref {
+  chat_id        String   @id @db.VarChar(14)
+  should_welcome Boolean?
+  should_goodbye Boolean?
+  custom_content String?
+  custom_welcome String?
+  welcome_type   BigInt?
+  custom_leave   String?
+  leave_type     BigInt?
+  clean_welcome  BigInt?
+}
+
+model welcome_urls {
+  id        BigInt   @default(autoincrement())
+  chat_id   String   @db.VarChar(14)
+  name      String
+  url       String
+  same_line Boolean?
+
+  @@id([id, chat_id])
+}
