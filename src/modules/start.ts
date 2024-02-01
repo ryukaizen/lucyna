@@ -18,9 +18,7 @@ const greets: string[] = [
     "What color is your Bugatti?" // hahaha this is so good
 ];
 
-const start_text = `\n\nI happen to be your all-in-one bot for effortless community engagement and entertainment.
-
-Report to @Ryukaizen if I act clumsy.`;
+const start_text = `\n\nI happen to be your all-in-one bot for effortless community engagement and entertainment.\n\nReport to @Ryukaizen if I act clumsy.`;
 
 const help_text = `
 ☑️ Things I can do:
@@ -112,7 +110,7 @@ help_submenu_2.register(news_feeds_submenu);
 
 bot.use(start_menu);  
 
-bot.chatType("private").command("start", typingAction(async(ctx: any) => { 
+bot.chatType("private").command("start", (async(ctx: any) => { 
     let pm_start_text: string = (`${greets[Math.floor(Math.random() * greets.length)]} ${ctx.from?.first_name}.${start_text}`);
     let payload = ctx.match;
     if (payload == "help_me_im_dumb"){
@@ -123,7 +121,7 @@ bot.chatType("private").command("start", typingAction(async(ctx: any) => {
     }
 }));
 
-bot.chatType("supergroup" || "group").command("start", typingAction(async(ctx: any) => {
+bot.chatType("supergroup" || "group").command("start", (async(ctx: any) => {
     let grp_start_text: string = `${greets[Math.floor(Math.random() * greets.length)]} <a href="tg://user?id=${ctx.from?.id}">${ctx.from?.first_name}</a>`;    
     await ctx.api.sendMessage(ctx.chat.id, grp_start_text, {parse_mode: "HTML"});
 }));
