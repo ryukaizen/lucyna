@@ -8,6 +8,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Session {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String
+}
+
 model access_connection {
   chat_id               String   @id @db.VarChar(14)
   allow_connect_to_chat Boolean?

@@ -10,6 +10,7 @@ const constants = cleanEnv(process.env, {
     LOG_CHANNEL: str(),
     BOT_TOKEN: str(),
     BOT_USERNAME: str(),
+    OWNER_ID: str(),
     START_GIF: str(),
     DATABASE_URL: str()
 });
