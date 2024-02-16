@@ -1,6 +1,5 @@
 import bot from "../bot"
 import constants from "../config"
-import { prisma } from "../database"
 import { Menu } from "@grammyjs/menu";
 import { InlineKeyboard } from "grammy";
 import { typingAction } from "../helpers/helper_func";
@@ -11,14 +10,14 @@ const greets: string[] = [
     "How's it going?", "What's the good word?", "Well, hi!", "How are you doing?", "What's new?", "How's everything?", "What's the buzz?", 
     "What's cracking?", "What's happening?", "How are you today?", "Bazinga!", "D'oh!", "Pivot!", "This is the way,", "Wubba lubba dub dub!", "Booyah!", "Let's make some chaos,",
     "Cheers, my love!", "Reporting in,", "I'm ready! How 'bout you?", "I would have been your daddy,", "I'm your huckleberry,", "I'm your biggest fan,", "I'm your destiny,",
-    "Hey! Listen!", "Hasta la vista, baby,", "I'm Batman,", "I'm the Doctor,", "I'm the king of the world!", "I'm the one who knocks,", "I'm the one who walks,", "I'm the one who waits,", "I'm the one who runs,",
-    "I'm the one who lifts,", "I'm the one who cooks,", "What're you gonna do?", "A man must have a code,", "Sheeeeeit,", "Say my name,", "Tread lightly,", "Lando!", "Hold the door!",
+    "Hey! Listen!", "Hasta la vista, baby,", "I'm Batman,", "I'm the king of the world!", "I'm the one who knocks,", "I'm the one who walks,", "I'm the one who waits,", "I'm the one who runs,",
+    "I'm the one who lifts,", "I'm the one who cooks,", "What're you gonna do?", "A man must have a code,", "Sheeeeeit,", "Say my name,", "Tread lightly,", "Hold the door!",
     "You win or you die,", "Oh my God!", "Well, well, well, how the turntables...", "Better call", "The game is on,", "Hey dawg!", "Sup homie!", "Yo brah!", "Need something?", "What's it?",
     "What da dog doin?", "Konnichiwa,", "Hajimemashite", "Yoroshiku,", "Ogenki desu ka?", "Genki desu,", "They don't know me son,", "I'm a straight up G,", "Who's gonna carry the boats?", "Who's gonna carry the logs?",
     "What color is your Bugatti?" // hahaha this is so good
 ];
 
-const start_text = `\n\nI happen to be your all-in-one bot for effortless community engagement and entertainment.`;
+const start_text = `I happen to be your all-in-one bot for effortless community engagement and entertainment.`;
 
 const help_text = `
 ☑️ Things I can do:
@@ -112,7 +111,7 @@ help_submenu_2.register(news_feeds_submenu);
 bot.use(start_menu);  
 
 bot.chatType("private").command("start", (async(ctx: any) => { 
-    let pm_start_text: string = (`${greets[Math.floor(Math.random() * greets.length)]} ${ctx.from?.first_name}.${start_text}`);
+    let pm_start_text: string = (`${greets[Math.floor(Math.random() * greets.length)]} ${ctx.from?.first_name}.\n\n${start_text}`);
     let payload = ctx.match;
     if (payload == "help_me_im_dumb"){
         await ctx.api.sendAnimation(ctx.chat.id, constants.START_GIF, {caption: help_text, reply_markup: help_submenu, parse_mode: "HTML"});    

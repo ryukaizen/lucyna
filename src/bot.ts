@@ -8,10 +8,18 @@ import {
     HttpError 
 } from "grammy"        
 import { type ChatMembersFlavor } from "@grammyjs/chat-members";
+import { prisma } from "./database";
+import { PrismaAdapter } from "@grammyjs/storage-prisma";
+import { type ChatMember } from "grammy/types";
+import { chatMembers } from "@grammyjs/chat-members";
 
 type ChatContext = Context & ChatMembersFlavor;
 
 const bot = new Bot<ChatContext>(constants.BOT_TOKEN)
+
+const adapter = new PrismaAdapter<ChatMember>(prisma.chat_members_data);
+
+bot.use(chatMembers(adapter));
 
 bot.catch((err) => {
     const ctx = err.ctx;

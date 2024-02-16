@@ -8,7 +8,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Session {
+model chat_members_data {
   id    Int    @id @default(autoincrement())
   key   String @unique
   value String
