@@ -6,7 +6,13 @@ import { logger } from "./logger"
 import { channel_log } from "./logger";
 
 // Initialize grammY runner
-const runner = run(bot);
+const runner = run(bot, { 
+    runner: { 
+        fetch: { 
+            allowed_updates: ["message", "edited_message", "callback_query", "chat_member"] 
+        } 
+    } 
+});
 
 // Flood control plugin
 const throttler = apiThrottler();

@@ -1,8 +1,17 @@
 import constants from "./config"
 import { logger, channel_log } from "./logger"
-import { Bot, BotError, GrammyError, HttpError } from "grammy"
+import {
+    Bot, 
+    Context, 
+    BotError, 
+    GrammyError, 
+    HttpError 
+} from "grammy"        
+import { type ChatMembersFlavor } from "@grammyjs/chat-members";
 
-const bot = new Bot(constants.BOT_TOKEN)
+type ChatContext = Context & ChatMembersFlavor;
+
+const bot = new Bot<ChatContext>(constants.BOT_TOKEN)
 
 bot.catch((err) => {
     const ctx = err.ctx;
