@@ -32,9 +32,10 @@ var ALL_MODULES: string[] = [];
 })();
 
 bot.init().then(async() => {
-    var bot_info = (
+    let currentTime = new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true });
+    let bot_info = (
         `${bot.botInfo.first_name}\n` + 
-        `\#LAUNCHED on ${new Date().toLocaleString()}\n\n` +
+        `\#LAUNCHED on ${currentTime}, ${new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}\n\n` +
         `• Username: @${bot.botInfo.username}\n` +
         `• Bot ID: ${bot.botInfo.id}\n` +
         `• Allow Groups: ${bot.botInfo.can_join_groups ? `Enabled` : `Disabled`}\n` +

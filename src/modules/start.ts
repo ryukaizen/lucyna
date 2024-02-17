@@ -33,11 +33,11 @@ const help_text = `
 \nReport to @Ryukaizen if I act clumsy.`;
 
 const helpButton = new InlineKeyboard()
-  .url("Please help me!", `http://telegram.me/${constants.BOT_USERNAME}?start=help_me_im_dumb`)
+  .url("Please help me!", `https://telegram.me/${constants.BOT_USERNAME}?start=help_me_im_dumb`)
 
 //--- Parent menu
 const start_menu = new Menu("start-menu", { onMenuOutdated: "Menu updated, try now." })
-    .url("Add to Chat", `http://telegram.me/${constants.BOT_USERNAME}?startgroup=new&admin=change_info+post_messages+edit_messages+delete_messages+restrict_members+invite_users+pin_messages+manage_topics+promote_members+manage_video_chats+manage_chat`)    
+    .url("Add to Chat", `https://telegram.me/${constants.BOT_USERNAME}?startgroup=new&admin=change_info+post_messages+edit_messages+delete_messages+restrict_members+invite_users+pin_messages+manage_topics+promote_members+manage_video_chats+manage_chat`)    
     .submenu("Usage Guide", "help-submenu", (ctx) => 
         ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"}))
 //---
@@ -47,7 +47,7 @@ const help_submenu = new Menu("help-submenu", { onMenuOutdated: "Menu updated, t
     .submenu("Anime and Manga", "anime-manga-submenu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()    
     .submenu("Games and Quizzes", "games-submenu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()
     .submenu("Group Management", "group-management-submenu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()
-    .back("◀️ Menu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: `${greets[Math.floor(Math.random() * greets.length)]} ${ctx.from?.first_name}.${start_text}`, parse_mode: "HTML"}))
+    .back("◀️ Menu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: `${greets[Math.floor(Math.random() * greets.length)]} ${ctx.from?.first_name}.\n\n${start_text}`, parse_mode: "HTML"}))
     .submenu("More ▶️", "help-submenu-2", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"}))
 //---
 
@@ -122,8 +122,14 @@ bot.chatType("private").command("start", (async(ctx: any) => {
 }));
 
 bot.chatType("supergroup" || "group").command("start", (async(ctx: any) => {
-    let grp_start_text: string = `${greets[Math.floor(Math.random() * greets.length)]} <a href="tg://user?id=${ctx.from?.id}">${ctx.from?.first_name}</a>`;    
-    await ctx.api.sendMessage(ctx.chat.id, grp_start_text, {parse_mode: "HTML"});
+    let grp_start_text: string = `${greets[Math.floor(Math.random() * greets.length)]} <a href="tg://user?id=${ctx.from?.id}">${ctx.from?.first_name}</a>.`;    
+    let payload = ctx.match;
+    if (payload == "new") {
+        return;
+    }
+    else {
+        await ctx.api.sendMessage(ctx.chat.id, grp_start_text, {parse_mode: "HTML"});
+    }
 }));
 
 bot.chatType("private").command("help", typingAction(async(ctx: any) => {
