@@ -123,17 +123,19 @@ bot.chatType("private").command("start", (async(ctx: any) => {
     // payload from the rules button
     else if (payload.startsWith("rules")) {
         let chatId = payload.split("_")[1];
-        let rules = await get_rules(chatId);
         let getchat_object = await ctx.api.getChat(chatId);
         let chat_title = getchat_object.title;
-        let rules_message = `Rules for <b>${chat_title}</b> are:\n\n${await get_rules(chatId)}`
-        if (rules == null) {
+        let rules = await get_rules(chatId);
+
+        if (rules == null || rules == undefined ) {
+            // in case user clicks on already sent button but there are no rules
             await ctx.api.sendMessage(ctx.chat.id, "The moderators of the group have not set rules (on this bot) as of now. However, this might not mean that the group doesn't have any rules!\n\n<i>Tip: Try informing the moderators on this issue, be a good one ;)</i>", {parse_mode: "HTML"});
         }
         else {
+            let rules_message = `Rules for <b>${chat_title}</b> are:\n\n${rules}`
             await ctx.api.sendMessage(ctx.chat.id, rules_message, {parse_mode: "HTML"});
         }
-    }
+    }   
 
     // if no payload, send the start message
     else {
