@@ -1,7 +1,7 @@
-import { InlineKeyboard } from "grammy";
 import bot from "../bot";
 import constants from "../config";
 import { channel_log } from "../logger";
+import { InlineKeyboard } from "grammy";
 
 // when the bot is added to a chat
 const added_to_chat_text = "Thank you for adding me to the group!\n\nExplore my functionalities by using the button below.";
@@ -11,6 +11,7 @@ const help_inlinekeyboard = new InlineKeyboard()
 bot.on("message:new_chat_members:me", async (ctx: any) => {
     let currentTime = new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true });
     let log_message = (
+        `${bot.botInfo.first_name}\n` + 
         `\#ADDED on ${currentTime}, ${new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}\n\n` +
         `• Chat Title: <b>${ctx.chat?.title}</b>\n` +
         `• Chat Type: <code>${ctx.chat?.type}</code>\n` +

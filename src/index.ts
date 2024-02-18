@@ -18,7 +18,7 @@ const runner = run(bot, {
 const throttler = apiThrottler();
 bot.api.config.use(throttler);
 
-var ALL_MODULES: string[] = [];
+const ALL_MODULES: string[] = [];
 
 (async function () {
     const modules = await fs.readdir("./dist/modules");

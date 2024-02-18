@@ -2,6 +2,7 @@ import bot from "../bot"
 import constants from "../config"
 import { Menu } from "@grammyjs/menu";
 import { InlineKeyboard } from "grammy";
+import { get_rules } from "./rules";
 import { typingAction } from "../helpers/helper_func";
 
 const greets: string[] = [
@@ -44,9 +45,9 @@ const start_menu = new Menu("start-menu", { onMenuOutdated: "Menu updated, try n
 
 //--- Parent menu submenus
 const help_submenu = new Menu("help-submenu", { onMenuOutdated: "Menu updated, try now." })
-    .submenu("Anime and Manga", "anime-manga-submenu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()    
-    .submenu("Games and Quizzes", "games-submenu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()
     .submenu("Group Management", "group-management-submenu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()
+    .submenu("Games and Quizzes", "games-submenu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()
+    .submenu("Anime and Manga", "anime-manga-submenu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"})).row()    
     .back("◀️ Menu", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: `${greets[Math.floor(Math.random() * greets.length)]} ${ctx.from?.first_name}.\n\n${start_text}`, parse_mode: "HTML"}))
     .submenu("More ▶️", "help-submenu-2", (ctx) => ctx.editMessageMedia({type: "animation", media: constants.START_GIF, caption: help_text, parse_mode: "HTML"}))
 //---
@@ -113,9 +114,25 @@ bot.use(start_menu);
 bot.chatType("private").command("start", (async(ctx: any) => { 
     let pm_start_text: string = (`${greets[Math.floor(Math.random() * greets.length)]} ${ctx.from?.first_name}.\n\n${start_text}`);
     let payload = ctx.match;
+
+    // payload from the help button
     if (payload == "help_me_im_dumb"){
         await ctx.api.sendAnimation(ctx.chat.id, constants.START_GIF, {caption: help_text, reply_markup: help_submenu, parse_mode: "HTML"});    
     }
+
+    // payload from the rules button
+    else if (payload.startsWith("rules")) {
+        let chatId = payload.split("_")[1];
+        let rules = await get_rules(chatId);
+        if (rules == null) {
+            await ctx.api.sendMessage(ctx.chat.id, "The moderators of the group have not set rules (on this bot) as of now. However, this might not mean that the group doesn't have any rules!\n\n<i>Tip: Try informing the moderators on this issue, be a good one ;)</i>", {parse_mode: "HTML"});
+        }
+        else {
+            await ctx.api.sendMessage(ctx.chat.id, rules, {parse_mode: "HTML"});
+        }
+    }
+
+    // if no payload, send the start message
     else {
         await ctx.api.sendAnimation(ctx.chat.id, constants.START_GIF, {caption: pm_start_text, reply_markup: start_menu, parse_mode: "HTML"});
     }
