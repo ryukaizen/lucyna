@@ -1,5 +1,5 @@
 {
-  "name": "faye",
+  "name": "Lucy",
   "version": "1.0.0",
   "description": "A multi-featured, anime themed bot. Built with grammY.",
   "main": "dist/index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Ryukaizen/Faye.git"
+    "url": "git+https://github.com/Ryukaizen/Lucy.git"
   },
   "keywords": [
     "anime",
@@ -19,15 +19,15 @@
     "nodejs",
     "chat",
     "mongoose",
-    "faye",
-    "faye-valentine"
+    "lucyna",
+    "lucyna-kushinada"
   ],
   "author": "Ryukaizen",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Ryukaizen/Faye/issues"
+    "url": "https://github.com/Ryukaizen/Lucy/issues"
   },
-  "homepage": "https://github.com/Ryukaizen/Faye#readme",
+  "homepage": "https://github.com/Ryukaizen/Lucy#readme",
   "devDependencies": {
     "@types/node": "^20.9.1",
     "@types/pg": "^8.11.0",
