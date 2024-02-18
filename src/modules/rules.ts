@@ -6,8 +6,8 @@ import { InlineKeyboard } from "grammy";
 bot.chatType("supergroup" || "group").command("rules", (async(ctx: any) => {
     let chatId = ctx.chat.id.toString();
     let rules_button = new InlineKeyboard()
-        .url("Rules❕", `https://telegram.me/${constants.BOT_USERNAME}?start=rules_${chatId}`);   
-    await ctx.api.sendMessage(ctx.chat.id, "Read the group rules from the button below.", {reply_markup: rules_button, reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML" });
+        .url("Rules❕", `https://telegram.me/${constants.BOT_USERNAME}?start=rules_${chatId}`);  
+    await ctx.reply("Read the group rules from the button below.", {reply_markup: rules_button, reply_parameters: {message_id: ctx.message.reply_to_message.message_id}, parse_mode: "HTML" });
 
 }));
 
