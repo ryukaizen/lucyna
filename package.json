@@ -22,12 +22,12 @@
     "lucyna",
     "lucyna-kushinada"
   ],
-  "author": "ryukaizen",
+  "author": "Ryukaizen",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ryukaizen/Lucy/issues"
+    "url": "https://github.com/Ryukaizen/Lucy/issues"
   },
-  "homepage": "https://github.com/ryukaizen/Lucy#readme",
+  "homepage": "https://github.com/Ryukaizen/Lucy#readme",
   "devDependencies": {
     "@types/node": "^20.9.1",
     "@types/pg": "^8.11.0",

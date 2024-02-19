@@ -34,7 +34,7 @@ export async function get_rules(chatId: string) {
 bot.chatType("supergroup" || "group").command("setrules", (async(ctx: any) => {
     // only let this happen if the user using /setrules command is an admin of the chat
     let user = await ctx.getAuthor();
-    if (user.status != "creator" && user.status != "administrator" && user.id != constants.OWNER_ID) {
+    if (user.status != "creator" && user.status != "administrator") {
         await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
     }
     else {
@@ -83,7 +83,7 @@ bot.chatType("supergroup" || "group").command("setrules", (async(ctx: any) => {
 bot.chatType("supergroup" || "group").command("resetrules", (async(ctx: any) => {
     // only let this happen if the user using /setrules command is an admin of the chat
     let user = await ctx.getAuthor();
-    if (user.status != "creator" && user.status != "administrator" && user.id != constants.OWNER_ID) {
+    if (user.status != "creator" && user.status != "administrator") {
         await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
     }
     else {
