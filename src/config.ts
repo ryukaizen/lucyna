@@ -11,6 +11,7 @@ const constants = cleanEnv(process.env, {
     BOT_TOKEN: str(),
     BOT_USERNAME: str(),
     OWNER_ID: str(),
+    SUPERUSERS: str(),
     START_GIF: str(),
     ADDED_TO_CHAT_GIF: str(),
     DATABASE_URL: str()

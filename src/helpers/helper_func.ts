@@ -7,10 +7,17 @@ export function typingAction(handler: any) {
     };
 }
 
-export function ownerOnlyCommand(handler: any) {
+export function superusersOnly(handler: any) {
     return async (ctx: any) => {
-        if (ctx.from.id == constants.OWNER_ID) {
+        let user = await ctx.getAuthor();
+        if (ctx.from.id == constants.OWNER_ID || constants.SUPERUSERS.includes(ctx.from.id)) {
             await handler(ctx);
+        }
+        else if (user.status == "creator" || user.status == "administrator") {
+            await handler(ctx);
+        }
+        else {
+            await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
         }
     };
 }
