@@ -8,7 +8,7 @@ export function typingAction(handler: any) {
     };
 }
 
-export function superusersOnly(handler: any) {
+export function elevatedUsersOnly(handler: any) {
     return async (ctx: any) => {
         let user = await ctx.getAuthor();
         if (ctx.from.id == constants.OWNER_ID || constants.SUPERUSERS.includes(ctx.from.id)) {

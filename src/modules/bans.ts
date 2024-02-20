@@ -1,7 +1,7 @@
 import bot from "../bot";
-import { checkElevatedUser, entityExtractor, superusersOnly, userInfo } from "../helpers/helper_func";
+import { checkElevatedUser, entityExtractor, elevatedUsersOnly, userInfo } from "../helpers/helper_func";
 
-bot.chatType("supergroup" || "group").command("ban", superusersOnly(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(async (ctx: any) => {
     const user_info = await userInfo(ctx);
     if (user_info.user.can_restrict_members == false) {
         await ctx.reply("You do not have rights to ban users.", {reply_parameters: {message_id: ctx.message.message_id}});

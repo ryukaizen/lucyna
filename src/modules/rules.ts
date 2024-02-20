@@ -2,7 +2,7 @@ import bot from "../bot";
 import constants from "../config";
 import { prisma } from "../database";
 import { InlineKeyboard } from "grammy";
-import { superusersOnly } from "../helpers/helper_func";
+import { elevatedUsersOnly } from "../helpers/helper_func";
 
 bot.chatType("supergroup" || "group").command("rules", (async(ctx: any) => {
     let chatId = ctx.chat.id.toString();
@@ -32,7 +32,7 @@ export async function get_rules(chatId: string) {
     return rules?.rules;
 }
 
-bot.chatType("supergroup" || "group").command("setrules", superusersOnly(async(ctx: any) => {
+bot.chatType("supergroup" || "group").command("setrules", elevatedUsersOnly(async(ctx: any) => {
     let chatId = ctx.chat.id.toString();
     if (ctx.message.text.replace("/setrules" || "!setrules" || "?setrules", "").trim() == "") {
         if (ctx.message.reply_to_message != undefined) {
@@ -76,7 +76,7 @@ bot.chatType("supergroup" || "group").command("setrules", superusersOnly(async(c
     }
 }));
 
-bot.chatType("supergroup" || "group").command("resetrules", superusersOnly(async(ctx: any) => {
+bot.chatType("supergroup" || "group").command("resetrules", elevatedUsersOnly(async(ctx: any) => {
     let chatId = ctx.chat.id.toString();
     // check if rules have been set or not, and only then delete
     let rules = await prisma.rules.findUnique({
