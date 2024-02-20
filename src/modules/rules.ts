@@ -2,7 +2,7 @@ import bot from "../bot";
 import constants from "../config";
 import { prisma } from "../database";
 import { InlineKeyboard } from "grammy";
-import { superusersOnly} from "../helpers/helper_func";
+import { superusersOnly } from "../helpers/helper_func";
 
 bot.chatType("supergroup" || "group").command("rules", (async(ctx: any) => {
     let chatId = ctx.chat.id.toString();
@@ -34,9 +34,7 @@ export async function get_rules(chatId: string) {
 
 bot.chatType("supergroup" || "group").command("setrules", superusersOnly(async(ctx: any) => {
     let chatId = ctx.chat.id.toString();
-    // if the content is empty after /setrules command, tell the user to type rules next to /setrules command or reply to a message with /setrules command
     if (ctx.message.text.replace("/setrules" || "!setrules" || "?setrules", "").trim() == "") {
-        // if the message is a reply to another message
         if (ctx.message.reply_to_message != undefined) {
             await prisma.rules.upsert({
                 where: {
@@ -58,18 +56,22 @@ bot.chatType("supergroup" || "group").command("setrules", superusersOnly(async(c
         }
     }
     else {
-        await prisma.rules.upsert({
-            where: {
-                chat_id: chatId,
-            },
-            update: {
-                rules: ctx.message.text.replace("/setrules" || "!setrules" || "?setrules", "").trim(),
-            },
-            create: {
-                chat_id: chatId,
-                rules: ctx.message.text.replace("/setrules" || "!setrules" || "?setrules", "").trim(),
-            }
-        });
+        let rules_text = ctx.message.text.replace("/setrules" || "!setrules" || "?setrules", "").trim();
+        if (rules_text.length > 4096) {
+            rules_text = rules_text.substring(0, 4096);
+            await prisma.rules.upsert({
+                where: {
+                    chat_id: chatId,
+                },
+                update: {
+                    rules: rules_text,
+                },
+                create: {
+                    chat_id: chatId,
+                    rules: rules_text,
+                }
+            });
+        }
         await ctx.reply("Rules have been set!", {reply_parameters: {message_id: ctx.message.message_id}});
     }
 }));

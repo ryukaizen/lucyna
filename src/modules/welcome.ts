@@ -4,7 +4,7 @@ import { channel_log } from "../logger";
 import { InlineKeyboard } from "grammy";
 
 // when the bot is added to a chat
-const added_to_chat_text = "Thank you for adding me to the group!\n\nExplore my functionalities by using the button below.";
+const added_to_chat_text = "Thank you for adding me to the group!\n<i>(Ensure that I've been made an <b>admin</b> & have <b>all the permissions.</b>)</i>\n\nExplore my functionalities by using the button below.";
 const help_inlinekeyboard = new InlineKeyboard()
     .url("Usage Guide", `https://telegram.me/${constants.BOT_USERNAME}?start=help_me_im_dumb`)
 
