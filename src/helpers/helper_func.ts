@@ -79,12 +79,21 @@ export async function entityExtractor(ctx: any) {
 
     let user_ids: string[] = []; 
     let usernames: string[] = [];
+    let args = ctx.match;
 
     let i = 0;
     while (i < entities.length) {
         const entity = entities[i];
         // bot api treats 10 digit integers as phone_number, 
         // and then you realize, user IDs are also 10 digit integers :p
+        
+        let nine_digit_regex = /(\d{9})/g;
+        let match: RegExpExecArray | null;
+
+        while ((match = nine_digit_regex.exec(args)) !== null) {
+            user_ids.push(match[1]);
+        }   
+
         if (entity.type === 'phone_number') {
           user_ids.push(entity.text);
         }
