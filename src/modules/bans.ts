@@ -1,8 +1,9 @@
 import bot from "../bot";
-import { checkElevatedUser, entityExtractor, elevatedUsersOnly, userInfo } from "../helpers/helper_func";
+import { logger, channel_log } from "../logger";
+import { elevatedUsersOnly, checkElevatedUser, userIdExtractor, userInfo } from "../helpers/helper_func";
 
 bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(async (ctx: any) => {
-    const user_info = await userInfo(ctx);
+    let user_info = await userInfo(ctx);
     if (user_info.user.can_restrict_members == false) {
         await ctx.reply("You do not have rights to ban users.", {reply_parameters: {message_id: ctx.message.message_id}});
         return;
@@ -11,71 +12,75 @@ bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(async (ct
         if (ctx.message.reply_to_message != undefined) {
             if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
                 await ctx.reply("Imagine making me ban myself...", {reply_parameters: {message_id: ctx.message.message_id}});
-                return;    
             }
             else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
                 await ctx.reply("Imagine trying to ban yourself...", {reply_parameters: {message_id: ctx.message.message_id}});
-                return;
             }
-            else if (await checkElevatedUser(ctx) == false) {
-                await ctx.reply("Whoops, can't ban elevated users!", {reply_parameters: {message_id: ctx.message.message_id}}); 
-                return;   
+            else if (await checkElevatedUser(ctx) == true) {
+                await ctx.reply("Whoops, can't ban elevated users!", {reply_parameters: {message_id: ctx.message.message_id}});   
             }
             else {
-                let ban_message = `User has been banned!\n`;
+                let ban_message = (
+                    `<b>Banned</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
+                    `Enforcer: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` 
+                );
                 if (ctx.match) {
                     let ban_reason = ctx.match;
                     ban_message += `Reason: ${ban_reason}`;
                 }
-                try {
-                  await ctx.api.banChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id);
-                }
-                catch (error) {
-                  await ctx.reply("Failed to ban user")
-                }
-                finally {
-                  await ctx.reply(ban_message);
-                }
-              }
+                await ctx.api.banChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
+                .then(() => {
+                    ctx.api.sendMessage(ctx.chat.id, ban_message, {parse_mode: "HTML"});
+                })
+                .catch((GrammyError: any) => {
+                    ctx.reply("Failed to ban user: invalid user / user probably does not exist.");
+                    logger.error(`${GrammyError}`);
+                    channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                });
             }
- 
+        }
         else {
-            if (ctx.match) {
-                const userids = await entityExtractor(ctx);
-                if (Object.keys(userids).length == 1) {
-                  try {
-                    await ctx.api.banChatMember(ctx.chat.id, userids[0]);
-                  }
-                  catch (error){
-                    await ctx.reply("Failed to ban user: Invalid user ID / username");
-                  }
-                  finally {
-                    await ctx.reply("User has been banned!")
-                  }
-                }
-                else if (Object.keys(userids).length > 1) {
-                    await ctx.reply("Bulk banning users...")
-                    for (let i = 0; i < userids.length; i++) {
-                      try {
-                            await ctx.api.banChatMember(ctx.chat.id, userids[i]);
-                      }
-                      catch (error) {
-                        // return for now
+            let args = ctx.match;
+            if (args) {
+                let split_args = args.split(" ");
+                let user_id = split_args[0];
+                let user_info =  await ctx.getChatMember(user_id)
+                    .catch((GrammyError: any) => {
                         return;
-                      }
-                      finally {
-                        // future pr: make object of banned users then print all those at once
-                        await ctx.reply("Users banned successfully!")
-                      }
-                      
+                    });
+                if (user_info != undefined) {
+                    if (user_info.user.id == bot.botInfo.id) {
+                        await ctx.reply("Imagine making me ban myself...", {reply_parameters: {message_id: ctx.message.message_id}});
+                        return;
+                    }
+                    else if (user_info.user.id == ctx.from.id) {
+                        await ctx.reply("Imagine trying to ban yourself...", {reply_parameters: {message_id: ctx.message.message_id}});
+                        return;
+                    }
+                    else {
+                        let ban_message = (
+                            `<b>Banned</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>)<b>!</b>\n\n` +
+                            `Enforcer: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` 
+                        );
+                        if (split_args[1] != undefined) {
+                            ban_message += `Reason: ${split_args[1]}`;
+                        }
+                        await ctx.api.banChatMember(ctx.chat.id, user_info.user.id)
+                        .then(() => {
+                            ctx.api.sendMessage(ctx.chat.id, ban_message, {parse_mode: "HTML"});
+                        })
+                        .catch((GrammyError: any) => {
+                            ctx.reply("Failed to ban user: couldn't identify the user, the user haven't interacted with me!");
+                            logger.error(`${GrammyError}`);
+                            channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                        });
                     }
                 }
                 else {
-                    await ctx.reply("Failed to ban: Invalid or no user IDs / usernames!", {reply_parameters: {message_id: ctx.message.message_id}});
+                    await ctx.reply("The provided user ID seems to be invalid!", {reply_parameters: {message_id: ctx.message.message_id}});
                     return;
                 }
-            }
-                    
+            }       
             else {        
                 await ctx.reply("Please type the user id or username next to /ban command or reply to a message with /ban command.", {reply_parameters: {message_id: ctx.message.message_id}});
                 return;
