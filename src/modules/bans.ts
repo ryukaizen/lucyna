@@ -1,6 +1,10 @@
 import bot from "../bot";
 import { logger, channel_log } from "../logger";
-import { elevatedUsersOnly, checkElevatedUser, userIdExtractor, userInfo } from "../helpers/helper_func";
+import { InlineKeyboard } from "grammy";
+import { elevatedUsersOnly, checkElevatedUser, checkElevatedUserFrom, userIdExtractor, userInfo } from "../helpers/helper_func";
+
+const unbanButton = new InlineKeyboard()
+.text("🔘 Unban", "unban-the-dawg");
 
 bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(async (ctx: any) => {
     let user_info = await userInfo(ctx);
@@ -30,7 +34,7 @@ bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(async (ct
                 }
                 await ctx.api.banChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
                 .then(() => {
-                    ctx.api.sendMessage(ctx.chat.id, ban_message, {parse_mode: "HTML"});
+                    ctx.api.sendMessage(ctx.chat.id, ban_message, {reply_markup: unbanButton, parse_mode: "HTML"});
                 })
                 .catch((GrammyError: any) => {
                     ctx.reply("Failed to ban user: invalid user / user probably does not exist.");
@@ -67,7 +71,7 @@ bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(async (ct
                         }
                         await ctx.api.banChatMember(ctx.chat.id, user_info.user.id)
                         .then(() => {
-                            ctx.api.sendMessage(ctx.chat.id, ban_message, {parse_mode: "HTML"});
+                            ctx.api.sendMessage(ctx.chat.id, ban_message, {reply_markup: unbanButton, parse_mode: "HTML"});
                         })
                         .catch((GrammyError: any) => {
                             ctx.reply("Failed to ban user: couldn't identify the user, the user haven't interacted with me!");
@@ -88,3 +92,45 @@ bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(async (ct
         }
     }
 }));
+
+bot.callbackQuery("unban-the-dawg", async(ctx) => {
+    if (await checkElevatedUserFrom(ctx) == true) {
+        let text = ctx.callbackQuery.message?.text || "";
+        let username = text.match(/(?<=Banned )\S+/);
+        let userid = text.match(/(?<=\()\d+(?=\))/);
+        let reason = text.match(/(?<=Reason: ).+/);
+        if (username && userid) {
+            let userId = Number(userid[0]);
+            let userName = String(username[0]);
+            await ctx.api.unbanChatMember(`${ctx.callbackQuery?.message?.chat?.id}`, userId)
+                .then(() => {
+                    ctx.answerCallbackQuery({
+                        text: `Unbanned ${userName}!`,
+                    });
+                    let ban_message = `Unbanned ${userName} (<code>${userid}</code>) by <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>`
+                    if (reason == null) {
+                        ctx.editMessageText(ban_message, { parse_mode: "HTML" });
+                    }
+                    else {
+                        ban_message += `\n\nReason: ${reason}`;
+                        ctx.editMessageText(ban_message, { parse_mode: "HTML" });
+                    }     
+                })
+                .catch((GrammyError: any) => {
+                    ctx.answerCallbackQuery({text: "Failed to unban user: invalid user / user probably does not exist."});
+                    logger.error(`${GrammyError}`);
+                    channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                });            
+        }
+        else {
+            await ctx.answerCallbackQuery({
+                text: `Unable to extract ban information.`,
+            });
+        }
+    }
+    else {
+        await ctx.answerCallbackQuery({
+            text: `You do not have rights to unban users.`,
+        });
+    }
+});

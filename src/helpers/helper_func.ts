@@ -23,10 +23,22 @@ export function elevatedUsersOnly(handler: any) {
     };
 }
 
+// for reply_to_message
 export async function checkElevatedUser(ctx: any) {
     // fetch user status
     let user = await ctx.api.getChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
     if (ctx.message.reply_to_message.from.id == constants.OWNER_ID || constants.SUPERUSERS.includes(ctx.message.reply_to_message.from.id) == true || user.status == "creator" || user.status == "administrator") {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+// for general stuff
+export async function checkElevatedUserFrom(ctx: any) {
+    let user = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id)
+    if (ctx.from.id == constants.OWNER_ID || constants.SUPERUSERS.includes(ctx.from.id) == true || user.status == "creator" || user.status == "administrator") {
         return true;
     }
     else {
