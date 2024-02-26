@@ -91,3 +91,25 @@ export async function userIdExtractor(ctx: any) {
     }
     return user_ids;
 }
+
+// future use maybe
+export async function isUserInChat(ctx: any, chat_id: string, user_id: number) {
+    let user = await ctx.api.getChatMember(chat_id, user_id);
+    if (user.status == "member" || user.status == "restricted" || user.status == "creator" || user.status == "administrator") {
+        return true;
+    }
+    else {
+        return false;
+    }
+
+}
+
+export async function isUserBanned(ctx: any, chat_id: string, user_id: number) {
+    let user = await ctx.api.getChatMember(chat_id, user_id);
+    if (user.status == "kicked") {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
