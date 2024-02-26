@@ -23,6 +23,22 @@ export function elevatedUsersOnly(handler: any) {
     };
 }
 
+export function elevatedUsersCallbackOnly(handler: any) {
+    return async (ctx: any) => {
+        let user = await ctx.getAuthor();
+        if (ctx.from.id == constants.OWNER_ID || constants.SUPERUSERS.includes(ctx.from.id)) {
+            await handler(ctx);
+        }
+        else if (user.status == "creator" || user.status == "administrator") {
+            await handler(ctx);
+        }
+        else {
+            await ctx.answerCallbackQuery({ text: "Only admins can use this command!"});
+        }
+    };
+
+}
+
 // for reply_to_message
 export async function checkElevatedUser(ctx: any) {
     // fetch user status
