@@ -4,18 +4,19 @@ import { InlineKeyboard } from "grammy";
 import { 
     canBanUsers, 
     canBanUsersCallback, 
+    canDeleteMessages,
+    checkElevatedUser,
     elevatedUsersOnly, 
     elevatedUsersCallbackOnly, 
-    checkElevatedUser, 
+    isUserBanned,
     userIdExtractor, 
-    userInfo, 
-    isUserBanned 
+    userInfo
 } from "../helpers/helper_func";
 
 const unbanButton = new InlineKeyboard()
 .text("🔘 Unban", "unban-the-dawg");
 
-bot.chatType("supergroup" || "group").command("ban", canBanUsers(elevatedUsersOnly(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(canBanUsers(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to ban users!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -102,7 +103,7 @@ bot.chatType("supergroup" || "group").command("ban", canBanUsers(elevatedUsersOn
     }
 })));
 
-bot.callbackQuery("unban-the-dawg", canBanUsersCallback(elevatedUsersCallbackOnly(async(ctx: any) => {
+bot.callbackQuery("unban-the-dawg", elevatedUsersCallbackOnly(canBanUsersCallback(async(ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.answerCallbackQuery({ text: "You don't have enough rights to unban users!"});
@@ -155,7 +156,7 @@ bot.callbackQuery("unban-the-dawg", canBanUsersCallback(elevatedUsersCallbackOnl
     }
 })));
 
-bot.chatType("supergroup" || "group").command("unban", canBanUsers(elevatedUsersOnly(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("unban", elevatedUsersOnly(canBanUsers(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to unban users!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -216,5 +217,52 @@ bot.chatType("supergroup" || "group").command("unban", canBanUsers(elevatedUsers
             }
         }
     }
-
 })));
+
+bot.chatType("supergroup" || "group").command("dban", elevatedUsersOnly(canBanUsers(canDeleteMessages(async (ctx: any) => {
+    let user_info = await userInfo(ctx);
+    if (user_info.can_restrict_members == false) {
+        await ctx.reply("You don't have enough rights to ban users!", {reply_parameters: {message_id: ctx.message.message_id}});
+        return;
+    }
+    else if (user_info.can_delete_messages == false) {
+        await ctx.reply("You don't have enough rights to delete messages!", {reply_parameters: {message_id: ctx.message.message_id}});
+        return;
+    }
+    else {
+        if (ctx.message.reply_to_message != undefined) {
+            if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
+                await ctx.reply("Imagine making me ban myself...", {reply_parameters: {message_id: ctx.message.message_id}});
+            }
+            else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
+                await ctx.reply("Imagine trying to ban yourself...", {reply_parameters: {message_id: ctx.message.message_id}});
+            }
+            else if (await checkElevatedUser(ctx) == true) {
+                await ctx.reply("Whoops, can't ban elevated users!", {reply_parameters: {message_id: ctx.message.message_id}});   
+            }
+            else {
+                let ban_message = (
+                    `<b>Banned</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
+                    `Enforcer: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` 
+                );
+                if (ctx.match) {
+                    let ban_reason = ctx.match;
+                    ban_message += `Reason: ${ban_reason}`;
+                }
+                await ctx.api.banChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
+                .then(() => {
+                    ctx.api.deleteMessage(ctx.chat.id, ctx.message.reply_to_message.message_id)
+                    ctx.api.sendMessage(ctx.chat.id, ban_message, {reply_markup: unbanButton, parse_mode: "HTML"});
+                })
+                .catch((GrammyError: any) => {
+                    ctx.reply("Failed to ban user: invalid user / user probably does not exist.");
+                    logger.error(`${GrammyError}`);
+                    channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                });
+            }
+        }
+        else {
+            await ctx.reply("Please reply to a message with /dban command to <i>delete-ban</i> it", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+        }       
+    }
+}))));

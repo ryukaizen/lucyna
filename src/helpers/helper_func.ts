@@ -154,4 +154,22 @@ export function canBanUsersCallback(hander: any) {
     }
 }
 
+export function canDeleteMessages(handler: any) {
+    return async (ctx: any) => {
+        let bot_id = ctx.me.id;
+        let chat_id = ctx.chat.id;
+        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+        if (bot_info.status == "administrator") {
+            if (bot_info.can_delete_messages == true) {
+                await handler(ctx);
+            }
+            else {
+                await ctx.reply("I don't have enough admin rights to delete messages!", {reply_parameters: {message_id: ctx.message.message_id}});
+            }
+        }
+        else {
+            await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+    }
+}
 // ====================================================
