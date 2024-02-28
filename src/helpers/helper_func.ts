@@ -116,7 +116,7 @@ export async function isUserBanned(ctx: any, chat_id: string, user_id: number) {
 // ====================================================
 
 // ==================== BOT STUFF ====================
-export function canBanUsers(hander: any) {
+export function canRestrictUsers(hander: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
@@ -135,7 +135,7 @@ export function canBanUsers(hander: any) {
     }
 }
 
-export function canBanUsersCallback(hander: any) {
+export function canRestrictUsersCallback(hander: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;

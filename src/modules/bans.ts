@@ -2,8 +2,8 @@ import bot from "../bot";
 import { logger, channel_log } from "../logger";
 import { InlineKeyboard } from "grammy";
 import { 
-    canBanUsers, 
-    canBanUsersCallback, 
+    canRestrictUsers, 
+    canRestrictUsersCallback, 
     canDeleteMessages,
     checkElevatedUser,
     elevatedUsersOnly, 
@@ -16,7 +16,7 @@ import {
 const unbanButton = new InlineKeyboard()
 .text("🔘 Unban", "unban-the-dawg");
 
-bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(canBanUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to ban users!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -103,7 +103,7 @@ bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(canBanUse
     }
 })));
 
-bot.callbackQuery("unban-the-dawg", elevatedUsersCallbackOnly(canBanUsersCallback(async(ctx: any) => {
+bot.callbackQuery("unban-the-dawg", elevatedUsersCallbackOnly(canRestrictUsersCallback(async(ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.answerCallbackQuery({ text: "You don't have enough rights to unban users!"});
@@ -156,7 +156,7 @@ bot.callbackQuery("unban-the-dawg", elevatedUsersCallbackOnly(canBanUsersCallbac
     }
 })));
 
-bot.chatType("supergroup" || "group").command("unban", elevatedUsersOnly(canBanUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("unban", elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to unban users!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -219,7 +219,7 @@ bot.chatType("supergroup" || "group").command("unban", elevatedUsersOnly(canBanU
     }
 })));
 
-bot.chatType("supergroup" || "group").command("dban", elevatedUsersOnly(canBanUsers(canDeleteMessages(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("dban", elevatedUsersOnly(canRestrictUsers(canDeleteMessages(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to ban users!", {reply_parameters: {message_id: ctx.message.message_id}});
