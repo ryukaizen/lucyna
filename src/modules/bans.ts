@@ -1,12 +1,21 @@
 import bot from "../bot";
 import { logger, channel_log } from "../logger";
 import { InlineKeyboard } from "grammy";
-import { elevatedUsersOnly, elevatedUsersCallbackOnly, checkElevatedUser, userIdExtractor, userInfo, isUserBanned } from "../helpers/helper_func";
+import { 
+    canBanUsers, 
+    canBanUsersCallback, 
+    elevatedUsersOnly, 
+    elevatedUsersCallbackOnly, 
+    checkElevatedUser, 
+    userIdExtractor, 
+    userInfo, 
+    isUserBanned 
+} from "../helpers/helper_func";
 
 const unbanButton = new InlineKeyboard()
 .text("🔘 Unban", "unban-the-dawg");
 
-bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("ban", canBanUsers(elevatedUsersOnly(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to ban users!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -91,9 +100,9 @@ bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(async (ct
             }
         }
     }
-}));
+})));
 
-bot.callbackQuery("unban-the-dawg", elevatedUsersCallbackOnly(async(ctx: any) => {
+bot.callbackQuery("unban-the-dawg", canBanUsersCallback(elevatedUsersCallbackOnly(async(ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.answerCallbackQuery({ text: "You don't have enough rights to unban users!"});
@@ -144,9 +153,9 @@ bot.callbackQuery("unban-the-dawg", elevatedUsersCallbackOnly(async(ctx: any) =>
         }
         
     }
-}));
+})));
 
-bot.chatType("supergroup" || "group").command("unban", elevatedUsersOnly(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("unban", canBanUsers(elevatedUsersOnly(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to unban users!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -208,4 +217,4 @@ bot.chatType("supergroup" || "group").command("unban", elevatedUsersOnly(async (
         }
     }
 
-}));
+})));
