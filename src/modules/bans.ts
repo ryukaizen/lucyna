@@ -1,6 +1,6 @@
 import bot from "../bot";
 import { logger, channel_log } from "../logger";
-import { InlineKeyboard } from "grammy";
+import { GrammyError, InlineKeyboard } from "grammy";
 import { 
     canRestrictUsers, 
     canRestrictUsersCallback, 
@@ -9,9 +9,39 @@ import {
     elevatedUsersOnly, 
     elevatedUsersCallbackOnly, 
     isUserBanned,
+    isUserInChat,
     userIdExtractor, 
     userInfo
 } from "../helpers/helper_func";
+
+// some humor
+const kick_responses: string[] = [
+    "And the award for the fastest exit goes to... drumroll... you!",
+    "You've been voted off the island!",
+    "Better luck surviving on your own,",
+    "Guess who just got a free ticket to the 'Ex-Group Members' club?",
+    "Oops! Looks like you accidentally clicked on the 'Eject' button. Happens to the best of us!",
+    "Time to spread those wings and fly... away from this group. Farewell!",
+    "Consider this your group exit interview,",
+    "Thanks for your contributions... or lack thereof!",
+    "And just like that, you're out!",
+    "One small step for you, one giant leap out of the group!",
+    "Cya later, alligator!",
+    "Time to say goodbye. Ta-ta!",
+    "Ejected! See you never!",
+    "Out of the group, into the great unknown!",
+    "Group's loss is your gain... or something like that,",
+    "You've left the group chat, but have you really left the group?",
+    "Kicked from the group: it's like getting unfriended but in 2D!",
+    "Just remember, wherever you go, you'll always be part of this group's history,",
+    "Group exit strategy: Stage 1 complete. Stage 2: Taking over the world by",
+    "Congratulations! You've been upgraded from 'Group Member' to 'Free Spirit',",
+    "And with a single click, you've been cast out into the digital darkness,",
+    "In a dramatic turn of events, the group has cut ties with you,",
+    "Looks like someone hit you with the 'Ctrl+Alt+Delete',",
+    "Well, you've been kicked quicker than a bot in a Discord server,",
+    "Error 404: User not found in this group anymore ;)",
+];
 
 const unbanButton = new InlineKeyboard()
 .text("🔘 Unban", "unban-the-dawg");
@@ -71,6 +101,9 @@ bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(canRestri
                         await ctx.reply("Imagine trying to ban yourself...", {reply_parameters: {message_id: ctx.message.message_id}});
                         return;
                     }
+                    else if (await checkElevatedUser(ctx) == true) {
+                        await ctx.reply("Whoops, can't ban elevated users!", {reply_parameters: {message_id: ctx.message.message_id}});   
+                    }
                     else {
                         let ban_message = (
                             `<b>Banned</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>)<b>!</b>\n\n` +
@@ -106,7 +139,7 @@ bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(canRestri
 bot.callbackQuery("unban-the-dawg", elevatedUsersCallbackOnly(canRestrictUsersCallback(async(ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
-        await ctx.answerCallbackQuery({ text: "You don't have enough rights to unban users!"});
+        await ctx.answerCallbackQuery({ text: "You don't have enough rights to unban users!"}).catch((GrammyError: any) => {return})
         return;
     }
     else {
@@ -122,7 +155,7 @@ bot.callbackQuery("unban-the-dawg", elevatedUsersCallbackOnly(canRestrictUsersCa
             if (is_user_in_chat == false) {
                 await ctx.answerCallbackQuery({
                     text: `The user is not banned here!`,
-                });
+                }).catch((GrammyError: any) => {return})
                 return;
             }
             else {
@@ -130,7 +163,7 @@ bot.callbackQuery("unban-the-dawg", elevatedUsersCallbackOnly(canRestrictUsersCa
                 .then(() => {
                     ctx.answerCallbackQuery({
                         text: `Unbanned ${userName}!`,                
-                    });
+                    }).catch((GrammyError: any) => {return}) // will improve this later
                     let ban_message = `<b>Unbanned</b> ${userName} (<code>${userid}</code>) <b>by</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n`;
                     if (enforcer != ctx.from.first_name) {
                         ban_message += `\nOriginal enforcer: ${enforcer}`
@@ -141,7 +174,7 @@ bot.callbackQuery("unban-the-dawg", elevatedUsersCallbackOnly(canRestrictUsersCa
                     ctx.editMessageText(ban_message, { parse_mode: "HTML" });
                 })
                 .catch((GrammyError: any) => {
-                    ctx.answerCallbackQuery({text: "Failed to unban user: invalid user / user probably does not exist."});
+                    ctx.answerCallbackQuery({text: "Failed to unban user: invalid user / user probably does not exist."}).catch((GrammyError: any) => {return}) //catching errors in error handlers itself yeah
                     logger.error(`${GrammyError}`);
                     channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
                 });     
@@ -150,7 +183,7 @@ bot.callbackQuery("unban-the-dawg", elevatedUsersCallbackOnly(canRestrictUsersCa
         else {
             await ctx.answerCallbackQuery({
                 text: `Unable to extract ban information.`,
-            });
+            }).catch((GrammyError: any) => {return})
         }
         
     }
@@ -266,3 +299,88 @@ bot.chatType("supergroup" || "group").command("dban", elevatedUsersOnly(canRestr
         }       
     }
 }))));
+
+bot.chatType("supergroup" || "group").command("kick", elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
+    let user_info = await userInfo(ctx);
+    if (user_info.can_restrict_members == false) {
+        await ctx.reply("You don't have enough rights to kick users!", {reply_parameters: {message_id: ctx.message.message_id}});
+        return;
+    }
+    else {
+        if (ctx.message.reply_to_message != undefined) {
+            if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
+                await ctx.reply("WHY WOULD YOU WANT TO DO THAT!?", {reply_parameters: {message_id: ctx.message.message_id}});
+            }
+            else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
+                await ctx.reply("You can just leave this group, you know?", {reply_parameters: {message_id: ctx.message.message_id}});
+            }
+            else if (await checkElevatedUser(ctx) == true) {
+                await ctx.reply("Special guys can't be kicked, sorry to say.", {reply_parameters: {message_id: ctx.message.message_id}});   
+            }
+            else {
+                let is_user_in_chat = await isUserInChat(ctx, ctx.chat.id, ctx.message.reply_to_message.from.id)
+                if (is_user_in_chat == false) {
+                    await ctx.reply("The user is not in this group!", {reply_parameters: {message_id: ctx.message.message_id}});   
+                }
+                else {
+                    let kick_message: string = (`${kick_responses[Math.floor(Math.random() * kick_responses.length)]} ${ctx.message.reply_to_message.from.first_name}.`);
+                    await ctx.api.unbanChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
+                    .then(() => {
+                        ctx.api.sendMessage(ctx.chat.id, kick_message, {parse_mode: "HTML"});
+                    })
+                    .catch((GrammyError: any) => {
+                        ctx.reply("Failed to kick user: invalid user / user probably does not exist.");
+                        logger.error(`${GrammyError}`);
+                        channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                    });
+                }
+            }
+        }
+        else {
+            let args = ctx.match;
+            if (args) {
+                let split_args = args.split(" ");
+                let user_id = split_args[0];
+                let user_info =  await ctx.getChatMember(user_id)
+                    .catch((GrammyError: any) => {
+                        return;
+                    });
+                if (user_info != undefined) {
+                    if (user_info.user.id == bot.botInfo.id) {
+                        await ctx.reply("WHY WOULD YOU WANT TO DO THAT!?", {reply_parameters: {message_id: ctx.message.message_id}});
+                        return;
+                    }
+                    else if (user_info.user.id == ctx.from.id) {
+                        await ctx.reply("You can just leave this group, you know?", {reply_parameters: {message_id: ctx.message.message_id}});
+                        return;
+                    }
+                    else if (await checkElevatedUser(ctx) == true) {
+                        await ctx.reply("Special guys can't be kicked, sorry to say.", {reply_parameters: {message_id: ctx.message.message_id}});   
+                    }
+                    else {
+                        let is_user_in_chat = await isUserInChat(ctx, ctx.chat.id, user_info.user.id)
+                        if (is_user_in_chat == false) {
+                            await ctx.reply("The user is not in this group!", {reply_parameters: {message_id: ctx.message.message_id}});   
+                        }
+                        else {
+                            let kick_message: string = (`${kick_responses[Math.floor(Math.random() * kick_responses.length)]} ${ctx.message.reply_to_message.from.first_name}.`);
+                            await ctx.api.unbanChatMember(ctx.chat.id, user_info.user.id)
+                            .then(() => {
+                                ctx.api.sendMessage(ctx.chat.id, kick_message, {parse_mode: "HTML"});
+                            })
+                            .catch((GrammyError: any) => {
+                                ctx.reply("Failed to kick user: invalid user / user probably does not exist.");
+                                logger.error(`${GrammyError}`);
+                                channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                            });
+                        }
+                    }
+                }
+                else {
+                    await ctx.reply("The provided user ID seems to be invalid!", {reply_parameters: {message_id: ctx.message.message_id}});
+                    return;
+                }
+            }    
+        }       
+    }
+})));
