@@ -104,6 +104,16 @@ export async function isUserInChat(ctx: any, chat_id: string, user_id: number) {
 
 }
 
+export async function isUserRestricted(ctx: any, chat_id: string, user_id: number) {
+    let user = await ctx.api.getChatMember(chat_id, user_id);
+    if (user.status == "restricted") {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 export async function isUserBanned(ctx: any, chat_id: string, user_id: number) {
     let user = await ctx.api.getChatMember(chat_id, user_id);
     if (user.status == "kicked") {

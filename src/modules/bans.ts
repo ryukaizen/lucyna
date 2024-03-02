@@ -65,7 +65,7 @@ bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(canRestri
             }
             else {
                 let ban_message = (
-                    `<b>Banned</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
+                    `<b>🚷 Banned</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
                     `Enforcer: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` 
                 );
                 if (ctx.match) {
@@ -106,7 +106,7 @@ bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(canRestri
                     }
                     else {
                         let ban_message = (
-                            `<b>Banned</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>)<b>!</b>\n\n` +
+                            `<b>🚷 Banned</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>)<b>!</b>\n\n` +
                             `Enforcer: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` 
                         );
                         if (split_args[1] != undefined) {
@@ -144,7 +144,7 @@ bot.callbackQuery("unban-the-dawg", elevatedUsersCallbackOnly(canRestrictUsersCa
     }
     else {
         let text = ctx.callbackQuery.message?.text || "";
-        let username = text.match(/(?<=Banned )\S+/);
+        let username = text.match(/(?<=🚷 Banned )\S+/);
         let userid = text.match(/(?<=\()\d+(?=\))/);
         let enforcer = text.match(/(?<=Enforcer: ).+/);
         let reason = text.match(/(?<=Reason: ).+/);
@@ -164,14 +164,14 @@ bot.callbackQuery("unban-the-dawg", elevatedUsersCallbackOnly(canRestrictUsersCa
                     ctx.answerCallbackQuery({
                         text: `Unbanned ${userName}!`,                
                     }).catch((GrammyError: any) => {return}) // will improve this later
-                    let ban_message = `<b>Unbanned</b> ${userName} (<code>${userid}</code>) <b>by</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n`;
+                    let unban_message = `<b>🏳️ Unbanned</b> ${userName} (<code>${userid}</code>) <b>by</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n`;
                     if (enforcer != ctx.from.first_name) {
-                        ban_message += `\nOriginal enforcer: ${enforcer}`
+                        unban_message += `\nOriginal enforcer: ${enforcer}`
                     }
                     if (reason != null) {
-                        ban_message += `\nReason was: ${reason}`;
+                        unban_message += `\nReason was: ${reason}`;
                     }
-                    ctx.editMessageText(ban_message, { parse_mode: "HTML" });
+                    ctx.editMessageText(unban_message, { parse_mode: "HTML" });
                 })
                 .catch((GrammyError: any) => {
                     ctx.answerCallbackQuery({text: "Failed to unban user: invalid user / user probably does not exist."}).catch((GrammyError: any) => {return}) //catching errors in error handlers itself yeah
@@ -205,7 +205,7 @@ bot.chatType("supergroup" || "group").command("unban", elevatedUsersOnly(canRest
             else {
                 await ctx.api.unbanChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
                     .then(() => {
-                        ctx.api.sendMessage(ctx.chat.id, `<b>Unbanned</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> <b>by</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>!`, {parse_mode: "HTML"});
+                        ctx.api.sendMessage(ctx.chat.id, `<b>🏳️ Unbanned</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> <b>by</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>!`, {parse_mode: "HTML"});
                     })
                     .catch((GrammyError: any) => {
                         ctx.reply("Failed to unban user: invalid user / user probably does not exist.");
@@ -232,7 +232,7 @@ bot.chatType("supergroup" || "group").command("unban", elevatedUsersOnly(canRest
                     else {
                         await ctx.api.unbanChatMember(ctx.chat.id, user_info.user.id)
                         .then(() => {
-                            ctx.api.sendMessage(ctx.chat.id, `<b>Unbanned</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> <b>by</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>!`, {parse_mode: "HTML"});
+                            ctx.api.sendMessage(ctx.chat.id, `<b>🏳️ Unbanned</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> <b>by</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>!`, {parse_mode: "HTML"});
                         })
                         .catch((GrammyError: any) => {
                             ctx.reply("Failed to unban user: invalid user / user probably does not exist.");
@@ -275,7 +275,7 @@ bot.chatType("supergroup" || "group").command("dban", elevatedUsersOnly(canRestr
             }
             else {
                 let ban_message = (
-                    `<b>Banned</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
+                    `<b>🚷 Banned</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
                     `Enforcer: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` 
                 );
                 if (ctx.match) {
