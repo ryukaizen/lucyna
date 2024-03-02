@@ -52,9 +52,9 @@ export async function checkElevatedUser(ctx: any) {
 }
 
 // for general stuff
-export async function checkElevatedUserFrom(ctx: any) {
-    let user = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id)
-    if (ctx.from.id == constants.OWNER_ID || constants.SUPERUSERS.includes(ctx.from.id) == true || user.status == "creator" || user.status == "administrator") {
+export async function checkElevatedUserFrom(ctx: any, user_info: any) {
+    let user = await ctx.api.getChatMember(ctx.chat.id, user_info.user.id)
+    if (user_info.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(user_info.user.id) == true || user.status == "creator" || user.status == "administrator") {
         return true;
     }
     else {

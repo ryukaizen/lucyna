@@ -6,6 +6,7 @@ import {
     canRestrictUsersCallback, 
     canDeleteMessages,
     checkElevatedUser,
+    checkElevatedUserFrom,
     elevatedUsersOnly, 
     elevatedUsersCallbackOnly, 
     isUserBanned,
@@ -101,7 +102,7 @@ bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(canRestri
                         await ctx.reply("Imagine trying to ban yourself...", {reply_parameters: {message_id: ctx.message.message_id}});
                         return;
                     }
-                    else if (await checkElevatedUser(ctx) == true) {
+                    else if (await checkElevatedUserFrom(ctx, user_info) == true) {
                         await ctx.reply("Whoops, can't ban elevated users!", {reply_parameters: {message_id: ctx.message.message_id}});   
                     }
                     else {
@@ -354,7 +355,7 @@ bot.chatType("supergroup" || "group").command("kick", elevatedUsersOnly(canRestr
                         await ctx.reply("You can just leave this group, you know?", {reply_parameters: {message_id: ctx.message.message_id}});
                         return;
                     }
-                    else if (await checkElevatedUser(ctx) == true) {
+                    else if (await checkElevatedUserFrom(ctx, user_info) == true) {
                         await ctx.reply("Special guys can't be kicked, sorry to say.", {reply_parameters: {message_id: ctx.message.message_id}});   
                     }
                     else {

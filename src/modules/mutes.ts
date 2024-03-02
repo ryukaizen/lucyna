@@ -6,6 +6,7 @@ import {
     canRestrictUsersCallback, 
     canDeleteMessages,
     checkElevatedUser,
+    checkElevatedUserFrom,
     elevatedUsersOnly, 
     elevatedUsersCallbackOnly, 
     isUserRestricted,
@@ -69,7 +70,7 @@ bot.chatType("supergroup" || "group").command("mute", elevatedUsersOnly(canRestr
             else {
                 let mute_message = (
                     `<b>🔇 Stay quiet</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
-                    `Muzzler: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` 
+                    `Muted by: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` 
                 );
                 if (ctx.match) {
                     let mute_reason = ctx.match;
@@ -104,18 +105,18 @@ bot.chatType("supergroup" || "group").command("mute", elevatedUsersOnly(canRestr
                         await ctx.reply("You can just stop typing, you know?", {reply_parameters: {message_id: ctx.message.message_id}});
                         return;
                     }
-                    else if (await checkElevatedUser(ctx) == true) {
+                    else if (await checkElevatedUserFrom(ctx, user_info) == true) {
                         await ctx.reply("Muting the privileged users is out of my league :(", {reply_parameters: {message_id: ctx.message.message_id}});   
                     }
                     else {
                         let mute_message = (
-                            `<b>🔇 Stay quiet</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
-                            `Muzzler: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` 
+                            `<b>🔇 Stay quiet</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>)<b>!</b>\n\n` +
+                            `Muted by: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` 
                         );
                         if (split_args[1] != undefined) {
                             mute_message += `Reason: ${split_args[1]}`;
                         }
-                        await ctx.api.restrictChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id, mutePermissions)
+                        await ctx.api.restrictChatMember(ctx.chat.id, user_info.user.id, mutePermissions)
                         .then(() => {
                             ctx.api.sendMessage(ctx.chat.id, mute_message, {reply_markup: unmuteButton, parse_mode: "HTML"});
                         })
@@ -150,7 +151,7 @@ bot.callbackQuery("unmute-our-boy", elevatedUsersCallbackOnly(canRestrictUsersCa
         let text = ctx.callbackQuery.message?.text || "";
         let username = text.match(/(?<=🔇 Stay quiet )\S+/);
         let userid = text.match(/(?<=\()\d+(?=\))/);
-        let muzzler = text.match(/(?<=Muzzler: ).+/);
+        let muzzler = text.match(/(?<=Muted by: ).+/);
         let reason = text.match(/(?<=Reason: ).+/);
         if (username && userid) {
             let userId = Number(userid[0]);
@@ -170,7 +171,7 @@ bot.callbackQuery("unmute-our-boy", elevatedUsersCallbackOnly(canRestrictUsersCa
                     }).catch((GrammyError: any) => {return}) // will improve this later
                     let unmute_message = `<b>🔊 Unmuted</b> ${userName} (<code>${userid}</code>) <b>by</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n`;
                     if (muzzler != ctx.from.first_name) {
-                        unmute_message += `\nOriginal muzzler: ${muzzler}`
+                        unmute_message += `\nOriginally muted by: ${muzzler}`
                     }
                     if (reason != null) {
                         unmute_message += `\nReason was: ${reason}`;
@@ -190,5 +191,68 @@ bot.callbackQuery("unmute-our-boy", elevatedUsersCallbackOnly(canRestrictUsersCa
             }).catch((GrammyError: any) => {return})
         }
         
+    }
+})));
+
+bot.chatType("supergroup" || "group").command("unmute", elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
+    let user_info = await userInfo(ctx);
+    if (user_info.can_restrict_members == false) {
+        await ctx.reply("You don't have enough rights to unmute users!", {reply_parameters: {message_id: ctx.message.message_id}});
+        return;
+    }
+    else {
+        if (ctx.message.reply_to_message != undefined) {
+            let is_user_restricted = await isUserRestricted(ctx, ctx.message.reply_to_message.chat.id, ctx.message.reply_to_message.from.id);
+            if (is_user_restricted == false) {
+                await ctx.reply("The user is not muted here!", {reply_parameters: {message_id: ctx.message.message_id}});
+                return;
+            }
+            else {
+                await ctx.api.restrictChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id, unmutePermissions)
+                .then(() => {
+                    ctx.api.sendMessage(ctx.chat.id, `<b>🔊 Unmuted</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> <b>by</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>!`, {parse_mode: "HTML"});
+                })
+                .catch((GrammyError: any) => {
+                    ctx.reply("Failed to unmute user: invalid user / user probably does not exist.");
+                    logger.error(`${GrammyError}`);
+                    channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                });
+            }
+        }
+        else {
+            let args = ctx.match;
+            if (args) {
+                let split_args = args.split(" ");
+                let user_id = split_args[0];
+                let user_info =  await ctx.getChatMember(user_id)
+                    .catch((GrammyError: any) => {
+                        return;
+                    });
+                if (user_info != undefined) {
+                    let is_user_restricted = await isUserRestricted(ctx, ctx.chat.id, user_info.user.id);
+                    if (is_user_restricted == false) {
+                        await ctx.reply("The user is not muted here!", {reply_parameters: {message_id: ctx.message.message_id}});
+                        return;
+                    }
+                    else {
+                        await ctx.api.restrictChatMember(ctx.chat.id, user_info.user.id, unmutePermissions)
+                        .then(() => {
+                            ctx.api.sendMessage(ctx.chat.id, `<b>🔊 Unmuted</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> <b>by</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>!`, {parse_mode: "HTML"});
+                        })
+                        .catch((GrammyError: any) => {
+                            ctx.reply("Failed to unmute user: invalid user / user probably does not exist.");
+                            logger.error(`${GrammyError}`);
+                            channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                        });
+                    }
+                }
+                else {
+                    ctx.reply("Failed to unmute user: invalid user / user probably does not exist.");
+                }
+            }
+            else {
+                ctx.reply("Please type the user ID next to /unmute command or reply to a message with /unmute command.");
+            }
+        }
     }
 })));
