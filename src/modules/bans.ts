@@ -385,3 +385,29 @@ bot.chatType("supergroup" || "group").command("kick", elevatedUsersOnly(canRestr
         }       
     }
 })));
+
+bot.chatType("supergroup" || "group").command("kickme", (canRestrictUsers(async (ctx: any) => {
+
+    let kick_sticker = "CAACAgUAAxkBAAFVoJdl5143l3aQas2IfSFEUqovfKwmAQACnxIAAhQLOFf6_XYxuhju8DQE"
+    await ctx.api.unbanChatMember(ctx.chat.id, ctx.from.id)
+    .then(() => {
+        ctx.api.sendSticker(ctx.chat.id, kick_sticker, {disable_notification: true})
+        ctx.api.sendMessage(ctx.chat.id, `${ctx.from.first_name} kicked out themselves!`, {parse_mode: "HTML"});
+    })
+    .catch((GrammyError: any) => {
+        ctx.reply("Nah, I don't want to...");
+    });
+})));
+
+bot.chatType("supergroup" || "group").command("banme", (canRestrictUsers(async (ctx: any) => {
+    let ban_message = `${ctx.from.first_name} banned themselves!`;
+    let ban_sticker = "CAACAgUAAxkBAAFVnsdl5vx8BAvmJFo1HivZppw_lwHb2wACFg4AAn-LOVdoTyZHers4xjQE"
+    await ctx.api.banChatMember(ctx.chat.id, ctx.from.id, {revoke_messages: true})
+    .then(() => {
+        ctx.api.sendSticker(ctx.chat.id, ban_sticker, {disable_notification: true})
+        ctx.api.sendMessage(ctx.chat.id, ban_message, {parse_mode: "HTML"});
+    })
+    .catch((GrammyError: any) => {
+        ctx.reply("Nah, I don't want to...");
+    });
+})));
