@@ -4,7 +4,7 @@ import { GrammyError, InlineKeyboard } from "grammy";
 import { 
     canRestrictUsers, 
     canRestrictUsersCallback, 
-    canDeleteMessages,
+    canDeleteMessages, // for dmute
     checkElevatedUser,
     checkElevatedUserFrom,
     elevatedUsersOnly, 

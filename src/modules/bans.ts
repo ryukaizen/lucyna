@@ -387,7 +387,6 @@ bot.chatType("supergroup" || "group").command("kick", elevatedUsersOnly(canRestr
 })));
 
 bot.chatType("supergroup" || "group").command("kickme", (canRestrictUsers(async (ctx: any) => {
-
     let kick_sticker = "CAACAgUAAxkBAAFVoJdl5143l3aQas2IfSFEUqovfKwmAQACnxIAAhQLOFf6_XYxuhju8DQE"
     await ctx.api.unbanChatMember(ctx.chat.id, ctx.from.id)
     .then(() => {
