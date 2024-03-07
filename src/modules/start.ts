@@ -2,7 +2,7 @@ import bot from "../bot"
 import constants from "../config"
 import { Menu } from "@grammyjs/menu";
 import { InlineKeyboard } from "grammy";
-import { get_rules } from "./rules";
+import { get_rules } from "../database/rules_sql"
 import { typingAction } from "../helpers/helper_func";
 
 const greets: string[] = [

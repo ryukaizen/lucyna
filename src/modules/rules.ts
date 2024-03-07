@@ -1,6 +1,7 @@
 import bot from "../bot";
 import constants from "../config";
 import { prisma } from "../database";
+import { get_rules } from "../database/rules_sql";
 import { InlineKeyboard } from "grammy";
 import { elevatedUsersOnly } from "../helpers/helper_func";
 
@@ -22,15 +23,6 @@ bot.chatType("supergroup" || "group").command("rules", (async(ctx: any) => {
         }
     }
 }));
-
-export async function get_rules(chatId: string) {
-    let rules = await prisma.rules.findUnique({
-        where: {
-        chat_id: chatId,
-        }
-    });
-    return rules?.rules;
-}
 
 bot.chatType("supergroup" || "group").command("setrules", elevatedUsersOnly(async(ctx: any) => {
     let chatId = ctx.chat.id.toString();

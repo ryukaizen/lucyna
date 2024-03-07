@@ -1,7 +1,7 @@
 import bot from "../bot";
 import { logger, channel_log } from "../logger";
 import { GrammyError, InlineKeyboard } from "grammy";
-import { prisma } from "../database";
+import { get_warn_numbers, get_warn_settings, set_warn_numbers, set_warn_settings } from "../database/warns_sql";
 import { 
     canRestrictUsers, 
     canRestrictUsersCallback, 
@@ -19,25 +19,6 @@ import {
 const unwarnButton = new InlineKeyboard()
     .text("Remove Latest Warn", "unwarn-once-my-beloved")
     .text("Remove All Warns", "unwarn-all-of-it");
-
-async function get_warn_numbers(chatId: string, userId: number) {
-    let warn_numbers = await prisma.warns.findFirst({
-        where: {
-            chat_id: chatId.toString(),
-            user_id: userId
-        }
-    })
-    return warn_numbers;
-}
-
-async function get_warn_settings(chatId: string) {
-    let warn_settings = await prisma.warn_settings.findUnique({
-        where: {
-            chat_id: chatId.toString()
-        }
-    })
-    return warn_settings;
-}
 
 bot.chatType("supergroup" || "group").command("warns", (async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
