@@ -385,3 +385,62 @@ bot.chatType("supergroup" || "group").command(["tmute", "tempmute"], elevatedUse
         }
     }
 })));
+
+bot.chatType("supergroup" || "group").command(["dmute", "delmute"], elevatedUsersOnly(canRestrictUsers(canDeleteMessages(async (ctx: any) => {
+    let user_info = await userInfo(ctx);
+    if (user_info.can_restrict_members == false) {
+        await ctx.reply("You don't have enough rights to mute users!", {reply_parameters: {message_id: ctx.message.message_id}});
+        return;
+    }
+    else if (user_info.can_delete_messages == false) {
+        await ctx.reply("You don't have enough rights to delete messages!", {reply_parameters: {message_id: ctx.message.message_id}});
+        return;
+    }
+    else {
+        if (ctx.message.reply_to_message != undefined) {
+            if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
+                await ctx.reply("YOU CAN'T MAKE ME STAY QUIET!!!", {reply_parameters: {message_id: ctx.message.message_id}});
+            }
+            else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
+                await ctx.reply("You can just stop typing, you know?", {reply_parameters: {message_id: ctx.message.message_id}});
+            }
+            else if (await checkElevatedUser(ctx) == true) {
+                await ctx.reply("Muting the privileged users is out of my league :(", {reply_parameters: {message_id: ctx.message.message_id}});   
+            }
+            else {
+                let mute_message = (
+                    `<b>🔇 Stay quiet</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
+                    `Muted by: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` 
+                );
+                if (ctx.match) {
+                    let mute_duration = await extract_time(ctx, `${ctx.match}`);
+                    let converted_time = await convertUnixTime(Number(mute_duration));
+                    mute_message += `Duration: ${converted_time}`;
+
+                    await ctx.api.restrictChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id, mutePermissions, {until_date: mute_duration})
+                    .then(() => {
+                        ctx.api.deleteMessage(ctx.chat.id, ctx.message.reply_to_message.message_id);
+                        ctx.api.sendMessage(ctx.chat.id, mute_message, {reply_markup: unmuteButton, parse_mode: "HTML"});
+                    })
+                    .catch((GrammyError: any) => {
+                        ctx.reply("Failed to delete-mute, please do it manually.");
+                        logger.error(`${GrammyError}`);
+                        channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                    });
+                }
+                else {
+                    await ctx.api.restrictChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id, mutePermissions)
+                    .then(() => {
+                        ctx.api.deleteMessage(ctx.chat.id, ctx.message.reply_to_message.message_id);
+                        ctx.api.sendMessage(ctx.chat.id, mute_message, {reply_markup: unmuteButton, parse_mode: "HTML"});
+                    })
+                    .catch((GrammyError: any) => {
+                        ctx.reply("Failed to delete-mute, please do it manually.");
+                        logger.error(`${GrammyError}`);
+                        channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                    });
+                }
+            }
+        }
+    } 
+}))));
