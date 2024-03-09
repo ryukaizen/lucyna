@@ -1,3 +1,4 @@
+import { logger } from "../logger";
 import { prisma } from "./index"
 
 export async function get_warn_numbers(chatId: string, userId: bigint) {
@@ -19,37 +20,53 @@ export async function get_warn_settings(chatId: string) {
     return warn_settings;
 }
 
-export async function set_warn_numbers(chatId: string, userId: bigint, numWarns: bigint, reasons: string[]) {
-    let warn_numbers = await prisma.warns.upsert({
-        where: {
-          chat_id: chatId,
-          user_id: userId,
-          user_id_chat_id: {user_id: userId, chat_id: chatId}
-        },
-        update: {
-            num_warns: numWarns,
-            reasons: reasons
-        },
-        create: {
+export async function set_warn_numbers(chatId: string, userId: bigint, reasons: string[]) {
+    try {
+        let warn_numbers = await prisma.warns.upsert({
+            where: {
             chat_id: chatId,
             user_id: userId,
-        }
-    })
+            user_id_chat_id: {user_id: userId, chat_id: chatId}
+            },
+            update: {
+                num_warns: {increment: 1n},
+                reasons: {push: reasons}
+            },
+            create: {
+                chat_id: chatId,
+                user_id: userId,
+                num_warns: 1n,
+                reasons: reasons
+            }
+        })
+        return true;
+    }
+    catch (e) {
+        console.error(e)
+        return false;    
+    }
 }
 
 export async function set_warn_settings(chatId: string, warnLimit: bigint, softWarn: boolean) {
-    let warn_settings =  await prisma.warn_settings.upsert({
-        where: {
-            chat_id: chatId
-        },
-        update: {
-            warn_limit: warnLimit,
-            soft_warn: softWarn
-        },
-        create: {
-            chat_id: chatId,
-            warn_limit: 3, // default is 3
-            soft_warn: false // ban instead of kick
-        }
-    })
+    try {
+        let warn_settings =  await prisma.warn_settings.upsert({
+            where: {
+                chat_id: chatId
+            },
+            update: {
+                warn_limit: warnLimit,
+                soft_warn: softWarn
+            },
+            create: {
+                chat_id: chatId,
+                warn_limit: 3, // default is 3
+                soft_warn: false // ban instead of kick
+            }
+        })
+        return true;
+    }
+    catch (e) {
+        console.error(e)
+        return false;
+    }
 }

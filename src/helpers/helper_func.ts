@@ -1,5 +1,4 @@
 import constants from "../config";
-import { prisma } from "../database";
 
 export function typingAction(handler: any) {
     return async (ctx: any) => {

@@ -199,7 +199,10 @@ bot.chatType("supergroup" || "group").command("unban", elevatedUsersOnly(canRest
     else {
         if (ctx.message.reply_to_message != undefined) {
             let is_user_in_chat = await isUserBanned(ctx, ctx.message.reply_to_message.chat.id, ctx.message.reply_to_message.from.id);
-            if (is_user_in_chat == false) {
+            if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
+                await ctx.reply("Don't worry sweetie, I'm never gonna get banned here!", {reply_parameters: {message_id: ctx.message.message_id}});
+            }
+            else if (is_user_in_chat == false) {
                 await ctx.reply("The user is not banned here!", {reply_parameters: {message_id: ctx.message.message_id}});
                 return;
             }
