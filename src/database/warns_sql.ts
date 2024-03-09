@@ -1,4 +1,3 @@
-import { logger } from "../logger";
 import { prisma } from "./index"
 
 export async function get_warn_numbers(chatId: string, userId: bigint) {

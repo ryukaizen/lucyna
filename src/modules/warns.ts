@@ -86,7 +86,7 @@ bot.chatType("supergroup" || "group").command("warn", elevatedUsersOnly(canRestr
                 await ctx.reply("It's good to be self-aware.", {reply_parameters: {message_id: ctx.message.message_id}});
             }
             else if (await checkElevatedUser(ctx) == true) {
-                await ctx.reply("Warned! <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});   
+                await ctx.reply("⚠️ <b>Warned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});   
             }
             else {
                 let getWarnNumbers = await get_warn_numbers(ctx.chat.id, ctx.message.reply_to_message.from.id);
@@ -152,7 +152,95 @@ bot.chatType("supergroup" || "group").command("warn", elevatedUsersOnly(canRestr
             }
         }
         else {
-            
+            let args = ctx.match;
+            if (args) {
+                let split_args = args.split(" ");
+                let user_id = split_args[0];
+                let user_info =  await ctx.getChatMember(user_id)
+                    .catch((GrammyError: any) => {
+                        return;
+                    });
+                if (user_info != undefined) {
+                    if (user_info.user.id == bot.botInfo.id) {
+                        await ctx.reply("Warn myself? for what!?", {reply_parameters: {message_id: ctx.message.message_id}});
+                    }
+                    else if (user_info.user.id == ctx.from.id) {
+                        await ctx.reply("It's good to be self-aware.", {reply_parameters: {message_id: ctx.message.message_id}});
+                    }
+                    else if (await checkElevatedUserFrom(ctx, user_info) == true) {
+                        await ctx.reply("⚠️ <b>Warned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}});   
+                    }
+                    else {
+                        let getWarnNumbers = await get_warn_numbers(ctx.chat.id, user_info.user.id);
+                        let getWarnSettings = await get_warn_settings(ctx.chat.id);
+                        let warnNumber = getWarnNumbers?.num_warns;
+                        let warnReasons = getWarnNumbers?.reasons;
+                        let warnLimit = getWarnSettings?.warn_limit;
+                        let warnMode = getWarnSettings?.soft_warn;
+                
+                        warnNumber = warnNumber ?? 0n;
+                        warnNumber += 1n;
+                        if (warnLimit == undefined) {
+                            await set_warn_settings(ctx.chat.id.toString(), 3n, false);
+                            warnLimit = 3n;
+                        }
+                        let warn_message = (
+                            `<b>⚠️ Warned</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>)<b>!</b>\n\n` +
+                            `Warner: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
+                            `Warns: <b>${warnNumber}/${warnLimit}</b>\n`
+                        );
+                        warnReasons = warnReasons ?? [];
+                        let inputReason;
+                        inputReason = inputReason ?? "";
+                        if (split_args[1] != undefined) {
+                            inputReason += split_args.slice(1).join(" ");
+                        }
+                        else {
+                            inputReason = "No reason provided";
+                        }
+                        warnReasons.push(`${inputReason}`);
+                        let warnReasonsWithBullets = warnReasons.map((reason, index) => `\n ${index + 1}. ${reason}`);
+                        warn_message += `Reason: ${warnReasonsWithBullets}`;
+                        await set_warn_numbers(ctx.chat.id.toString(), user_info.user.id, [`${inputReason}`]);
+                        
+                        if (warnNumber >= warnLimit) {
+                            if (warnMode == true) {
+                                warn_message += "\n\n<b>🦿 Kicked out of the group!</b>"
+                                await ctx.api.unbanChatMember(ctx.chat.id, user_info.user.id)
+                                .then(() => {
+                                    ctx.api.sendMessage(ctx.chat.id, warn_message, {parse_mode: "HTML"});
+                                })
+                                .catch((GrammyError: any) => {
+                                    ctx.reply("Failed to kick user, they can be removed manually.");
+                                    logger.error(`${GrammyError}`);
+                                    channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                                });
+                            }
+                            else {
+                                warn_message += "\n\n<b>❌ Banned out of the group!</b>"
+                                await ctx.api.banChatMember(ctx.chat.id, user_info.user.id)
+                                .then(() => {
+                                    ctx.api.sendMessage(ctx.chat.id, warn_message, {parse_mode: "HTML"});
+                                })
+                                .catch((GrammyError: any) => {
+                                    ctx.reply("Failed to ban user, they can be removed manually.");
+                                    logger.error(`${GrammyError}`);
+                                    channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                                });
+                            }
+                        }
+                        else {
+                            await ctx.api.sendMessage(ctx.chat.id, warn_message, {reply_markup: unwarnButton, parse_mode: "HTML"});
+                        }
+                    }
+                }
+                else {
+                    await ctx.reply("The provided user ID seems to be invalid!", {reply_parameters: {message_id: ctx.message.message_id}});
+                }
+            }       
+            else {        
+                await ctx.reply("Please type the user ID next to /ban command or reply to a message with /ban command.", {reply_parameters: {message_id: ctx.message.message_id}});
+            }   
         }
     }
 })));

@@ -1,5 +1,4 @@
 import { prisma } from "./index"
-import { logger } from "../logger";
 
 export async function get_rules(chatId: string) {
     let rules = await prisma.rules.findUnique({
@@ -27,7 +26,7 @@ export async function set_rules(chatId: string, rulesText: string) {
         return true;
     }
     catch (e) {
-        logger.error(e);
+        console.error(e);
         return false;
     }
 };
@@ -42,7 +41,7 @@ export async function reset_rules(chatId: string) {
         return true;
     }
     catch (e) {
-        logger.error(e);
+        console.error(e);
         return false;
     }
 
