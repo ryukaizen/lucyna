@@ -129,17 +129,30 @@ bot.chatType("supergroup" || "group").command("mute", elevatedUsersOnly(canRestr
                             `Muted by: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` 
                         );
                         if (split_args[1] != undefined) {
-                            mute_message += `Reason: ${split_args[1]}`;
+                            let mute_duration = await extract_time(ctx, `${split_args.slice(1).join(" ")}`);
+                            let converted_time = await convertUnixTime(Number(mute_duration));
+                            mute_message += `Duration: ${converted_time}`;
+                            await ctx.api.restrictChatMember(ctx.chat.id, user_info.user.id, mutePermissions, {until_date: mute_duration})
+                            .then(() => {
+                                ctx.api.sendMessage(ctx.chat.id, mute_message, {reply_markup: unmuteButton, parse_mode: "HTML"});
+                            })
+                            .catch((GrammyError: any) => {
+                                ctx.reply("Failed to mute user: invalid user / user probably does not exist.");
+                                logger.error(`${GrammyError}`);
+                                channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                            });
                         }
-                        await ctx.api.restrictChatMember(ctx.chat.id, user_info.user.id, mutePermissions)
-                        .then(() => {
-                            ctx.api.sendMessage(ctx.chat.id, mute_message, {reply_markup: unmuteButton, parse_mode: "HTML"});
-                        })
-                        .catch((GrammyError: any) => {
-                            ctx.reply("Failed to mute user: couldn't identify the user, the user haven't interacted with me!");
-                            logger.error(`${GrammyError}`);
-                            channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
-                        });
+                        else {
+                            await ctx.api.restrictChatMember(ctx.chat.id, user_info.user.id, mutePermissions)
+                            .then(() => {
+                                ctx.api.sendMessage(ctx.chat.id, mute_message, {reply_markup: unmuteButton, parse_mode: "HTML"});
+                            })
+                            .catch((GrammyError: any) => {
+                                ctx.reply("Failed to mute user: invalid user / user probably does not exist.");
+                                logger.error(`${GrammyError}`);
+                                channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                            });
+                        }
                     }
                 }
                 else {
