@@ -15,8 +15,7 @@ import {
 } from "../helpers/helper_func";
 
 const unwarnButton = new InlineKeyboard()
-    .text("Remove Latest Warn", "unwarn-once-my-beloved")
-    .text("Remove All Warns", "unwarn-all-of-it");
+    .text("Remove Warn", "unwarn-once-my-beloved")
 
 bot.chatType("supergroup" || "group").command("warns", (async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {

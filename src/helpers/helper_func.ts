@@ -183,3 +183,51 @@ export function canDeleteMessages(handler: any) {
     }
 }
 // ====================================================
+
+export async function extract_time(ctx: any, time_val: string): Promise<string | number> {
+    const units = ["m", "h", "d"];
+    const timeUnits = time_val.split(/\s+/); // Split the time_val by whitespace
+    
+    let totalTime = 0;
+
+    for (const timeUnit of timeUnits) {
+        const unit = timeUnit.slice(-1);
+        const time_num = timeUnit.slice(0, -1);
+        
+        if (!/^\d+$/.test(time_num) || !units.includes(unit)) {
+            await ctx.reply("Invalid time amount specified.", {reply_parameters: {message_id: ctx.message.message_id}});
+            return "";
+        }
+        switch (unit) {
+            case "m":
+                totalTime += parseInt(time_num) * 60;
+                break;
+            case "h":
+                totalTime += parseInt(time_num) * 60 * 60;
+                break;
+            case "d":
+                totalTime += parseInt(time_num) * 24 * 60 * 60;
+                break;
+            default:
+                await ctx.reply("Invalid time type specified. Expected m, h, or d.", {reply_parameters: {message_id: ctx.message.message_id}});
+                return "";
+        }
+    }
+    const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+    return currentTime + totalTime;
+}
+
+export function convertUnixTime(unixTime: number): string {
+    const currentTime = Math.floor(Date.now() / 1000);
+    const timeDifference = unixTime - currentTime;
+
+    if (timeDifference < 60) {
+        return `${timeDifference} second(s)`;
+    } else if (timeDifference < 3600) {
+        return `${Math.floor(timeDifference / 60)} minute(s)`;
+    } else if (timeDifference < 86400) {
+        return `${Math.floor(timeDifference / 3600)} hour(s)`;
+    } else {
+        return `${Math.floor(timeDifference / 86400)} day(s)`;
+    }
+}
