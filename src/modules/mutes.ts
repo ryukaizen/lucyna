@@ -442,5 +442,8 @@ bot.chatType("supergroup" || "group").command(["dmute", "delmute"], elevatedUser
                 }
             }
         }
+        else {
+            await ctx.reply("Please reply to a message with /dmute command to <i>delete-mute</i> it", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+        }
     } 
 }))));
