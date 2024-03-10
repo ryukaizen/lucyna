@@ -304,7 +304,7 @@ bot.chatType("supergroup" || "group").command(["tmute", "tempmute"], elevatedUse
             }
             else {
                 let mute_message = (
-                    `<b>🔇 Temporarily muted</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
+                    `<b>🔇 Stay quiet</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
                     `Muted by: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` 
                 );
                 if (ctx.match) {
@@ -350,7 +350,7 @@ bot.chatType("supergroup" || "group").command(["tmute", "tempmute"], elevatedUse
                     }
                     else {
                         let mute_message = (
-                            `<b>🔇 Temporarily muted</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>)<b>!</b>\n\n` +
+                            `<b>🔇 Stay quiet</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>)<b>!</b>\n\n` +
                             `Muted by: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` 
                         );
                         if (split_args[1] != undefined) {

@@ -1,7 +1,13 @@
 import bot from "../bot";
 import { logger, channel_log } from "../logger";
 import { GrammyError, InlineKeyboard } from "grammy";
-import { get_warn_numbers, get_warn_settings, set_warn_numbers, set_warn_settings } from "../database/warns_sql";
+import { 
+    get_warn_numbers, 
+    get_warn_settings, 
+    set_warn_numbers, 
+    set_warn_settings,
+    reset_warn_numbers
+} from "../database/warns_sql";
 import { 
     canRestrictUsers, 
     canRestrictUsersCallback, 
@@ -10,12 +16,13 @@ import {
     checkElevatedUserFrom,
     elevatedUsersOnly, 
     elevatedUsersCallbackOnly, 
+    isUserRestricted,
     userIdExtractor, 
     userInfo
 } from "../helpers/helper_func";
 
 const unwarnButton = new InlineKeyboard()
-    .text("Remove Warn", "unwarn-once-my-beloved")
+    .text("*️⃣ Remove Warn", "unwarn-once-my-beloved")
 
 bot.chatType("supergroup" || "group").command("warns", (async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
@@ -241,5 +248,47 @@ bot.chatType("supergroup" || "group").command("warn", elevatedUsersOnly(canRestr
                 await ctx.reply("Please type the user ID next to /ban command or reply to a message with /ban command.", {reply_parameters: {message_id: ctx.message.message_id}});
             }   
         }
+    }
+})));
+
+bot.callbackQuery("unwarn-once-my-beloved", elevatedUsersCallbackOnly(canRestrictUsersCallback(async(ctx: any) => {
+    let user_info = await userInfo(ctx);
+    if (user_info.can_restrict_members == false) {
+        await ctx.answerCallbackQuery({ text: "You don't have enough rights to unwarn users!"}).catch((GrammyError: any) => {return})
+        return;
+    }
+    else {
+        let text = ctx.callbackQuery.message?.text || "";
+        let username = text.match(/(?<=⚠️ Warned )\S+/);
+        let userid = text.match(/(?<=\()\d+(?=\))/);
+        if (username && userid) {
+            let userId = BigInt(userid[0]);
+            let userName = String(username[0]);
+
+            let getWarnNumbers = await get_warn_numbers(ctx.chat.id, userId);
+            let getWarnSettings = await get_warn_settings(ctx.chat.id);
+            let warnNumber = getWarnNumbers?.num_warns;
+            let warnReasons = getWarnNumbers?.reasons;
+            let warnLimit = getWarnSettings?.warn_limit;
+                
+            warnNumber = warnNumber ?? 0n;
+            warnNumber -= 1n;
+
+            warnReasons = warnReasons ?? [];
+            warnReasons.pop();
+            await reset_warn_numbers(ctx.chat.id.toString(), userId, warnReasons);
+            let warn_message = (
+                `<b>🏳️ Unwarned</b> <a href="tg://user?id=${userId}">${userName}</a> (<code>${userId}</code>)<b>!</b>\n\n` +
+                `Unwarned by: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
+                `Warn count: <b>${warnNumber}/${warnLimit}</b>\n`
+            );
+            await ctx.editMessageText(warn_message, { parse_mode: "HTML" });
+        }       
+        else {
+            await ctx.answerCallbackQuery({
+                text: `Unable to extract ban information.`,
+            }).catch((GrammyError: any) => {return})
+        }
+        
     }
 })));
