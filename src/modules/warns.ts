@@ -28,16 +28,19 @@ bot.chatType("supergroup" || "group").command("warns", (async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         let warn_numbers = await get_warn_numbers(ctx.chat.id, ctx.message.reply_to_message.from.id);
         let warn_settings = await get_warn_settings(ctx.chat.id)
-        let warns_message = `Total warns for user <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)\n\n`
+        let warns_message = `Warnings received by user <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)\n\n`
         if (warn_numbers?.num_warns != null) {
-            warns_message += `<b>> ${warn_numbers?.num_warns}</b>`
+            warns_message += `Total warning(s):<b>${warn_numbers?.num_warns}</b>`
             if (warn_settings?.warn_limit != null) {
-            warns_message += `<b>/${warn_settings?.warn_limit}</b>` 
+                warns_message += `<b>/${warn_settings?.warn_limit}</b>` 
+            }
+            if (warn_numbers?.reasons.length != 0) {
+                let warnReasonsWithBullets = warn_numbers?.reasons.map((reason, index) => `\n ${index + 1}. ${reason}`);
+                warns_message += `\nReason(s): ${warnReasonsWithBullets}`;
             }
         }
         else {
             warns_message = `User <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>) have no warnings yet!`
-
         }
         await ctx.api.sendMessage(ctx.chat.id, warns_message, {parse_mode: "HTML"});
     }
@@ -50,14 +53,18 @@ bot.chatType("supergroup" || "group").command("warns", (async (ctx: any) => {
                 .catch((GrammyError: any) => {
                     return;
                 });
-            let warns_message = `Total warns for user <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>)\n\n`
+            let warns_message = `Warnings received by user <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>)\n\n`
             if (user_info != undefined) {
                 let warn_numbers = await get_warn_numbers(ctx.chat.id, user_info.user.id);
                 let warn_settings = await get_warn_settings(ctx.chat.id)
                 if (warn_numbers?.num_warns != null) {
-                    warns_message += `<b>> ${warn_numbers?.num_warns}</b>`
+                    warns_message += `Total warning(s): <b>${warn_numbers?.num_warns}</b>`
                     if (warn_settings?.warn_limit != null) {
                     warns_message += `<b>/${warn_settings?.warn_limit}</b>` 
+                    }
+                    if (warn_numbers?.reasons.length != 0) {
+                        let warnReasonsWithBullets = warn_numbers?.reasons.map((reason, index) => `\n ${index + 1}. ${reason}`);
+                        warns_message += `\nReason(s): ${warnReasonsWithBullets}`;
                     }
                 }
                 else {
@@ -275,7 +282,13 @@ bot.callbackQuery("unwarn-once-my-beloved", elevatedUsersCallbackOnly(canRestric
             warnNumber -= 1n;
 
             warnReasons = warnReasons ?? [];
-            warnReasons.pop();
+            if (warnReasons.length === 1) {
+                warnReasons.pop()
+                warnReasons = []
+            }
+            else {
+                warnReasons.pop();
+            }
             await reset_warn_numbers(ctx.chat.id.toString(), userId, warnReasons);
             let warn_message = (
                 `<b>🏳️ Unwarned</b> <a href="tg://user?id=${userId}">${userName}</a> (<code>${userId}</code>)<b>!</b>\n\n` +
