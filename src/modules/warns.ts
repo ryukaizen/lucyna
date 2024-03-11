@@ -655,3 +655,82 @@ bot.callbackQuery("yes-reset", ownerOnlyCallback(async(ctx: any) => {
 bot.callbackQuery("no-reset", ownerOnlyCallback(async(ctx: any) => {
     await ctx.editMessageText("Okay fine. Tell me when you change your mind!", { parse_mode: "HTML" });
 }));
+
+bot.chatType("supergroup" || "group").command("warnmode", elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
+    let getWarnSettings = await get_warn_settings(ctx.chat.id);
+    let warnMode = getWarnSettings?.soft_warn
+    let whatWillHappen;
+
+    if (warnMode == undefined) {
+        await set_warn_settings(ctx.chat.id.toString(), 3n, false); // default limit to 3, and soft_warn is disabled
+        warnMode = false;
+        whatWillHappen = "ban"
+    }
+    else if (warnMode == true) {
+        whatWillHappen = "kick"
+    }
+    else if (warnMode == false) {
+        whatWillHappen = "ban"
+    }
+
+    if (ctx.match) {
+        let split_args = ctx.match.split(" ");
+        let mode = split_args[0];
+        if (mode == "ban") {
+            warnMode = false;
+            await ctx.reply(`Crossing the warning threshold will result in <b>BANNING</b> the user!`, 
+            {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+        }
+        else if (mode == "kick") {
+            warnMode = true;
+            whatWillHappen = "kick"
+            await ctx.reply(`Crossing the warning threshold will result in <b>KICKING</b> the user!`, 
+            {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+        }
+        else {
+            await ctx.reply(
+                `Invalid arguments!` +
+                `\n\nUsage:\n<code>/warnmode ban</code> - set to ban\n<code>/warnmode kick</code> - set to kick` +
+                `\n\nCurrent mode: <b>${whatWillHappen}</b> the user!`, 
+                {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"}
+            );
+        }
+        await set_warn_mode(ctx.chat.id.toString(), warnMode)
+    }
+    else {
+        await ctx.reply(`Crossing the warning threshold will <b>${whatWillHappen} the user!</b>`, 
+        {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+    }
+})));
+
+bot.chatType("supergroup" || "group").command("warnlimit", elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
+    let getWarnSettings = await get_warn_settings(ctx.chat.id);
+    let warnLimit = getWarnSettings?.warn_limit;
+
+    if (warnLimit == undefined) {
+        await set_warn_settings(ctx.chat.id.toString(), 3n, false); // default limit to 3, and soft_warn is disabled
+    }
+
+    if (ctx.match) {
+        let split_args = ctx.match.split(" ");
+        let limit = split_args[0];
+        if (limit >= 1 && limit <= 5) {
+            await ctx.reply(`Warning limit has been set to <b>${limit}</b> warn(s)!`, 
+            {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+        }
+        else {
+            await ctx.reply(
+                `Invalid arguments!` +
+                `\n\nUsage:\n<code>/warnlimit 3</code> - set max warns to 3\n<code>/warnlimit 5</code> - set max warns to 5` +
+                `\n\nRange of the limit should be between 1 (minimum) to 5 (maximum)` +
+                `\nCurrent limit: <b>${warnLimit}</b>`, 
+                {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"}
+            );
+            limit = warnLimit;
+        }
+        await set_warn_limit(ctx.chat.id.toString(), BigInt(limit))
+    }
+    else {
+        await ctx.reply(`\n\nCurrent warning limit: <b>${warnLimit}</b> warn(s)`, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+    }
+})));
