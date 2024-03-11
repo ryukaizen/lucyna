@@ -96,3 +96,30 @@ export async function reset_warn_numbers(chatId: string, userId: bigint, reasons
         return false;    
     }
 }
+
+export async function reset_all_warns(chatId: string, userId: bigint, reasons: string[]) {
+    try {
+        let warn_numbers = await prisma.warns.upsert({
+            where: {
+            chat_id: chatId,
+            user_id: userId,
+            user_id_chat_id: {user_id: userId, chat_id: chatId}
+            },
+            update: {
+                num_warns: 0n,
+                reasons: reasons
+            },
+            create: {
+                chat_id: chatId,
+                user_id: userId,
+                num_warns: 1n,
+                reasons: reasons
+            }
+        })
+        return true;
+    }
+    catch (e) {
+        console.error(e)
+        return false;    
+    }
+}

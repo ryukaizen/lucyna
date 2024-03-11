@@ -8,6 +8,31 @@ export function typingAction(handler: any) {
 }
 
 // ==================== USER STUFF ====================
+
+export function ownerOnly(handler: any) {
+    return async (ctx: any) => {
+        let user = await ctx.getAuthor();
+        if (ctx.from.id == constants.OWNER_ID || user.status == "creator") {
+            await handler(ctx);
+        }
+        else {
+            await ctx.reply("Only owner of this chat can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+    }
+}
+
+export function ownerOnlyCallback(handler: any) {
+    return async (ctx: any) => {
+        let user = await ctx.getAuthor();
+        if (ctx.from.id == constants.OWNER_ID || user.status == "creator") {
+            await handler(ctx);
+        }
+        else {
+            await ctx.answerCallbackQuery({ text: "Only owner of this chat can use this command!"});
+        }
+    };
+}
+
 export function elevatedUsersOnly(handler: any) {
     return async (ctx: any) => {
         let user = await ctx.getAuthor();

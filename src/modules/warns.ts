@@ -6,18 +6,19 @@ import {
     get_warn_settings, 
     set_warn_numbers, 
     set_warn_settings,
-    reset_warn_numbers
+    reset_warn_numbers,
+    reset_all_warns
 } from "../database/warns_sql";
 import { 
     canRestrictUsers, 
     canRestrictUsersCallback, 
-    canDeleteMessages, // for dwarn
+    canDeleteMessages, 
     checkElevatedUser,
     checkElevatedUserFrom,
     elevatedUsersOnly, 
     elevatedUsersCallbackOnly, 
-    isUserRestricted,
-    userIdExtractor, 
+    ownerOnly,
+    ownerOnlyCallback,
     userInfo
 } from "../helpers/helper_func";
 
@@ -568,9 +569,8 @@ bot.chatType("supergroup" || "group").command("resetwarns", elevatedUsersOnly(ca
                     warnReasons = warnReasons ?? [];
                     warnReasons.pop()
                     warnReasons = []
- 
-                    await reset_warn_numbers(ctx.chat.id.toString(), ctx.message.reply_to_message.from.id, warnReasons);
 
+                    await reset_all_warns(ctx.chat.id.toString(), ctx.message.reply_to_message.from.id, warnReasons)
                 }   
                 await ctx.api.sendMessage(ctx.chat.id, warns_message, {parse_mode: "HTML"}); 
             }
@@ -620,9 +620,8 @@ bot.chatType("supergroup" || "group").command("resetwarns", elevatedUsersOnly(ca
                             warnReasons = warnReasons ?? [];
                             warnReasons.pop()
                             warnReasons = []
- 
-                            await reset_warn_numbers(ctx.chat.id.toString(), ctx.message.reply_to_message.from.id, warnReasons);
-
+        
+                            await reset_all_warns(ctx.chat.id.toString(), user_info.user.id, warnReasons)
                         }   
                         await ctx.api.sendMessage(ctx.chat.id, warns_message, {parse_mode: "HTML"});  
                     }
@@ -638,3 +637,19 @@ bot.chatType("supergroup" || "group").command("resetwarns", elevatedUsersOnly(ca
         }
     }
 })));
+
+bot.chatType("supergroup" || "group").command("resetallwarns", ownerOnly(canRestrictUsers(async (ctx: any) => {
+    let confirmReset = new InlineKeyboard()
+        .text("Yes", "yes-reset")
+        .text("No", "no-reset")
+
+    await ctx.api.sendMessage(ctx.chat.id, "Are you sure you want to reset <b>everyone's</b> warnings in this chat?\n\n<i>This action cannot be undone.</i>", {reply_markup: confirmReset, parse_mode: "HTML"}); 
+})));
+
+bot.callbackQuery("yes-reset", ownerOnlyCallback(async(ctx: any) => {
+    // await reset_all_chat_warns(ctx.chat.id) // will do this later
+}));
+
+bot.callbackQuery("no-reset", ownerOnlyCallback(async(ctx: any) => {
+    await ctx.editMessageText("Okay fine. Tell me when you change your mind!", { parse_mode: "HTML" });
+}));
