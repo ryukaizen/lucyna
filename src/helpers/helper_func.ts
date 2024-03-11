@@ -33,6 +33,17 @@ export function ownerOnlyCallback(handler: any) {
     };
 }
 
+export function superusersOnly(handler: any) {
+    return async (ctx: any) => {
+        if (constants.SUPERUSERS.includes(ctx.from.id) || ctx.from.id == constants.OWNER_ID) {
+            await handler(ctx);
+        }
+        else {
+            await ctx.reply("Only superusers can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+    };
+}
+
 export function elevatedUsersOnly(handler: any) {
     return async (ctx: any) => {
         let user = await ctx.getAuthor();
