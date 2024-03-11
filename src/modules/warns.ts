@@ -643,7 +643,7 @@ bot.chatType("supergroup" || "group").command("resetallwarns", ownerOnly(canRest
         .text("Yes", "yes-reset")
         .text("No", "no-reset")
 
-    await ctx.api.sendMessage(ctx.chat.id, "Are you sure you want to reset <b>everyone's</b> warnings in this chat?\n\n<i>This action cannot be undone.</i>", {reply_markup: confirmReset, parse_mode: "HTML"}); 
+    await ctx.api.sendMessage(ctx.chat.id, "Are you sure you want to reset <b>everyone's</b> warnings in this chat?\n\n<i>This action cannot be undone.</i>", {reply_markup: confirmReset, reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"}); 
 })));
 
 bot.callbackQuery("yes-reset", ownerOnlyCallback(async(ctx: any) => {
