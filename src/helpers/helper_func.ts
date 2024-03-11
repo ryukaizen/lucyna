@@ -28,7 +28,7 @@ export function ownerOnlyCallback(handler: any) {
             await handler(ctx);
         }
         else {
-            await ctx.answerCallbackQuery({ text: "Only owner of this chat can use this command!"});
+            await ctx.answerCallbackQuery({ text: "Only owner of this chat can use this button!"});
         }
     };
 }
@@ -69,7 +69,7 @@ export function elevatedUsersCallbackOnly(handler: any) {
             await handler(ctx);
         }
         else {
-            await ctx.answerCallbackQuery({ text: "Only admins can use this command!"});
+            await ctx.answerCallbackQuery({ text: "Only admins can use this button!"});
         }
     };
 
@@ -211,6 +211,25 @@ export function canDeleteMessages(handler: any) {
             }
             else {
                 await ctx.reply("I don't have enough admin rights to delete messages!", {reply_parameters: {message_id: ctx.message.message_id}});
+            }
+        }
+        else {
+            await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+    }
+}
+
+export function canPinMessages(handler: any) {
+    return async (ctx: any) => {
+        let bot_id = ctx.me.id;
+        let chat_id = ctx.chat.id;
+        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+        if (bot_info.status == "administrator") {
+            if (bot_info.can_pin_messages == true) {
+                await handler(ctx);
+            }
+            else {
+                await ctx.reply("I don't have enough admin rights to pin messages!", {reply_parameters: {message_id: ctx.message.message_id}});     
             }
         }
         else {
