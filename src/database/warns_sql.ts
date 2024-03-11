@@ -70,6 +70,52 @@ export async function set_warn_settings(chatId: string, warnLimit: bigint, softW
     }
 }
 
+export async function set_warn_mode(chatId: string, softWarn: boolean) {
+    try {
+        let warn_settings =  await prisma.warn_settings.upsert({
+            where: {
+                chat_id: chatId
+            },
+            update: {
+                soft_warn: softWarn
+            },
+            create: {
+                chat_id: chatId,
+                warn_limit: 3, // default is 3
+                soft_warn: false // ban instead of kick
+            }
+        })
+        return true;
+    }
+    catch (e) {
+        console.error(e)
+        return false;
+    }
+}
+
+export async function set_warn_limit(chatId: string, warnLimit: bigint) {
+    try {
+        let warn_settings =  await prisma.warn_settings.upsert({
+            where: {
+                chat_id: chatId
+            },
+            update: {
+                warn_limit: warnLimit
+            },
+            create: {
+                chat_id: chatId,
+                warn_limit: 3, // default is 3
+                soft_warn: false // ban instead of kick
+            }
+        })
+        return true;
+    }
+    catch (e) {
+        console.error(e)
+        return false;
+    }
+}
+
 export async function reset_warn_numbers(chatId: string, userId: bigint, reasons: string[]) {
     try {
         let warn_numbers = await prisma.warns.upsert({
