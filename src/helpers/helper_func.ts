@@ -75,6 +75,17 @@ export function elevatedUsersCallbackOnly(handler: any) {
 
 }
 
+export function samePersonCallbackOnly(handler: any) {
+    return async (ctx: any) => {
+        if (ctx.callbackQuery.message.reply_to_message?.from?.id == ctx.callbackQuery?.from?.id) {
+            await handler(ctx);
+        }
+        else {
+            await ctx.answerCallbackQuery({ text: "You can't use this button!"});
+        }
+    };
+}
+
 // for reply_to_message
 export async function checkElevatedUser(ctx: any) {
     // fetch user status
@@ -230,6 +241,44 @@ export function canPinMessages(handler: any) {
             }
             else {
                 await ctx.reply("I don't have enough admin rights to pin messages!", {reply_parameters: {message_id: ctx.message.message_id}});     
+            }
+        }
+        else {
+            await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+    }
+}
+
+export function canInviteUsers(handler: any) {
+    return async (ctx: any) => {
+        let bot_id = ctx.me.id;
+        let chat_id = ctx.chat.id;
+        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+        if (bot_info.status == "administrator") {
+            if (bot_info.can_invite_users == true) {
+                await handler(ctx);
+            }
+            else {
+                await ctx.reply("I don't have enough admin rights to generate invitelinks!", {reply_parameters: {message_id: ctx.message.message_id}});     
+            }
+        }
+        else {
+            await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+    }
+}
+
+export function canPromoteMembers(handler: any) {
+    return async (ctx: any) => {
+        let bot_id = ctx.me.id;
+        let chat_id = ctx.chat.id;
+        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+        if (bot_info.status == "administrator") {
+            if (bot_info.can_promote_members == true) {
+                await handler(ctx);
+            }
+            else {
+                await ctx.reply("I don't have enough admin rights to promote members!", {reply_parameters: {message_id: ctx.message.message_id}});     
             }
         }
         else {
