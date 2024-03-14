@@ -640,21 +640,21 @@ bot.chatType("supergroup" || "group").command("resetwarns", elevatedUsersOnly(ca
     }
 })));
 
-bot.chatType("supergroup" || "group").command("resetallwarns", ownerOnly(canRestrictUsers(async (ctx: any) => {
-    let confirmReset = new InlineKeyboard()
-        .text("Yes", "yes-reset")
-        .text("No", "no-reset")
+// bot.chatType("supergroup" || "group").command("resetallwarns", ownerOnly(canRestrictUsers(async (ctx: any) => {
+//     let confirmReset = new InlineKeyboard()
+//         .text("Yes", "yes-reset")
+//         .text("No", "no-reset")
 
-    await ctx.api.sendMessage(ctx.chat.id, "Are you sure you want to reset <b>everyone's</b> warnings in this chat?\n\n<i>This action cannot be undone.</i>", {reply_markup: confirmReset, reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"}); 
-})));
+//     await ctx.api.sendMessage(ctx.chat.id, "Are you sure you want to reset <b>everyone's</b> warnings in this chat?\n\n<i>This action cannot be undone.</i>", {reply_markup: confirmReset, reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"}); 
+// })));
 
-bot.callbackQuery("yes-reset", ownerOnlyCallback(async(ctx: any) => {
-    // await reset_all_chat_warns(ctx.chat.id) // will do this later
-}));
+// bot.callbackQuery("yes-reset", ownerOnlyCallback(async(ctx: any) => {
+//     // await reset_all_chat_warns(ctx.chat.id) // will do this later
+// }));
 
-bot.callbackQuery("no-reset", ownerOnlyCallback(async(ctx: any) => {
-    await ctx.editMessageText("Okay fine. Tell me when you change your mind!", { parse_mode: "HTML" });
-}));
+// bot.callbackQuery("no-reset", ownerOnlyCallback(async(ctx: any) => {
+//     await ctx.editMessageText("Okay fine. Tell me when you change your mind!", { parse_mode: "HTML" });
+// }));
 
 bot.chatType("supergroup" || "group").command("warnmode", elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
     let getWarnSettings = await get_warn_settings(ctx.chat.id);

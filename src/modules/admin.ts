@@ -89,23 +89,26 @@ bot.chatType("supergroup" || "group").command("unpinall", elevatedUsersOnly(canP
         return;
     }
     else {
-        let confirmUnpin = new InlineKeyboard()
-            .text("Yes", "yes-unpin")
-            .text("No", "no-unpin");
-    
-        await ctx.api.sendMessage(ctx.chat.id, "Are you sure you want to unpin <b>ALL the pinned messages</b> in this chat?\n\n<i>This action cannot be undone.</i>", {reply_markup: confirmUnpin, reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"}); 
-    }
-})));
-    
-bot.callbackQuery("yes-unpin", samePersonCallbackOnly(async(ctx: any) => {
         await ctx.api.unpinAllChatMessages(ctx.chat.id)
             .then(ctx.editMessageText("Unpinned all the messages successfully!"))
             .catch((GrammyError: any) => {ctx.editMessageText("Failed to unpin messages: invalid message / message probably does not exist.")});
-}));
+        // let confirmUnpin = new InlineKeyboard()
+            // .text("Yes", "yes-unpin")
+            // .text("No", "no-unpin");
+
+        // await ctx.api.sendMessage(ctx.chat.id, "Are you sure you want to unpin <b>ALL the pinned messages</b> in this chat?\n\n<i>This action cannot be undone.</i>", {reply_markup: confirmUnpin, reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"}); 
+    }
+})));
     
-bot.callbackQuery("no-unpin", samePersonCallbackOnly(async(ctx: any) => {
-        await ctx.editMessageText("Okay fine. Tell me when you change your mind!", { parse_mode: "HTML" });
-}));
+// bot.callbackQuery("yes-unpin", samePersonCallbackOnly(async(ctx: any) => {
+//         await ctx.api.unpinAllChatMessages(ctx.chat.id)
+//             .then(ctx.editMessageText("Unpinned all the messages successfully!"))
+//             .catch((GrammyError: any) => {ctx.editMessageText("Failed to unpin messages: invalid message / message probably does not exist.")});
+// }));
+    
+// bot.callbackQuery("no-unpin", samePersonCallbackOnly(async(ctx: any) => {
+//         await ctx.editMessageText("Okay fine. Tell me when you change your mind!", { parse_mode: "HTML" });
+// }));
 
 bot.chatType("supergroup" || "group").command("invitelink", elevatedUsersOnly(canInviteUsers(async(ctx: any) => {
     let user_info = await userInfo(ctx);
@@ -287,10 +290,7 @@ bot.chatType("supergroup" || "group").command("title", elevatedUsersOnly(canProm
     }
     else {
         if (ctx.message.reply_to_message != undefined) {
-            if (user_info.status == "creator") {
-                await ctx.reply("Only group owner themselves can change their own title!", {reply_parameters: {message_id: ctx.message.message_id}})
-            }
-            else if (await checkElevatedUser(ctx) == true) {
+            if (await checkElevatedUser(ctx) == true) {
                     if (ctx.match) {
                         let title_string = ctx.match.substring(0, 16)
                         await ctx.api.setChatAdministratorCustomTitle(ctx.chat.id, ctx.message.reply_to_message.from.id, title_string)
@@ -299,7 +299,7 @@ bot.chatType("supergroup" || "group").command("title", elevatedUsersOnly(canProm
                             {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});   
                         })
                         .catch((GrammyError: any) => {
-                            ctx.reply("Failed to set admin title, it can be done manually.");
+                            ctx.reply("Failed to set admin title, it can be done manually.", {reply_parameters: {message_id: ctx.message.message_id}});
                             logger.error(`${GrammyError}`);
                             channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
                         });
@@ -331,7 +331,7 @@ bot.chatType("supergroup" || "group").command("title", elevatedUsersOnly(canProm
                             {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"}); 
                         })
                         .catch((GrammyError: any) => {
-                            ctx.reply("Failed to set admin title, it can be done manually.");
+                            ctx.reply("Failed to set admin title, it can be done manually.", {reply_parameters: {message_id: ctx.message.message_id}});
                             logger.error(`${GrammyError}`);
                             channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
                         });
