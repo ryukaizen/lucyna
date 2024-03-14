@@ -405,3 +405,14 @@ bot.chatType("supergroup" || "group").command("title", elevatedUsersOnly(canProm
 //
 //     }
 // })));
+
+// bot.chatType("supergroup" || "group").command("setgsticker", elevatedUsersOnly(canChangeInfo(async (ctx: any) => {
+//     let user_info = await userInfo(ctx);
+//     if (user_info.can_change_info == false) {
+//         await ctx.reply("You don't have enough rights to change group stickerpack!", {reply_parameters: {message_id: ctx.message.message_id}});
+//         return;
+//     }
+//     else {
+//
+//     }
+// })));

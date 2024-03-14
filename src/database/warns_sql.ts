@@ -1,4 +1,4 @@
-import { prisma } from "./index"
+import { prisma } from "./index";
 
 export async function get_warn_numbers(chatId: string, userId: bigint) {
     let warn_numbers = await prisma.warns.findFirst({

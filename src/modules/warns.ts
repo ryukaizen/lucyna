@@ -675,7 +675,7 @@ bot.chatType("supergroup" || "group").command("warnmode", elevatedUsersOnly(canR
 
     if (ctx.match) {
         let split_args = ctx.match.split(" ");
-        let mode = split_args[0];
+        let mode = split_args[0].toLowerCase();
         if (mode == "ban") {
             warnMode = false;
             await ctx.reply(`Crossing the warning threshold will result in <b>BANNING</b> the user!`, 
@@ -731,6 +731,6 @@ bot.chatType("supergroup" || "group").command("warnlimit", elevatedUsersOnly(can
         await set_warn_limit(ctx.chat.id.toString(), BigInt(limit))
     }
     else {
-        await ctx.reply(`\n\nCurrent warning limit: <b>${warnLimit}</b> warn(s)`, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+        await ctx.reply(`Current warning limit: <b>${warnLimit}</b> warn(s)`, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
     }
 })));
