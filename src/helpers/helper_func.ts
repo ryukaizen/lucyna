@@ -286,6 +286,25 @@ export function canPromoteMembers(handler: any) {
         }
     }
 }
+
+export function canChangeInfo(handler: any) {
+    return async (ctx: any) => {
+        let bot_id = ctx.me.id;
+        let chat_id = ctx.chat.id;
+        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+        if (bot_info.status == "administrator") {
+            if (bot_info.can_change_info == true) {
+                await handler(ctx);
+            }
+            else {
+                await ctx.reply("I don't have enough admin rights to change group information!", {reply_parameters: {message_id: ctx.message.message_id}}); 
+            }
+        }
+        else {
+            await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}})
+        }
+    }
+}
 // ====================================================
 
 export async function extract_time(ctx: any, time_val: string): Promise<string | number> {

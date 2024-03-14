@@ -5,6 +5,7 @@ import {
     canInviteUsers, 
     canPinMessages, 
     canPromoteMembers,
+    canChangeInfo,
     checkElevatedUser,
     checkElevatedUserFrom,
     elevatedUsersOnly, 
@@ -352,3 +353,55 @@ bot.chatType("supergroup" || "group").command("title", elevatedUsersOnly(canProm
         }
     }
 })));
+
+// will write this later
+// bot.chatType("supergroup" || "group").command("setgpic", elevatedUsersOnly(canChangeInfo(async (ctx: any) => {
+//     let user_info = await userInfo(ctx);
+//     if (user_info.can_change_info == false) {
+//         await ctx.reply("You don't have enough rights to change group profile picture!", {reply_parameters: {message_id: ctx.message.message_id}});
+//         return;
+//     }
+//     else {
+//         if (ctx.message.reply_to_message != undefined) {
+//             console.log(JSON.stringify(ctx.message.reply_to_message), null, 2)
+  
+//         }
+     
+//        else {        
+//             await ctx.reply("Please reply to an image with /setgpic command to set it as a profile picture for this group.", {reply_parameters: {message_id: ctx.message.message_id}});
+//         }
+//     }
+// })));
+
+// bot.chatType("supergroup" || "group").command("delgpic", elevatedUsersOnly(canChangeInfo(async (ctx: any) => {
+//     let user_info = await userInfo(ctx);
+//     if (user_info.can_change_info == false) {
+//         await ctx.reply("You don't have enough rights to remove group profile picture!", {reply_parameters: {message_id: ctx.message.message_id}});
+//         return;
+//     }
+//     else {
+// 
+//     }
+// })));
+
+// bot.chatType("supergroup" || "group").command("setgtitle", elevatedUsersOnly(canChangeInfo(async (ctx: any) => {
+//     let user_info = await userInfo(ctx);
+//     if (user_info.can_change_info == false) {
+//         await ctx.reply("You don't have enough rights to change group title!", {reply_parameters: {message_id: ctx.message.message_id}});
+//         return;
+//     }
+//     else {
+//
+//     }
+// })));
+
+// bot.chatType("supergroup" || "group").command("setgdesc", elevatedUsersOnly(canChangeInfo(async (ctx: any) => {
+//     let user_info = await userInfo(ctx);
+//     if (user_info.can_change_info == false) {
+//         await ctx.reply("You don't have enough rights to change group description!", {reply_parameters: {message_id: ctx.message.message_id}});
+//         return;
+//     }
+//     else {
+//
+//     }
+// })));
