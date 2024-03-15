@@ -24,7 +24,8 @@ bot.on("message:new_chat_members:me", async (ctx: any) => {
         log_message += `• Service Message: <a href="https://telegram.me/${ctx.chat.username}/${ctx.message.message_id}">${ctx.message.message_id}</a>`
     }
     else {
-        log_message += `• Invite Link: <code>(group is private)</code>` 
+        let chat_id = ctx.chat?.id.toString().slice(4);
+        log_message += `• Link: Group's private (<a href="https://telegram.me/c/${chat_id}/${ctx.message.message_id}">Message Link</a>)`
     }
     await ctx.api.sendAnimation(ctx.chat.id, constants.ADDED_TO_CHAT_GIF, {caption: added_to_chat_text, reply_markup: help_inlinekeyboard, parse_mode: "HTML"});
     channel_log(log_message)  
