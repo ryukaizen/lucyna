@@ -49,6 +49,7 @@
     "npm-check-updates": "^16.14.6",
     "pg": "^8.11.3",
     "systeminformation": "^5.22.0",
+    "telegram": "^2.20.2",
     "winston": "^3.11.0"
   }
 }

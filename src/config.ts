@@ -14,7 +14,10 @@ const constants = cleanEnv(process.env, {
     SUPERUSERS: str(),
     START_GIF: str(),
     ADDED_TO_CHAT_GIF: str(),
-    DATABASE_URL: str()
+    DATABASE_URL: str(),
+    GRAMJS_API_ID: str(),
+    GRAMJS_API_HASH: str(),
+    GRAMJS_STRING_SESSION: str()
 });
 
 export default constants;

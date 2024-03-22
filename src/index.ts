@@ -1,9 +1,12 @@
 import fs from 'fs/promises';
 import bot from "./bot";
+import constants from "./config"
 import { run } from "@grammyjs/runner";
 import { apiThrottler } from "@grammyjs/transformer-throttler";
 import { logger } from "./logger"
 import { channel_log } from "./logger";
+import { LogLevel } from "telegram/extensions/Logger";
+import { gramjs } from './utility';
 
 // Initialize grammY runner
 const runner = run(bot, { 
@@ -28,7 +31,8 @@ const ALL_MODULES: string[] = [];
             ALL_MODULES.push(`${file.replace(/\.[^\/.]+$/, "").toUpperCase()}`);
         }
     }
-    await bot.api.deleteWebhook({ drop_pending_updates: true });    
+    await bot.api.deleteWebhook({ drop_pending_updates: true });
+    await gramjs.start({botAuthToken: constants.BOT_TOKEN});  
 })();
 
 bot.init().then(async() => {

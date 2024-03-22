@@ -1,4 +1,5 @@
 import constants from "../config";
+import { gramjs, gramJsApi } from "../utility";
 
 export function typingAction(handler: any) {
     return async (ctx: any) => {
@@ -115,29 +116,51 @@ export async function userInfo(ctx: any) {
     return user_info;
 }
 
-export async function usernameExtractor(ctx: any) {
-    let args = ctx.match;
-    let regex = /@([^\s]+)/g;
-    let usernames: string[] = [];
+async function usernameExtractor(args: string) {
+    let regex = /@([a-zA-Z][a-zA-Z0-9]{4,})/g;
+    let username;
     let match: RegExpExecArray | null;
 
     while ((match = regex.exec(args)) !== null) {
-        usernames.push(match[1]);
+        username = match[1];
     }
-
-    return usernames;
+    return username;
 }
 
-export async function userIdExtractor(ctx: any) {
-    let args = ctx.match;
+async function userIdExtractor(args: string) {
     let regex = /(\b\d{9,10}\b)/g; // filter out 9 or 10 digit integers
-    let user_ids: string[] = [];
+    let user_id;
     let match: RegExpExecArray | null;
 
     while ((match = regex.exec(args)) !== null) {
-        user_ids.push(match[1]);
+        user_id = match[1];
     }
-    return user_ids;
+    return user_id;
+}
+
+export async function resolveUsername(ctx: any) {
+    let args = ctx.match;
+    let userhandle;
+    let username = await usernameExtractor(args);
+    let user_id = await userIdExtractor(args);
+
+    if (username != undefined && username.length > 0) {
+        const user = await gramjs.invoke(
+            new gramJsApi.users.GetFullUser({
+              id: username,
+            })
+        );
+        userhandle = user;
+    }
+    else if (user_id != undefined && user_id.length > 0) {
+        const user = await gramjs.invoke(
+            new gramJsApi.users.GetFullUser({
+              id: user_id,
+            })
+        );
+        userhandle = user;
+    }
+    return userhandle;
 }
 
 // future use maybe

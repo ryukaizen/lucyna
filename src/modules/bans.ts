@@ -10,8 +10,7 @@ import {
     elevatedUsersOnly, 
     elevatedUsersCallbackOnly, 
     isUserBanned,
-    isUserInChat,
-    userIdExtractor, 
+    isUserInChat, 
     userInfo
 } from "../helpers/helper_func";
 
