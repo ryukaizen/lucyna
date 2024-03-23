@@ -12,9 +12,9 @@ import {
     reset_all_warns
 } from "../database/warns_sql";
 import { 
-    canRestrictUsers, 
-    canRestrictUsersCallback, 
-    canDeleteMessages, 
+    botCanRestrictUsers, 
+    botCanRestrictUsersCallback, 
+    botCanDeleteMessages, 
     checkElevatedUser,
     checkElevatedUserFrom,
     elevatedUsersOnly, 
@@ -87,7 +87,7 @@ bot.chatType("supergroup" || "group").command("warns", (async (ctx: any) => {
     }
 }));
 
-bot.chatType("supergroup" || "group").command("warn", elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("warn", elevatedUsersOnly(botCanRestrictUsers(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to warn users!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -261,7 +261,7 @@ bot.chatType("supergroup" || "group").command("warn", elevatedUsersOnly(canRestr
     }
 })));
 
-bot.callbackQuery("unwarn-once-my-beloved", elevatedUsersCallbackOnly(canRestrictUsersCallback(async(ctx: any) => {
+bot.callbackQuery("unwarn-once-my-beloved", elevatedUsersCallbackOnly(botCanRestrictUsersCallback(async(ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.answerCallbackQuery({ text: "You don't have enough rights to unwarn users!"}).catch((GrammyError: any) => {return})
@@ -314,7 +314,7 @@ bot.callbackQuery("unwarn-once-my-beloved", elevatedUsersCallbackOnly(canRestric
     }
 })));
 
-bot.chatType("supergroup" || "group").command(["unwarn", "rmwarn"], elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command(["unwarn", "rmwarn"], elevatedUsersOnly(botCanRestrictUsers(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to unwarn users!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -435,7 +435,7 @@ bot.chatType("supergroup" || "group").command(["unwarn", "rmwarn"], elevatedUser
     }
 })));
 
-bot.chatType("supergroup" || "group").command(["dwarn", "delwarn"], elevatedUsersOnly(canRestrictUsers(canDeleteMessages(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command(["dwarn", "delwarn"], elevatedUsersOnly(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to mute users!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -528,7 +528,7 @@ bot.chatType("supergroup" || "group").command(["dwarn", "delwarn"], elevatedUser
     } 
 }))));
 
-bot.chatType("supergroup" || "group").command("resetwarns", elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("resetwarns", elevatedUsersOnly(botCanRestrictUsers(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to reset warns of a user!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -640,7 +640,7 @@ bot.chatType("supergroup" || "group").command("resetwarns", elevatedUsersOnly(ca
     }
 })));
 
-// bot.chatType("supergroup" || "group").command("resetallwarns", ownerOnly(canRestrictUsers(async (ctx: any) => {
+// bot.chatType("supergroup" || "group").command("resetallwarns", ownerOnly(botCanRestrictUsers(async (ctx: any) => {
 //     let confirmReset = new InlineKeyboard()
 //         .text("Yes", "yes-reset")
 //         .text("No", "no-reset")
@@ -656,7 +656,7 @@ bot.chatType("supergroup" || "group").command("resetwarns", elevatedUsersOnly(ca
 //     await ctx.editMessageText("Okay fine. Tell me when you change your mind!", { parse_mode: "HTML" });
 // }));
 
-bot.chatType("supergroup" || "group").command("warnmode", elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("warnmode", elevatedUsersOnly(botCanRestrictUsers(async (ctx: any) => {
     let getWarnSettings = await get_warn_settings(ctx.chat.id);
     let warnMode = getWarnSettings?.soft_warn
     let whatWillHappen;
@@ -703,7 +703,7 @@ bot.chatType("supergroup" || "group").command("warnmode", elevatedUsersOnly(canR
     }
 })));
 
-bot.chatType("supergroup" || "group").command("warnlimit", elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("warnlimit", elevatedUsersOnly(botCanRestrictUsers(async (ctx: any) => {
     let getWarnSettings = await get_warn_settings(ctx.chat.id);
     let warnLimit = getWarnSettings?.warn_limit;
 

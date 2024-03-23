@@ -197,7 +197,7 @@ export async function isUserBanned(ctx: any, chat_id: string, user_id: number) {
 // ====================================================
 
 // ==================== BOT STUFF ====================
-export function canRestrictUsers(hander: any) {
+export function botCanRestrictUsers(hander: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
@@ -216,7 +216,7 @@ export function canRestrictUsers(hander: any) {
     }
 }
 
-export function canRestrictUsersCallback(hander: any) {
+export function botCanRestrictUsersCallback(hander: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
@@ -235,7 +235,7 @@ export function canRestrictUsersCallback(hander: any) {
     }
 }
 
-export function canDeleteMessages(handler: any) {
+export function botCanDeleteMessages(handler: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
@@ -254,7 +254,7 @@ export function canDeleteMessages(handler: any) {
     }
 }
 
-export function canPinMessages(handler: any) {
+export function botCanPinMessages(handler: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
@@ -273,7 +273,7 @@ export function canPinMessages(handler: any) {
     }
 }
 
-export function canInviteUsers(handler: any) {
+export function botCanInviteUsers(handler: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
@@ -292,7 +292,7 @@ export function canInviteUsers(handler: any) {
     }
 }
 
-export function canPromoteMembers(handler: any) {
+export function botCanPromoteMembers(handler: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
@@ -311,7 +311,7 @@ export function canPromoteMembers(handler: any) {
     }
 }
 
-export function canChangeInfo(handler: any) {
+export function botCanChangeInfo(handler: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
@@ -345,19 +345,21 @@ export async function extract_time(ctx: any, time_val: string): Promise<string |
             await ctx.reply("Invalid time amount specified.", {reply_parameters: {message_id: ctx.message.message_id}});
             return "";
         }
-        switch (unit) {
-            case "m":
-                totalTime += parseInt(time_num) * 60;
-                break;
-            case "h":
-                totalTime += parseInt(time_num) * 60 * 60;
-                break;
-            case "d":
-                totalTime += parseInt(time_num) * 24 * 60 * 60;
-                break;
-            default:
-                await ctx.reply("Invalid time type specified. Expected m, h, or d.", {reply_parameters: {message_id: ctx.message.message_id}});
-                return "";
+        else {
+            switch (unit) {
+                case "m":
+                    totalTime += parseInt(time_num) * 60;
+                    break;
+                case "h":
+                    totalTime += parseInt(time_num) * 60 * 60;
+                    break;
+                case "d":
+                    totalTime += parseInt(time_num) * 24 * 60 * 60;
+                    break;
+                default:
+                    await ctx.reply("Invalid time type specified. Expected m, h, or d.", {reply_parameters: {message_id: ctx.message.message_id}});
+                    return "";
+            }
         }
     }
     const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds

@@ -2,9 +2,9 @@ import bot from "../bot";
 import { logger, channel_log } from "../logger";
 import { GrammyError, InlineKeyboard } from "grammy";
 import { 
-    canRestrictUsers, 
-    canRestrictUsersCallback, 
-    canDeleteMessages,
+    botCanRestrictUsers, 
+    botCanRestrictUsersCallback, 
+    botCanDeleteMessages,
     checkElevatedUser,
     checkElevatedUserFrom,
     elevatedUsersOnly, 
@@ -46,7 +46,7 @@ const kick_responses: string[] = [
 const unbanButton = new InlineKeyboard()
 .text("🔘 Unban", "unban-the-dawg");
 
-bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(botCanRestrictUsers(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to ban users!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -136,7 +136,7 @@ bot.chatType("supergroup" || "group").command("ban", elevatedUsersOnly(canRestri
     }
 })));
 
-bot.callbackQuery("unban-the-dawg", elevatedUsersCallbackOnly(canRestrictUsersCallback(async(ctx: any) => {
+bot.callbackQuery("unban-the-dawg", elevatedUsersCallbackOnly(botCanRestrictUsersCallback(async(ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.answerCallbackQuery({ text: "You don't have enough rights to unban users!"}).catch((GrammyError: any) => {return})
@@ -189,7 +189,7 @@ bot.callbackQuery("unban-the-dawg", elevatedUsersCallbackOnly(canRestrictUsersCa
     }
 })));
 
-bot.chatType("supergroup" || "group").command("unban", elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("unban", elevatedUsersOnly(botCanRestrictUsers(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to unban users!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -255,7 +255,7 @@ bot.chatType("supergroup" || "group").command("unban", elevatedUsersOnly(canRest
     }
 })));
 
-bot.chatType("supergroup" || "group").command("dban", elevatedUsersOnly(canRestrictUsers(canDeleteMessages(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("dban", elevatedUsersOnly(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to ban users!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -303,7 +303,7 @@ bot.chatType("supergroup" || "group").command("dban", elevatedUsersOnly(canRestr
     }
 }))));
 
-bot.chatType("supergroup" || "group").command("kick", elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("kick", elevatedUsersOnly(botCanRestrictUsers(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to kick users!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -388,7 +388,7 @@ bot.chatType("supergroup" || "group").command("kick", elevatedUsersOnly(canRestr
     }
 })));
 
-bot.chatType("supergroup" || "group").command("kickme", (canRestrictUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("kickme", (botCanRestrictUsers(async (ctx: any) => {
     let kick_sticker = "CAACAgUAAxkBAAFVoJdl5143l3aQas2IfSFEUqovfKwmAQACnxIAAhQLOFf6_XYxuhju8DQE"
     await ctx.api.unbanChatMember(ctx.chat.id, ctx.from.id)
     .then(() => {
@@ -400,7 +400,7 @@ bot.chatType("supergroup" || "group").command("kickme", (canRestrictUsers(async 
     });
 })));
 
-bot.chatType("supergroup" || "group").command("banme", (canRestrictUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("banme", (botCanRestrictUsers(async (ctx: any) => {
     let ban_message = `${ctx.from.first_name} banned themselves!`;
     let ban_sticker = "CAACAgUAAxkBAAFVnsdl5vx8BAvmJFo1HivZppw_lwHb2wACFg4AAn-LOVdoTyZHers4xjQE"
     await ctx.api.banChatMember(ctx.chat.id, ctx.from.id, {revoke_messages: true})

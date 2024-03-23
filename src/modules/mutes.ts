@@ -2,9 +2,9 @@ import bot from "../bot";
 import { logger, channel_log } from "../logger";
 import { GrammyError, InlineKeyboard } from "grammy";
 import { 
-    canRestrictUsers, 
-    canRestrictUsersCallback, 
-    canDeleteMessages, // for dmute
+    botCanRestrictUsers, 
+    botCanRestrictUsersCallback, 
+    botCanDeleteMessages, // for dmute
     checkElevatedUser,
     checkElevatedUserFrom,
     elevatedUsersOnly, 
@@ -52,7 +52,7 @@ const unmutePermissions = {
 const unmuteButton = new InlineKeyboard()
 .text("🔊 Unmute", "unmute-our-boy");
 
-bot.chatType("supergroup" || "group").command("mute", elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("mute", elevatedUsersOnly(botCanRestrictUsers(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to mute users!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -169,7 +169,7 @@ bot.chatType("supergroup" || "group").command("mute", elevatedUsersOnly(canRestr
     }
 })));
 
-bot.callbackQuery("unmute-our-boy", elevatedUsersCallbackOnly(canRestrictUsersCallback(async(ctx: any) => {
+bot.callbackQuery("unmute-our-boy", elevatedUsersCallbackOnly(botCanRestrictUsersCallback(async(ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.answerCallbackQuery({ text: "You don't have enough rights to unmute users!"}).catch((GrammyError: any) => {return})
@@ -222,7 +222,7 @@ bot.callbackQuery("unmute-our-boy", elevatedUsersCallbackOnly(canRestrictUsersCa
     }
 })));
 
-bot.chatType("supergroup" || "group").command("unmute", elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("unmute", elevatedUsersOnly(botCanRestrictUsers(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to unmute users!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -285,7 +285,7 @@ bot.chatType("supergroup" || "group").command("unmute", elevatedUsersOnly(canRes
     }
 })));
 
-bot.chatType("supergroup" || "group").command(["tmute", "tempmute"], elevatedUsersOnly(canRestrictUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command(["tmute", "tempmute"], elevatedUsersOnly(botCanRestrictUsers(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to mute users!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -386,7 +386,7 @@ bot.chatType("supergroup" || "group").command(["tmute", "tempmute"], elevatedUse
     }
 })));
 
-bot.chatType("supergroup" || "group").command(["dmute", "delmute"], elevatedUsersOnly(canRestrictUsers(canDeleteMessages(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command(["dmute", "delmute"], elevatedUsersOnly(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_restrict_members == false) {
         await ctx.reply("You don't have enough rights to mute users!", {reply_parameters: {message_id: ctx.message.message_id}});

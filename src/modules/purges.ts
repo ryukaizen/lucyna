@@ -1,8 +1,8 @@
 import bot from "../bot";
 import { logger, channel_log } from "../logger";
-import { canDeleteMessages, elevatedUsersOnly, userInfo } from "../helpers/helper_func";
+import { botCanDeleteMessages, elevatedUsersOnly, userInfo } from "../helpers/helper_func";
 
-bot.chatType("supergroup" || "group").command("del", elevatedUsersOnly(canDeleteMessages(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("del", elevatedUsersOnly(botCanDeleteMessages(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_delete_messages == false) {
         await ctx.reply("You don't have enough rights to delete messages!", {reply_parameters: {message_id: ctx.message.message_id}});

@@ -2,10 +2,10 @@ import bot from "../bot";
 import { InlineKeyboard } from "grammy";
 import { logger, channel_log } from "../logger";
 import { 
-    canInviteUsers, 
-    canPinMessages, 
-    canPromoteMembers,
-    canChangeInfo,
+    botCanInviteUsers, 
+    botCanPinMessages, 
+    botCanPromoteMembers,
+    botCanChangeInfo,
     checkElevatedUser,
     checkElevatedUserFrom,
     elevatedUsersOnly, 
@@ -39,7 +39,7 @@ const demote = {
     can_pin_messages: false
 }
 
-bot.chatType("supergroup" || "group").command("pin", elevatedUsersOnly(canPinMessages(async(ctx: any) => {
+bot.chatType("supergroup" || "group").command("pin", elevatedUsersOnly(botCanPinMessages(async(ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_pin_messages == false) {
         await ctx.reply("You don't have enough rights to pin messages!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -63,7 +63,7 @@ bot.chatType("supergroup" || "group").command("pin", elevatedUsersOnly(canPinMes
     }
 })));
 
-bot.chatType("supergroup" || "group").command("unpin", elevatedUsersOnly(canPinMessages(async(ctx: any) => {
+bot.chatType("supergroup" || "group").command("unpin", elevatedUsersOnly(botCanPinMessages(async(ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_pin_messages == false) {
         await ctx.reply("You don't have enough rights to unpin messages!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -83,7 +83,7 @@ bot.chatType("supergroup" || "group").command("unpin", elevatedUsersOnly(canPinM
     }
 })));
 
-bot.chatType("supergroup" || "group").command("unpinall", elevatedUsersOnly(canPinMessages(async(ctx: any) => {
+bot.chatType("supergroup" || "group").command("unpinall", elevatedUsersOnly(botCanPinMessages(async(ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_pin_messages == false) {
         await ctx.reply("You don't have enough rights to unpin messages!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -111,7 +111,7 @@ bot.chatType("supergroup" || "group").command("unpinall", elevatedUsersOnly(canP
 //         await ctx.editMessageText("Okay fine. Tell me when you change your mind!", { parse_mode: "HTML" });
 // }));
 
-bot.chatType("supergroup" || "group").command("invitelink", elevatedUsersOnly(canInviteUsers(async(ctx: any) => {
+bot.chatType("supergroup" || "group").command("invitelink", elevatedUsersOnly(botCanInviteUsers(async(ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_invite_users == false) {
         await ctx.reply("You don't have enough rights to use invitelinks!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -123,7 +123,7 @@ bot.chatType("supergroup" || "group").command("invitelink", elevatedUsersOnly(ca
     }
 })));
 
-bot.chatType("supergroup" || "group").command("promote", elevatedUsersOnly(canPromoteMembers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("promote", elevatedUsersOnly(botCanPromoteMembers(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_promote_members == false) {
         await ctx.reply("You don't have enough rights to promote members!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -202,7 +202,7 @@ bot.chatType("supergroup" || "group").command("promote", elevatedUsersOnly(canPr
     }
 })));
 
-bot.chatType("supergroup" || "group").command("demote", elevatedUsersOnly(canPromoteMembers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("demote", elevatedUsersOnly(botCanPromoteMembers(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_promote_members == false) {
         await ctx.reply("You don't have enough rights to demote members!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -283,7 +283,7 @@ bot.chatType("supergroup" || "group").command("demote", elevatedUsersOnly(canPro
     }
 })));
 
-bot.chatType("supergroup" || "group").command("title", elevatedUsersOnly(canPromoteMembers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("title", elevatedUsersOnly(botCanPromoteMembers(async (ctx: any) => {
     let user_info = await userInfo(ctx);
     if (user_info.can_promote_members == false) {
         await ctx.reply("You don't have enough rights to set custom admin title!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -355,7 +355,7 @@ bot.chatType("supergroup" || "group").command("title", elevatedUsersOnly(canProm
 })));
 
 // will write this later
-// bot.chatType("supergroup" || "group").command("setgpic", elevatedUsersOnly(canChangeInfo(async (ctx: any) => {
+// bot.chatType("supergroup" || "group").command("setgpic", elevatedUsersOnly(botCanChangeInfo(async (ctx: any) => {
 //     let user_info = await userInfo(ctx);
 //     if (user_info.can_change_info == false) {
 //         await ctx.reply("You don't have enough rights to change group profile picture!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -373,7 +373,7 @@ bot.chatType("supergroup" || "group").command("title", elevatedUsersOnly(canProm
 //     }
 // })));
 
-// bot.chatType("supergroup" || "group").command("delgpic", elevatedUsersOnly(canChangeInfo(async (ctx: any) => {
+// bot.chatType("supergroup" || "group").command("delgpic", elevatedUsersOnly(botCanChangeInfo(async (ctx: any) => {
 //     let user_info = await userInfo(ctx);
 //     if (user_info.can_change_info == false) {
 //         await ctx.reply("You don't have enough rights to remove group profile picture!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -384,7 +384,7 @@ bot.chatType("supergroup" || "group").command("title", elevatedUsersOnly(canProm
 //     }
 // })));
 
-// bot.chatType("supergroup" || "group").command("setgtitle", elevatedUsersOnly(canChangeInfo(async (ctx: any) => {
+// bot.chatType("supergroup" || "group").command("setgtitle", elevatedUsersOnly(botCanChangeInfo(async (ctx: any) => {
 //     let user_info = await userInfo(ctx);
 //     if (user_info.can_change_info == false) {
 //         await ctx.reply("You don't have enough rights to change group title!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -395,7 +395,7 @@ bot.chatType("supergroup" || "group").command("title", elevatedUsersOnly(canProm
 //     }
 // })));
 
-// bot.chatType("supergroup" || "group").command("setgdesc", elevatedUsersOnly(canChangeInfo(async (ctx: any) => {
+// bot.chatType("supergroup" || "group").command("setgdesc", elevatedUsersOnly(botCanChangeInfo(async (ctx: any) => {
 //     let user_info = await userInfo(ctx);
 //     if (user_info.can_change_info == false) {
 //         await ctx.reply("You don't have enough rights to change group description!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -406,7 +406,7 @@ bot.chatType("supergroup" || "group").command("title", elevatedUsersOnly(canProm
 //     }
 // })));
 
-// bot.chatType("supergroup" || "group").command("setgsticker", elevatedUsersOnly(canChangeInfo(async (ctx: any) => {
+// bot.chatType("supergroup" || "group").command("setgsticker", elevatedUsersOnly(botCanChangeInfo(async (ctx: any) => {
 //     let user_info = await userInfo(ctx);
 //     if (user_info.can_change_info == false) {
 //         await ctx.reply("You don't have enough rights to change group stickerpack!", {reply_parameters: {message_id: ctx.message.message_id}});
