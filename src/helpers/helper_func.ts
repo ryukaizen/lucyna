@@ -155,7 +155,7 @@ export function adminCanRestrictUsers(handler: any) {
                 await handler(ctx);
             }
             else {
-                await ctx.reply("You don't have enough rights to restrict users!", {reply_parameters: {message_id: ctx.message.message_id}});
+                await ctx.reply("You don't have enough rights to restrict / derestrict users!", {reply_parameters: {message_id: ctx.message.message_id}});
             }  
         }
         else {
@@ -176,7 +176,7 @@ export function adminCanRestrictUsersCallback(handler: any) {
                 await handler(ctx);
             }
             else {
-                await ctx.answerCallbackQuery({ text: "You don't have enough rights to restrict users!"}).catch((GrammyError: any) => {return})
+                await ctx.answerCallbackQuery({ text: "You don't have enough rights to restrict / derestrict users!"}).catch((GrammyError: any) => {return})
             }  
         }
         else {
@@ -206,6 +206,68 @@ export function adminCanDeleteMessages(handler: any) {
     };
 }
 
+export function adminCanPinMessages(handler: any) {
+    return async (ctx: any) => {
+        const chatMember = await ctx.chatMembers.getChatMember();
+        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
+            await handler(ctx);
+        }
+        else if (chatMember.status == "administrator") {
+            if (chatMember.can_pin_messages == true) {
+                await handler(ctx);
+            }
+            else {
+                await ctx.reply("You don't have enough rights to pin / unpin messages!", {reply_parameters: {message_id: ctx.message.message_id}});
+            }  
+        }
+        else {
+            await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+
+        }
+    };
+}
+
+export function adminCanInviteUsers(handler: any) {
+    return async (ctx: any) => {
+        const chatMember = await ctx.chatMembers.getChatMember();
+        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
+            await handler(ctx);
+        }
+        else if (chatMember.status == "administrator") {
+            if (chatMember.can_invite_users == true) {
+                await handler(ctx);
+            }
+            else {
+                await ctx.reply("You don't have enough rights to use invitelinks!", {reply_parameters: {message_id: ctx.message.message_id}});
+            }  
+        }
+        else {
+            await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+
+        }
+    };
+}
+
+export function adminCanPromoteUsers(handler: any) {
+    return async (ctx: any) => {
+        const chatMember = await ctx.chatMembers.getChatMember();
+        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
+            await handler(ctx);
+        }
+        else if (chatMember.status == "administrator") {
+            if (chatMember.can_promote_members == true) {
+                await handler(ctx);
+            }
+            else {
+                await ctx.reply("You don't have enough rights to promote / demote members!", {reply_parameters: {message_id: ctx.message.message_id}});
+            }  
+        }
+        else {
+            await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+
+        }
+    };
+}
 
 // ====================================================
 
