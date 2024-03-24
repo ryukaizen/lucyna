@@ -3,7 +3,6 @@ import constants from "../config"
 import { Menu } from "@grammyjs/menu";
 import { InlineKeyboard } from "grammy";
 import { get_rules } from "../database/rules_sql"
-import { typingAction } from "../helpers/helper_func";
 
 const greets: string[] = [
     "That's what she said,", "Sir, this is a Wendy's,", "At your service,", "Hi!", "Hello!", "Hey!", "Hey there!", "Hiya!", "Greetings!", "Howdy!", "G'day!", "Salutations!", "What's up?", "How's it going?", "Wassup?",
@@ -154,10 +153,10 @@ bot.chatType("supergroup" || "group").command("start", (async(ctx: any) => {
     }
 }));
 
-bot.chatType("private").command("help", typingAction(async(ctx: any) => {
+bot.chatType("private").command("help", (async(ctx: any) => {
     await ctx.api.sendAnimation(ctx.chat.id, constants.START_GIF, {caption: help_text, reply_markup: help_submenu, parse_mode: "HTML"});
 }));
 
-bot.chatType("supergroup" || "group").command("help", typingAction(async(ctx: any) => {
+bot.chatType("supergroup" || "group").command("help", (async(ctx: any) => {
     await ctx.reply("Need help?", {reply_parameters: {message_id: ctx.message.message_id}, reply_markup: helpButton, parse_mode: "HTML"});
 }));

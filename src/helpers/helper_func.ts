@@ -1,13 +1,6 @@
 import constants from "../config";
 import { gramjs, gramJsApi } from "../utility";
 
-export function typingAction(handler: any) {
-    return async (ctx: any) => {
-        await ctx.api.sendChatAction(ctx.chat.id, "typing");
-        await handler(ctx);
-    };
-}
-
 // ==================== USER STUFF ====================
 
 export function ownerOnly(handler: any) {
@@ -116,52 +109,6 @@ export async function userInfo(ctx: any) {
     return user_info;
 }
 
-async function usernameExtractor(args: string) {
-    let regex = /@([a-zA-Z][a-zA-Z0-9]{4,})/g;
-    let username;
-    let match: RegExpExecArray | null;
-
-    while ((match = regex.exec(args)) !== null) {
-        username = match[1];
-    }
-    return username;
-}
-
-async function userIdExtractor(args: string) {
-    let regex = /(\b\d{9,10}\b)/g; // filter out 9 or 10 digit integers
-    let user_id;
-    let match: RegExpExecArray | null;
-
-    while ((match = regex.exec(args)) !== null) {
-        user_id = match[1];
-    }
-    return user_id;
-}
-
-export async function resolveUsername(ctx: any) {
-    let args = ctx.match;
-    let userhandle;
-    let username = await usernameExtractor(args);
-    let user_id = await userIdExtractor(args);
-
-    if (username != undefined && username.length > 0) {
-        const user = await gramjs.invoke(
-            new gramJsApi.users.GetFullUser({
-              id: username,
-            })
-        );
-        userhandle = user;
-    }
-    else if (user_id != undefined && user_id.length > 0) {
-        const user = await gramjs.invoke(
-            new gramJsApi.users.GetFullUser({
-              id: user_id,
-            })
-        );
-        userhandle = user;
-    }
-    return userhandle;
-}
 
 // future use maybe
 export async function isUserInChat(ctx: any, chat_id: string, user_id: number) {
@@ -194,6 +141,72 @@ export async function isUserBanned(ctx: any, chat_id: string, user_id: number) {
         return false;
     }
 }
+// ====================================================
+
+// ==================== ADMIN STUFF ====================
+export function adminCanRestrictUsers(handler: any) {
+    return async (ctx: any) => {
+        const chatMember = await ctx.chatMembers.getChatMember();
+        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
+            await handler(ctx);
+        }
+        else if (chatMember.status == "administrator") {
+            if (chatMember.can_restrict_members == true) {
+                await handler(ctx);
+            }
+            else {
+                await ctx.reply("You don't have enough rights to restrict users!", {reply_parameters: {message_id: ctx.message.message_id}});
+            }  
+        }
+        else {
+            await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+
+        }
+    };
+}
+
+export function adminCanRestrictUsersCallback(handler: any) {
+    return async (ctx: any) => {
+        const chatMember = await ctx.chatMembers.getChatMember();
+        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator" ) {
+            await handler(ctx);
+        }
+        else if (chatMember.status == "administrator") {
+            if (chatMember.can_restrict_members == true) {
+                await handler(ctx);
+            }
+            else {
+                await ctx.answerCallbackQuery({ text: "You don't have enough rights to restrict users!"}).catch((GrammyError: any) => {return})
+            }  
+        }
+        else {
+            await ctx.answerCallbackQuery({ text: "Only admins can use this button!"}).catch((GrammyError: any) => {return})
+        }
+    };
+}
+
+export function adminCanDeleteMessages(handler: any) {
+    return async (ctx: any) => {
+        const chatMember = await ctx.chatMembers.getChatMember();
+        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
+            await handler(ctx);
+        }
+        else if (chatMember.status == "administrator") {
+            if (chatMember.can_delete_messages == true) {
+                await handler(ctx);
+            }
+            else {
+                await ctx.reply("You don't have enough rights to delete messages!", {reply_parameters: {message_id: ctx.message.message_id}});
+            }  
+        }
+        else {
+            await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+
+        }
+    };
+}
+
+
 // ====================================================
 
 // ==================== BOT STUFF ====================
@@ -329,7 +342,63 @@ export function botCanChangeInfo(handler: any) {
         }
     }
 }
-// ====================================================
+// ===================================================================
+
+// ===================== MISCELLANEOUS STUFF =========================
+
+export function typingAction(handler: any) {
+    return async (ctx: any) => {
+        await ctx.api.sendChatAction(ctx.chat.id, "typing");
+        await handler(ctx);
+    };
+}
+
+async function usernameExtractor(args: string) {
+    let regex = /@([a-zA-Z][a-zA-Z0-9]{4,})/g;
+    let username;
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(args)) !== null) {
+        username = match[1];
+    }
+    return username;
+}
+
+async function userIdExtractor(args: string) {
+    let regex = /(\b\d{9,10}\b)/g; // filter out 9 or 10 digit integers
+    let user_id;
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(args)) !== null) {
+        user_id = match[1];
+    }
+    return user_id;
+}
+
+export async function resolveUserhandle(ctx: any) {
+    let args = ctx.match;
+    let userhandle;
+    let username = await usernameExtractor(args);
+    let user_id = await userIdExtractor(args);
+
+    if (username != undefined && username.length > 0) {
+        const user = await gramjs.invoke(
+            new gramJsApi.users.GetFullUser({
+              id: username,
+            })
+        );
+        userhandle = user;
+    }
+    else if (user_id != undefined && user_id.length > 0) {
+        const user = await gramjs.invoke(
+            new gramJsApi.users.GetFullUser({
+              id: user_id,
+            })
+        );
+        userhandle = user;
+    }
+    return userhandle;
+}
 
 export async function extract_time(ctx: any, time_val: string): Promise<string | number> {
     const units = ["m", "h", "d"];

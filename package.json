@@ -39,7 +39,7 @@
     "@grammyjs/chat-members": "^1.0.12",
     "@grammyjs/menu": "^1.2.1",
     "@grammyjs/runner": "^2.0.3",
-    "@grammyjs/storage-prisma": "^2.4.1",
+    "@grammyjs/storage-prisma": "^2.4.2",
     "@grammyjs/transformer-throttler": "^1.2.1",
     "@prisma/adapter-pg": "^5.8.1",
     "@prisma/client": "^5.9.0",
