@@ -33,7 +33,6 @@ export function superusersOnly(handler: any) {
             await handler(ctx);
         }
         else {
-            // await ctx.reply("Only superusers can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
             return;
         }
     };
