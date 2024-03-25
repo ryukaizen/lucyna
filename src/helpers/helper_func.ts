@@ -461,52 +461,58 @@ export async function resolveUserhandle(ctx: any) {
     return userhandle;
 }
 
-export async function extract_time(ctx: any, time_val: string): Promise<string | number> {
+export async function extract_time(ctx: any, time_val: string) {
     const units = ["m", "h", "d"];
-    const timeUnits = time_val.split(/\s+/); // Split the time_val by whitespace
+    const timeUnits = time_val.match(/\d+[dhm]/g); // Match any combination of digits followed by 'd', 'h', or 'm'
     
     let totalTime = 0;
+
+    if (!timeUnits || timeUnits.some(unit => {
+        const time_num = unit.slice(0, -1);
+        const unitType = unit.slice(-1);
+        return !/^\d+$/.test(time_num) || !units.includes(unitType);
+    })) {
+        await ctx.reply("Invalid time amount specified.", {reply_parameters: {message_id: ctx.message.message_id}});
+        return false;
+    }
 
     for (const timeUnit of timeUnits) {
         const unit = timeUnit.slice(-1);
         const time_num = timeUnit.slice(0, -1);
         
-        if (!/^\d+$/.test(time_num) || !units.includes(unit)) {
-            await ctx.reply("Invalid time amount specified.", {reply_parameters: {message_id: ctx.message.message_id}});
-            return "";
-        }
-        else {
-            switch (unit) {
-                case "m":
-                    totalTime += parseInt(time_num) * 60;
-                    break;
-                case "h":
-                    totalTime += parseInt(time_num) * 60 * 60;
-                    break;
-                case "d":
-                    totalTime += parseInt(time_num) * 24 * 60 * 60;
-                    break;
-                default:
-                    await ctx.reply("Invalid time type specified. Expected m, h, or d.", {reply_parameters: {message_id: ctx.message.message_id}});
-                    return "";
-            }
+        switch (unit) {
+            case "m":
+                totalTime += parseInt(time_num) * 60;
+                break;
+            case "h":
+                totalTime += parseInt(time_num) * 60 * 60;
+                break;
+            case "d":
+                totalTime += parseInt(time_num) * 24 * 60 * 60;
+                break;
+            default:
+                await ctx.reply("Invalid time type specified. Expected m, h, or d.", {reply_parameters: {message_id: ctx.message.message_id}});
+                return false;
         }
     }
+    
     const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
-    return currentTime + totalTime;
+    return totalTime ? currentTime + totalTime : false;
 }
 
 export function convertUnixTime(unixTime: number): string {
-    const currentTime = Math.floor(Date.now() / 1000);
-    const timeDifference = unixTime - currentTime;
+    const timeDifference = unixTime - Math.floor(Date.now() / 1000);
 
-    if (timeDifference < 60) {
-        return `${timeDifference} second(s)`;
-    } else if (timeDifference < 3600) {
-        return `${Math.floor(timeDifference / 60)} minute(s)`;
-    } else if (timeDifference < 86400) {
-        return `${Math.floor(timeDifference / 3600)} hour(s)`;
-    } else {
-        return `${Math.floor(timeDifference / 86400)} day(s)`;
-    }
+    const days = Math.floor(timeDifference / 86400);
+    const hours = Math.floor((timeDifference % 86400) / 3600);
+    const minutes = Math.floor((timeDifference % 3600) / 60);
+    const seconds = timeDifference % 60;
+
+    let result = "";
+    if (days) result += `${days} day(s) `;
+    if (hours) result += `${hours} hour(s) `;
+    if (minutes) result += `${minutes} minute(s) `;
+    if (seconds) result += `${seconds} second(s)`;
+
+    return result.trim();
 }
