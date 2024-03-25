@@ -40,13 +40,10 @@ export function superusersOnly(handler: any) {
 
 export function elevatedUsersOnly(handler: any) {
     return async (ctx: any) => {
-        let user = await ctx.getAuthor();
-        if (ctx.from.id == constants.OWNER_ID || constants.SUPERUSERS.includes(ctx.from.id)) {
+        const chatMember = await ctx.chatMembers.getChatMember();
+        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator" || chatMember.status == "administrator") {
             await handler(ctx);
-        }
-        else if (user.status == "creator" || user.status == "administrator") {
-            await handler(ctx);
-        }
+        } 
         else {
             await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
         }
@@ -55,18 +52,14 @@ export function elevatedUsersOnly(handler: any) {
 
 export function elevatedUsersCallbackOnly(handler: any) {
     return async (ctx: any) => {
-        let user = await ctx.getAuthor();
-        if (ctx.from.id == constants.OWNER_ID || constants.SUPERUSERS.includes(ctx.from.id)) {
+        const chatMember = await ctx.chatMembers.getChatMember();
+        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator" || chatMember.status == "administrator") {
             await handler(ctx);
-        }
-        else if (user.status == "creator" || user.status == "administrator") {
-            await handler(ctx);
-        }
+        } 
         else {
             await ctx.answerCallbackQuery({ text: "Only admins can use this button!"});
         }
     };
-
 }
 
 export function samePersonCallbackOnly(handler: any) {
