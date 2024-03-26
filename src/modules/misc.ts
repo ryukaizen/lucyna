@@ -46,7 +46,7 @@ bot.chatType("supergroup" || "group").command("sysinfo", superusersOnly(async (c
         `• Memory: <code>${formatBytes(mem.available)} / ${formatBytes(mem.total)}</code>\n` +
         `• Disk: <code>${disk[0].name} ${formatBytes(disk[0].size)}</code>\n` +
         `• CPU: <code>${cpu.manufacturer} ${cpu.brand} ${cpu.speed}GHz</code>\n` +
-        `• GPU: <code>${gpu.controllers[0].model}</code>\n` +
+        // `• GPU: <code>${gpu.controllers[0].model}</code>\n` +
         `• Network: <code>${network[0].iface}</code>\n` +
         `• Shell: <code>${shell}</code>\n` +
         `• Kernel: <code>${kernel}</code>\n` +

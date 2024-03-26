@@ -1,11 +1,11 @@
 import fs from 'fs/promises';
 import bot from "./bot";
 import constants from "./config"
+import { autoRetry } from "@grammyjs/auto-retry";
 import { run } from "@grammyjs/runner";
-import { apiThrottler } from "@grammyjs/transformer-throttler";
+//import { apiThrottler } from "@grammyjs/transformer-throttler";
 import { logger } from "./logger"
 import { channel_log } from "./logger";
-import { LogLevel } from "telegram/extensions/Logger";
 import { gramjs } from './utility';
 
 // Initialize grammY runner
@@ -18,8 +18,14 @@ const runner = run(bot, {
 });
 
 // Flood control plugin
-const throttler = apiThrottler();
-bot.api.config.use(throttler);
+// const throttler = apiThrottler();
+// bot.api.config.use(throttler);
+
+// Auto-retry plugin
+bot.api.config.use(autoRetry({
+    maxRetryAttempts: 1, 
+    maxDelaySeconds: 5, 
+}));
 
 const ALL_MODULES: string[] = [];
 
