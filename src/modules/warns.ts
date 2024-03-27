@@ -11,7 +11,10 @@ import {
     reset_warn_numbers,
     reset_all_warns
 } from "../database/warns_sql";
-import { 
+import {
+    adminCanRestrictUsers,
+    adminCanRestrictUsersCallback,
+    adminCanDeleteMessages, 
     botCanRestrictUsers, 
     botCanRestrictUsersCallback, 
     botCanDeleteMessages, 
@@ -21,7 +24,6 @@ import {
     elevatedUsersCallbackOnly, 
     ownerOnly,
     ownerOnlyCallback,
-    userInfo
 } from "../helpers/helper_func";
 
 const unwarnButton = new InlineKeyboard()
@@ -87,210 +89,248 @@ bot.chatType("supergroup" || "group").command("warns", (async (ctx: any) => {
     }
 }));
 
-bot.chatType("supergroup" || "group").command("warn", elevatedUsersOnly(botCanRestrictUsers(async (ctx: any) => {
-    let user_info = await userInfo(ctx);
-    if (user_info.can_restrict_members == false) {
-        await ctx.reply("You don't have enough rights to warn users!", {reply_parameters: {message_id: ctx.message.message_id}});
-        return;
-    }
-    else {
-        if (ctx.message.reply_to_message != undefined) {
-            if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
-                await ctx.reply("Warn myself? for what!?", {reply_parameters: {message_id: ctx.message.message_id}});
-            }
-            else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
-                await ctx.reply("It's good to be self-aware.", {reply_parameters: {message_id: ctx.message.message_id}});
-            }
-            else if (await checkElevatedUser(ctx) == true) {
-                await ctx.reply("⚠️ <b>Warned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});   
-            }
-            else {
-                let getWarnNumbers = await get_warn_numbers(ctx.chat.id, ctx.message.reply_to_message.from.id);
-                let getWarnSettings = await get_warn_settings(ctx.chat.id);
-                let warnNumber = getWarnNumbers?.num_warns;
-                let warnReasons = getWarnNumbers?.reasons;
-                let warnLimit = getWarnSettings?.warn_limit;
-                let warnMode = getWarnSettings?.soft_warn;
-                
-                warnNumber = warnNumber ?? 0n;
-                warnNumber += 1n;
-                if (warnLimit == undefined) {
-                    await set_warn_settings(ctx.chat.id.toString(), 3n, false);
-                    warnLimit = 3n;
-                }
-                let warn_message = (
-                    `<b>⚠️ Warned</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
-                    `Warner: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
-                    `Warns: <b>${warnNumber}/${warnLimit}</b>\n`
-                );
-                warnReasons = warnReasons ?? [];
-                let inputReason;
-                if (ctx.match) {
-                    inputReason = ctx.match;
-                }
-                else {
-                    inputReason = "No reason provided";
-                }
-                warnReasons.push(`${inputReason}`);
-                let warnReasonsWithBullets = warnReasons.map((reason, index) => `\n ${index + 1}. ${reason}`);
-                warn_message += `Reason: ${warnReasonsWithBullets}`;
-                await set_warn_numbers(ctx.chat.id.toString(), ctx.message.reply_to_message.from.id, [`${inputReason}`]);
-                        
-                if (warnNumber >= warnLimit) {
-                    if (warnMode == true) {
-                        warn_message += "\n\n<b>🦿 Kicked out of the group!</b>"
-                        await ctx.api.unbanChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
-                        .then(() => {
-                            ctx.api.sendMessage(ctx.chat.id, warn_message, {parse_mode: "HTML"});
-                        })
-                        .catch((GrammyError: any) => {
-                            ctx.reply("Failed to kick user, they can be removed manually.");
-                            logger.error(`${GrammyError}`);
-                            channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
-                        });
-                    }
-                    else {
-                        warn_message += "\n\n<b>❌ Banned out of the group!</b>"
-                        await ctx.api.banChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
-                        .then(() => {
-                            ctx.api.sendMessage(ctx.chat.id, warn_message, {parse_mode: "HTML"});
-                        })
-                        .catch((GrammyError: any) => {
-                            ctx.reply("Failed to ban user, they can be removed manually.");
-                            logger.error(`${GrammyError}`);
-                            channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
-                        });
-                    }
-                }
-                else {
-                    await ctx.api.sendMessage(ctx.chat.id, warn_message, {reply_markup: unwarnButton, parse_mode: "HTML"});
-                }
-            }
+bot.chatType("supergroup" || "group").command("warn", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+    if (ctx.message.reply_to_message != undefined) {
+        if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
+            await ctx.reply("Warn myself? for what!?", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+        else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
+            await ctx.reply("It's good to be self-aware.", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+        else if (await checkElevatedUser(ctx) == true) {
+            await ctx.reply("⚠️ <b>Warned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});   
         }
         else {
-            let args = ctx.match;
-            if (args) {
-                let split_args = args.split(" ");
-                let user_id = split_args[0];
-                let user_info =  await ctx.getChatMember(user_id)
-                    .catch((GrammyError: any) => {
-                        return;
-                    });
-                if (user_info != undefined) {
-                    if (user_info.user.id == bot.botInfo.id) {
-                        await ctx.reply("Warn myself? for what!?", {reply_parameters: {message_id: ctx.message.message_id}});
-                    }
-                    else if (user_info.user.id == ctx.from.id) {
-                        await ctx.reply("It's good to be self-aware.", {reply_parameters: {message_id: ctx.message.message_id}});
-                    }
-                    else if (await checkElevatedUserFrom(ctx, user_info) == true) {
-                        await ctx.reply("⚠️ <b>Warned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}});   
-                    }
-                    else {
-                        let getWarnNumbers = await get_warn_numbers(ctx.chat.id, user_info.user.id);
-                        let getWarnSettings = await get_warn_settings(ctx.chat.id);
-                        let warnNumber = getWarnNumbers?.num_warns;
-                        let warnReasons = getWarnNumbers?.reasons;
-                        let warnLimit = getWarnSettings?.warn_limit;
-                        let warnMode = getWarnSettings?.soft_warn;
-                
-                        warnNumber = warnNumber ?? 0n;
-                        warnNumber += 1n;
-                        if (warnLimit == undefined) {
-                            await set_warn_settings(ctx.chat.id.toString(), 3n, false);
-                            warnLimit = 3n;
-                        }
-                        let warn_message = (
-                            `<b>⚠️ Warned</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>)<b>!</b>\n\n` +
-                            `Warner: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
-                            `Warns: <b>${warnNumber}/${warnLimit}</b>\n`
-                        );
-                        warnReasons = warnReasons ?? [];
-                        let inputReason;
-                        inputReason = inputReason ?? "";
-                        if (split_args[1] != undefined) {
-                            inputReason += split_args.slice(1).join(" ");
-                        }
-                        else {
-                            inputReason = "No reason provided";
-                        }
-                        warnReasons.push(`${inputReason}`);
-                        let warnReasonsWithBullets = warnReasons.map((reason, index) => `\n ${index + 1}. ${reason}`);
-                        warn_message += `Reason: ${warnReasonsWithBullets}`;
-                        await set_warn_numbers(ctx.chat.id.toString(), user_info.user.id, [`${inputReason}`]);
-                        
-                        if (warnNumber >= warnLimit) {
-                            if (warnMode == true) {
-                                warn_message += "\n\n<b>🦿 Kicked out of the group!</b>"
-                                await ctx.api.unbanChatMember(ctx.chat.id, user_info.user.id)
-                                .then(() => {
-                                    ctx.api.sendMessage(ctx.chat.id, warn_message, {parse_mode: "HTML"});
-                                })
-                                .catch((GrammyError: any) => {
-                                    ctx.reply("Failed to kick user, they can be removed manually.");
-                                    logger.error(`${GrammyError}`);
-                                    channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
-                                });
-                            }
-                            else {
-                                warn_message += "\n\n<b>❌ Banned out of the group!</b>"
-                                await ctx.api.banChatMember(ctx.chat.id, user_info.user.id)
-                                .then(() => {
-                                    ctx.api.sendMessage(ctx.chat.id, warn_message, {parse_mode: "HTML"});
-                                })
-                                .catch((GrammyError: any) => {
-                                    ctx.reply("Failed to ban user, they can be removed manually.");
-                                    logger.error(`${GrammyError}`);
-                                    channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
-                                });
-                            }
-                        }
-                        else {
-                            await ctx.api.sendMessage(ctx.chat.id, warn_message, {reply_markup: unwarnButton, parse_mode: "HTML"});
-                        }
-                    }
-                }
-                else {
-                    await ctx.reply("The provided user ID seems to be invalid!", {reply_parameters: {message_id: ctx.message.message_id}});
-                }
-            }       
-            else {        
-                await ctx.reply("Please type the user ID next to /warn command or reply to a message with /warn command.", {reply_parameters: {message_id: ctx.message.message_id}});
-            }   
-        }
-    }
-})));
-
-bot.callbackQuery("unwarn-once-my-beloved", elevatedUsersCallbackOnly(botCanRestrictUsersCallback(async(ctx: any) => {
-    let user_info = await userInfo(ctx);
-    if (user_info.can_restrict_members == false) {
-        await ctx.answerCallbackQuery({ text: "You don't have enough rights to unwarn users!"}).catch((GrammyError: any) => {return})
-        return;
-    }
-    else {
-        let text = ctx.callbackQuery.message?.text || "";
-        let username = text.match(/(?<=⚠️ Warned )\S+/);
-        let userid = text.match(/(?<=\()\d+(?=\))/);
-        if (username && userid) {
-            let userId = BigInt(userid[0]);
-            let userName = String(username[0]);
-
-            let getWarnNumbers = await get_warn_numbers(ctx.chat.id, userId);
+            let getWarnNumbers = await get_warn_numbers(ctx.chat.id, ctx.message.reply_to_message.from.id);
             let getWarnSettings = await get_warn_settings(ctx.chat.id);
             let warnNumber = getWarnNumbers?.num_warns;
             let warnReasons = getWarnNumbers?.reasons;
             let warnLimit = getWarnSettings?.warn_limit;
+            let warnMode = getWarnSettings?.soft_warn;
+            
+            warnNumber = warnNumber ?? 0n;
+            warnNumber += 1n;
+            if (warnLimit == undefined) {
+                await set_warn_settings(ctx.chat.id.toString(), 3n, false);
+                warnLimit = 3n;
+            }
+            let warn_message = (
+                `<b>⚠️ Warned</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
+                `Warner: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
+                `Warns: <b>${warnNumber}/${warnLimit}</b>\n`
+            );
+            warnReasons = warnReasons ?? [];
+            let inputReason;
+            if (ctx.match) {
+                inputReason = ctx.match;
+            }
+            else {
+                inputReason = "No reason provided";
+            }
+            warnReasons.push(`${inputReason}`);
+            let warnReasonsWithBullets = warnReasons.map((reason, index) => `\n ${index + 1}. ${reason}`);
+            warn_message += `Reason: ${warnReasonsWithBullets}`;
+            await set_warn_numbers(ctx.chat.id.toString(), ctx.message.reply_to_message.from.id, [`${inputReason}`]);
+                    
+            if (warnNumber >= warnLimit) {
+                if (warnMode == true) {
+                    warn_message += "\n\n<b>🦿 Kicked out of the group!</b>"
+                    await ctx.api.unbanChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
+                    .then(() => {
+                        ctx.api.sendMessage(ctx.chat.id, warn_message, {parse_mode: "HTML"});
+                    })
+                    .catch((GrammyError: any) => {
+                        ctx.reply("Failed to kick user, they can be removed manually.");
+                        logger.error(`${GrammyError}`);
+                        channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                    });
+                }
+                else {
+                    warn_message += "\n\n<b>❌ Banned out of the group!</b>"
+                    await ctx.api.banChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
+                    .then(() => {
+                        ctx.api.sendMessage(ctx.chat.id, warn_message, {parse_mode: "HTML"});
+                    })
+                    .catch((GrammyError: any) => {
+                        ctx.reply("Failed to ban user, they can be removed manually.");
+                        logger.error(`${GrammyError}`);
+                        channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                    });
+                }
+            }
+            else {
+                await ctx.api.sendMessage(ctx.chat.id, warn_message, {reply_markup: unwarnButton, parse_mode: "HTML"});
+            }
+        }
+    }
+    else {
+        let args = ctx.match;
+        if (args) {
+            let split_args = args.split(" ");
+            let user_id = split_args[0];
+            let user_info =  await ctx.getChatMember(user_id)
+                .catch((GrammyError: any) => {
+                    return;
+                });
+            if (user_info != undefined) {
+                if (user_info.user.id == bot.botInfo.id) {
+                    await ctx.reply("Warn myself? for what!?", {reply_parameters: {message_id: ctx.message.message_id}});
+                }
+                else if (user_info.user.id == ctx.from.id) {
+                    await ctx.reply("It's good to be self-aware.", {reply_parameters: {message_id: ctx.message.message_id}});
+                }
+                else if (await checkElevatedUserFrom(ctx, user_info) == true) {
+                    await ctx.reply("⚠️ <b>Warned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}});   
+                }
+                else {
+                    let getWarnNumbers = await get_warn_numbers(ctx.chat.id, user_info.user.id);
+                    let getWarnSettings = await get_warn_settings(ctx.chat.id);
+                    let warnNumber = getWarnNumbers?.num_warns;
+                    let warnReasons = getWarnNumbers?.reasons;
+                    let warnLimit = getWarnSettings?.warn_limit;
+                    let warnMode = getWarnSettings?.soft_warn;
+            
+                    warnNumber = warnNumber ?? 0n;
+                    warnNumber += 1n;
+                    if (warnLimit == undefined) {
+                        await set_warn_settings(ctx.chat.id.toString(), 3n, false);
+                        warnLimit = 3n;
+                    }
+                    let warn_message = (
+                        `<b>⚠️ Warned</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>)<b>!</b>\n\n` +
+                        `Warner: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
+                        `Warns: <b>${warnNumber}/${warnLimit}</b>\n`
+                    );
+                    warnReasons = warnReasons ?? [];
+                    let inputReason;
+                    inputReason = inputReason ?? "";
+                    if (split_args[1] != undefined) {
+                        inputReason += split_args.slice(1).join(" ");
+                    }
+                    else {
+                        inputReason = "No reason provided";
+                    }
+                    warnReasons.push(`${inputReason}`);
+                    let warnReasonsWithBullets = warnReasons.map((reason, index) => `\n ${index + 1}. ${reason}`);
+                    warn_message += `Reason: ${warnReasonsWithBullets}`;
+                    await set_warn_numbers(ctx.chat.id.toString(), user_info.user.id, [`${inputReason}`]);
+                    
+                    if (warnNumber >= warnLimit) {
+                        if (warnMode == true) {
+                            warn_message += "\n\n<b>🦿 Kicked out of the group!</b>"
+                            await ctx.api.unbanChatMember(ctx.chat.id, user_info.user.id)
+                            .then(() => {
+                                ctx.api.sendMessage(ctx.chat.id, warn_message, {parse_mode: "HTML"});
+                            })
+                            .catch((GrammyError: any) => {
+                                ctx.reply("Failed to kick user, they can be removed manually.");
+                                logger.error(`${GrammyError}`);
+                                channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                            });
+                        }
+                        else {
+                            warn_message += "\n\n<b>❌ Banned out of the group!</b>"
+                            await ctx.api.banChatMember(ctx.chat.id, user_info.user.id)
+                            .then(() => {
+                                ctx.api.sendMessage(ctx.chat.id, warn_message, {parse_mode: "HTML"});
+                            })
+                            .catch((GrammyError: any) => {
+                                ctx.reply("Failed to ban user, they can be removed manually.");
+                                logger.error(`${GrammyError}`);
+                                channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                            });
+                        }
+                    }
+                    else {
+                        await ctx.api.sendMessage(ctx.chat.id, warn_message, {reply_markup: unwarnButton, parse_mode: "HTML"});
+                    }
+                }
+            }
+            else {
+                await ctx.reply("The provided user ID seems to be invalid!", {reply_parameters: {message_id: ctx.message.message_id}});
+            }
+        }       
+        else {        
+            await ctx.reply("Please type the user ID next to /warn command or reply to a message with /warn command.", {reply_parameters: {message_id: ctx.message.message_id}});
+        }   
+    }
+})));
 
+bot.callbackQuery("unwarn-once-my-beloved", adminCanRestrictUsersCallback(botCanRestrictUsersCallback(async(ctx: any) => {
+    let text = ctx.callbackQuery.message?.text || "";
+    let username = text.match(/(?<=⚠️ Warned )\S+/);
+    let userid = text.match(/(?<=\()\d+(?=\))/);
+    if (username && userid) {
+        let userId = BigInt(userid[0]);
+        let userName = String(username[0]);
+        let getWarnNumbers = await get_warn_numbers(ctx.chat.id, userId);
+        let getWarnSettings = await get_warn_settings(ctx.chat.id);
+        let warnNumber = getWarnNumbers?.num_warns;
+        let warnReasons = getWarnNumbers?.reasons;
+        let warnLimit = getWarnSettings?.warn_limit;
+        let warns_message;
+        if (warnNumber == 0n || warnNumber == undefined) {
+            warnNumber = 0n;
+            warns_message = `User <a href="tg://user?id=${userId}">${userName}</a> (<code>${userId}</code>) have no warnings yet!`
+        }
+        else {
+            warnNumber = warnNumber ?? 0n;
+            warnNumber -= 1n;
+            warns_message = (
+                `<b>🏳️ Removed latest warn for</b> <a href="tg://user?id=${userId}">${userName}</a> (<code>${userId}</code>)<b>!</b>\n\n` +
+                `Unwarned by: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
+                `Warn count: <b>${warnNumber}/${warnLimit}</b>\n`
+            );
+            warnReasons = warnReasons ?? [];
+            if (warnReasons.length === 1) {
+                warnReasons.pop()
+                warnReasons = []
+            }
+            else {
+                warnReasons.pop();
+            }
+            await reset_warn_numbers(ctx.chat.id.toString(), userId, warnReasons);
+        }   
+        await ctx.editMessageText(warns_message, { parse_mode: "HTML" });
+        }       
+    else {
+        await ctx.answerCallbackQuery({
+            text: `Unable to extract user information.`,
+        }).catch((GrammyError: any) => {return})
+    }
+})));
+
+bot.chatType("supergroup" || "group").command(["unwarn", "rmwarn"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+    if (ctx.message.reply_to_message != undefined) {
+        if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
+            await ctx.reply("I can't be warned in first place.", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+        else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
+            await ctx.reply("You are an admin. Period.", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+        else if (await checkElevatedUser(ctx) == true) {
+            await ctx.reply("🏳️ <b>Unwarned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});   
+        }
+        else {
+            let getWarnNumbers = await get_warn_numbers(ctx.chat.id, ctx.message.reply_to_message.from.id);
+            let getWarnSettings = await get_warn_settings(ctx.chat.id);
+            let warnNumber = getWarnNumbers?.num_warns;
+            let warnReasons = getWarnNumbers?.reasons;
+            let warnLimit = getWarnSettings?.warn_limit;
             let warns_message;
+            if (warnLimit == undefined) {
+                await set_warn_settings(ctx.chat.id.toString(), 3n, false);
+                warnLimit = 3n;
+            }
             if (warnNumber == 0n || warnNumber == undefined) {
                 warnNumber = 0n;
-                warns_message = `User <a href="tg://user?id=${userId}">${userName}</a> (<code>${userId}</code>) have no warnings yet!`
+                warns_message = `User <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>) have no warnings yet!`
             }
             else {
                 warnNumber = warnNumber ?? 0n;
                 warnNumber -= 1n;
                 warns_message = (
-                    `<b>🏳️ Removed latest warn for</b> <a href="tg://user?id=${userId}">${userName}</a> (<code>${userId}</code>)<b>!</b>\n\n` +
+                    `<b>🏳️ Removed latest warn for</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
                     `Unwarned by: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
                     `Warn count: <b>${warnNumber}/${warnLimit}</b>\n`
                 );
@@ -302,340 +342,259 @@ bot.callbackQuery("unwarn-once-my-beloved", elevatedUsersCallbackOnly(botCanRest
                 else {
                     warnReasons.pop();
                 }
-                await reset_warn_numbers(ctx.chat.id.toString(), userId, warnReasons);
+                await reset_warn_numbers(ctx.chat.id.toString(), ctx.message.reply_to_message.from.id, warnReasons);
             }   
-            await ctx.editMessageText(warns_message, { parse_mode: "HTML" });
-        }       
-        else {
-            await ctx.answerCallbackQuery({
-                text: `Unable to extract user information.`,
-            }).catch((GrammyError: any) => {return})
+            await ctx.api.sendMessage(ctx.chat.id, warns_message, {parse_mode: "HTML"}); 
         }
     }
-})));
-
-bot.chatType("supergroup" || "group").command(["unwarn", "rmwarn"], elevatedUsersOnly(botCanRestrictUsers(async (ctx: any) => {
-    let user_info = await userInfo(ctx);
-    if (user_info.can_restrict_members == false) {
-        await ctx.reply("You don't have enough rights to unwarn users!", {reply_parameters: {message_id: ctx.message.message_id}});
-        return;
-    }
-    else {
-        if (ctx.message.reply_to_message != undefined) {
-            if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
-                await ctx.reply("I can't be warned in first place.", {reply_parameters: {message_id: ctx.message.message_id}});
-            }
-            else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
-                await ctx.reply("You are an admin. Period.", {reply_parameters: {message_id: ctx.message.message_id}});
-            }
-            else if (await checkElevatedUser(ctx) == true) {
-                await ctx.reply("🏳️ <b>Unwarned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});   
-            }
-            else {
-                let getWarnNumbers = await get_warn_numbers(ctx.chat.id, ctx.message.reply_to_message.from.id);
-                let getWarnSettings = await get_warn_settings(ctx.chat.id);
-                let warnNumber = getWarnNumbers?.num_warns;
-                let warnReasons = getWarnNumbers?.reasons;
-                let warnLimit = getWarnSettings?.warn_limit;
-                let warns_message;
-                if (warnLimit == undefined) {
-                    await set_warn_settings(ctx.chat.id.toString(), 3n, false);
-                    warnLimit = 3n;
+        else {
+        let args = ctx.match;
+        if (args) {
+            let split_args = args.split(" ");
+            let user_id = split_args[0];
+            let user_info =  await ctx.getChatMember(user_id)
+                .catch((GrammyError: any) => {
+                    return;
+                });
+            if (user_info != undefined) {
+                if (user_info.user.id == bot.botInfo.id) {
+                    await ctx.reply("I can't be warned in first place.", {reply_parameters: {message_id: ctx.message.message_id}});
                 }
-                if (warnNumber == 0n || warnNumber == undefined) {
-                    warnNumber = 0n;
-                    warns_message = `User <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>) have no warnings yet!`
+                else if (user_info.user.id == ctx.from.id) {
+                    await ctx.reply("You are an admin. Period.", {reply_parameters: {message_id: ctx.message.message_id}});
+                }
+                else if (await checkElevatedUserFrom(ctx, user_info) == true) {
+                    await ctx.reply("🏳️ <b>Unwarned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}});   
                 }
                 else {
-                    warnNumber = warnNumber ?? 0n;
-                    warnNumber -= 1n;
-                    warns_message = (
-                        `<b>🏳️ Removed latest warn for</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
-                        `Unwarned by: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
-                        `Warn count: <b>${warnNumber}/${warnLimit}</b>\n`
-                    );
-                    warnReasons = warnReasons ?? [];
-                    if (warnReasons.length === 1) {
-                        warnReasons.pop()
-                        warnReasons = []
+                    let getWarnNumbers = await get_warn_numbers(ctx.chat.id, user_info.user.id );
+                    let getWarnSettings = await get_warn_settings(ctx.chat.id);
+                    let warnNumber = getWarnNumbers?.num_warns;
+                    let warnReasons = getWarnNumbers?.reasons;
+                    let warnLimit = getWarnSettings?.warn_limit;
+                    let warns_message;
+                    if (warnLimit == undefined) {
+                        await set_warn_settings(ctx.chat.id.toString(), 3n, false);
+                        warnLimit = 3n;
+                    }
+                    if (warnNumber == 0n || warnNumber == undefined) {
+                        warnNumber = 0n;
+                        warns_message = `User <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>) have no warnings yet!`
                     }
                     else {
-                        warnReasons.pop();
-                    }
-                    await reset_warn_numbers(ctx.chat.id.toString(), ctx.message.reply_to_message.from.id, warnReasons);
-
-                }   
-                await ctx.api.sendMessage(ctx.chat.id, warns_message, {parse_mode: "HTML"}); 
-            }
-        }
-        else {
-            let args = ctx.match;
-            if (args) {
-                let split_args = args.split(" ");
-                let user_id = split_args[0];
-                let user_info =  await ctx.getChatMember(user_id)
-                    .catch((GrammyError: any) => {
-                        return;
-                    });
-                if (user_info != undefined) {
-                    if (user_info.user.id == bot.botInfo.id) {
-                        await ctx.reply("I can't be warned in first place.", {reply_parameters: {message_id: ctx.message.message_id}});
-                    }
-                    else if (user_info.user.id == ctx.from.id) {
-                        await ctx.reply("You are an admin. Period.", {reply_parameters: {message_id: ctx.message.message_id}});
-                    }
-                    else if (await checkElevatedUserFrom(ctx, user_info) == true) {
-                        await ctx.reply("🏳️ <b>Unwarned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}});   
-                    }
-                    else {
-                        let getWarnNumbers = await get_warn_numbers(ctx.chat.id, user_info.user.id );
-                        let getWarnSettings = await get_warn_settings(ctx.chat.id);
-                        let warnNumber = getWarnNumbers?.num_warns;
-                        let warnReasons = getWarnNumbers?.reasons;
-                        let warnLimit = getWarnSettings?.warn_limit;
-                        let warns_message;
-                        if (warnLimit == undefined) {
-                            await set_warn_settings(ctx.chat.id.toString(), 3n, false);
-                            warnLimit = 3n;
-                        }
-                        if (warnNumber == 0n || warnNumber == undefined) {
-                            warnNumber = 0n;
-                            warns_message = `User <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>) have no warnings yet!`
-                        }
-                        else {
-                            warnNumber = warnNumber ?? 0n;
-                            warnNumber -= 1n;
-                            warns_message = (
-                                `<b>🏳️ Removed latest warn for</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>)<b>!</b>\n\n` +
-                                `Unwarned by: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
-                                `Warn count: <b>${warnNumber}/${warnLimit}</b>\n`
-                            );
-                            warnReasons = warnReasons ?? [];
-                            if (warnReasons.length === 1) {
-                                warnReasons.pop()
-                                warnReasons = []
-                            }
-                            else {
-                                warnReasons.pop();
-                            }
-                            await reset_warn_numbers(ctx.chat.id.toString(), user_info.user.id, warnReasons);
-                        }
-                        await ctx.api.sendMessage(ctx.chat.id, warns_message, {parse_mode: "HTML"}); 
-                    }
-                }
-                else {
-                    await ctx.reply("The provided user ID seems to be invalid!", {reply_parameters: {message_id: ctx.message.message_id}});
-                }      
-            }
-            else {        
-                await ctx.reply("Please type the user ID next to /unwarn command or reply to a user with /unwarn command.", {reply_parameters: {message_id: ctx.message.message_id}});
-                return;
-            }
-        }
-    }
-})));
-
-bot.chatType("supergroup" || "group").command(["dwarn", "delwarn"], elevatedUsersOnly(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
-    let user_info = await userInfo(ctx);
-    if (user_info.can_restrict_members == false) {
-        await ctx.reply("You don't have enough rights to mute users!", {reply_parameters: {message_id: ctx.message.message_id}});
-        return;
-    }
-    else if (user_info.can_delete_messages == false) {
-        await ctx.reply("You don't have enough rights to delete messages!", {reply_parameters: {message_id: ctx.message.message_id}});
-        return;
-    }
-    else {
-        if (ctx.message.reply_to_message != undefined) {
-            if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
-                await ctx.reply("Warn myself? for what!?", {reply_parameters: {message_id: ctx.message.message_id}});
-            }
-            else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
-                await ctx.reply("It's good to be self-aware.", {reply_parameters: {message_id: ctx.message.message_id}});
-            }
-            else if (await checkElevatedUser(ctx) == true) {
-                await ctx.reply("⚠️ <b>Warned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});   
-            }
-            else {
-                let getWarnNumbers = await get_warn_numbers(ctx.chat.id, ctx.message.reply_to_message.from.id);
-                let getWarnSettings = await get_warn_settings(ctx.chat.id);
-                let warnNumber = getWarnNumbers?.num_warns;
-                let warnReasons = getWarnNumbers?.reasons;
-                let warnLimit = getWarnSettings?.warn_limit;
-                let warnMode = getWarnSettings?.soft_warn;
-                
-                warnNumber = warnNumber ?? 0n;
-                warnNumber += 1n;
-                if (warnLimit == undefined) {
-                    await set_warn_settings(ctx.chat.id.toString(), 3n, false);
-                    warnLimit = 3n;
-                }
-                let warn_message = (
-                    `<b>⚠️ Warned</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
-                    `Warner: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
-                    `Warns: <b>${warnNumber}/${warnLimit}</b>\n`
-                );
-                warnReasons = warnReasons ?? [];
-                let inputReason;
-                if (ctx.match) {
-                    inputReason = ctx.match;
-                }
-                else {
-                    inputReason = "No reason provided";
-                }
-                warnReasons.push(`${inputReason}`);
-                let warnReasonsWithBullets = warnReasons.map((reason, index) => `\n ${index + 1}. ${reason}`);
-                warn_message += `Reason: ${warnReasonsWithBullets}`;
-                await set_warn_numbers(ctx.chat.id.toString(), ctx.message.reply_to_message.from.id, [`${inputReason}`]);
-                        
-                if (warnNumber >= warnLimit) {
-                    if (warnMode == true) {
-                        warn_message += "\n\n<b>🦿 Kicked out of the group!</b>"
-                        await ctx.api.unbanChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
-                        .then(() => {
-                            ctx.api.deleteMessage(ctx.chat.id, ctx.message.reply_to_message.message_id);
-                            ctx.api.sendMessage(ctx.chat.id, warn_message, {parse_mode: "HTML"});
-                        })
-                        .catch((GrammyError: any) => {
-                            ctx.reply("Failed to kick user, they can be removed manually.");
-                            logger.error(`${GrammyError}`);
-                            channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
-                        });
-                    }
-                    else {
-                        warn_message += "\n\n<b>❌ Banned out of the group!</b>"
-                        await ctx.api.banChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
-                        .then(() => {
-                            ctx.api.deleteMessage(ctx.chat.id, ctx.message.reply_to_message.message_id);
-                            ctx.api.sendMessage(ctx.chat.id, warn_message, {parse_mode: "HTML"});
-                        })
-                        .catch((GrammyError: any) => {
-                            ctx.reply("Failed to ban user, they can be removed manually.");
-                            logger.error(`${GrammyError}`);
-                            channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
-                        });
-                    }
-                }
-                else {
-                    await ctx.api.deleteMessage(ctx.chat.id, ctx.message.reply_to_message.message_id);
-                    await ctx.api.sendMessage(ctx.chat.id, warn_message, {reply_markup: unwarnButton, parse_mode: "HTML"});
-                }
-            }
-        }
-        else {
-            await ctx.reply("Please reply to a message with /dwarn command to <i>delete-warn</i> it", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
-        }
-    } 
-}))));
-
-bot.chatType("supergroup" || "group").command("resetwarns", elevatedUsersOnly(botCanRestrictUsers(async (ctx: any) => {
-    let user_info = await userInfo(ctx);
-    if (user_info.can_restrict_members == false) {
-        await ctx.reply("You don't have enough rights to reset warns of a user!", {reply_parameters: {message_id: ctx.message.message_id}});
-        return;
-    }
-    else {
-        if (ctx.message.reply_to_message != undefined) {
-            if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
-                await ctx.reply("I can't be warned in first place.", {reply_parameters: {message_id: ctx.message.message_id}});
-            }
-            else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
-                await ctx.reply("You are an admin. Period.", {reply_parameters: {message_id: ctx.message.message_id}});
-            }
-            else if (await checkElevatedUser(ctx) == true) {
-                await ctx.reply("🏳️ <b>Warns resetted!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});   
-            }
-            else {
-                let getWarnNumbers = await get_warn_numbers(ctx.chat.id, ctx.message.reply_to_message.from.id);
-                let getWarnSettings = await get_warn_settings(ctx.chat.id);
-                let warnNumber = getWarnNumbers?.num_warns;
-                let warnReasons = getWarnNumbers?.reasons;
-                let warnLimit = getWarnSettings?.warn_limit;
-                let warns_message;
-                if (warnLimit == undefined) {
-                    await set_warn_settings(ctx.chat.id.toString(), 3n, false);
-                    warnLimit = 3n;
-                }
-                if (warnNumber == 0n || warnNumber == -1n || warnNumber == undefined || warnNumber == null) {
-                    warnNumber = 0n;
-                    warns_message = `User <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>) have no warnings yet!`
-                }
-                else {
-                    warnNumber = warnNumber ?? 0n;
-                    warnNumber = 0n;
-                    warns_message = (
-                        `<b>🏳️ Warns resetted for</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
-                        `Unwarned by: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
-                        `Warn count: <b>${warnNumber}/${warnLimit}</b>\n`
-                    );
-                    warnReasons = warnReasons ?? [];
-                    warnReasons.pop()
-                    warnReasons = []
-
-                    await reset_all_warns(ctx.chat.id.toString(), ctx.message.reply_to_message.from.id, warnReasons)
-                }   
-                await ctx.api.sendMessage(ctx.chat.id, warns_message, {parse_mode: "HTML"}); 
-            }
-        }
-        else {
-            let args = ctx.match;
-            if (args) {
-                let split_args = args.split(" ");
-                let user_id = split_args[0];
-                let user_info =  await ctx.getChatMember(user_id)
-                    .catch((GrammyError: any) => {
-                        return;
-                    });
-                if (user_info != undefined) {
-                    if (user_info.user.id == bot.botInfo.id) {
-                        await ctx.reply("I can't be warned in first place.", {reply_parameters: {message_id: ctx.message.message_id}});
-                    }
-                    else if (user_info.user.id == ctx.from.id) {
-                        await ctx.reply("You are an admin. Period.", {reply_parameters: {message_id: ctx.message.message_id}});
-                    }
-                    else if (await checkElevatedUserFrom(ctx, user_info) == true) {
-                        await ctx.reply("🏳️ <b>Warns resetted!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}});   
-                    }
-                    else {
-                        let getWarnNumbers = await get_warn_numbers(ctx.chat.id, user_info.user.id);
-                        let getWarnSettings = await get_warn_settings(ctx.chat.id);
-                        let warnNumber = getWarnNumbers?.num_warns;
-                        let warnReasons = getWarnNumbers?.reasons;
-                        let warnLimit = getWarnSettings?.warn_limit;
-                        let warns_message;
-                        if (warnLimit == undefined) {
-                            await set_warn_settings(ctx.chat.id.toString(), 3n, false);
-                            warnLimit = 3n;
-                        }
-                        if (warnNumber == 0n || warnNumber == -1n || warnNumber == undefined || warnNumber == null) {
-                            warnNumber = 0n;
-                            warns_message = `User <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>) have no warnings yet!`
-                        }
-                        else {
-                            warnNumber = warnNumber ?? 0n;
-                            warnNumber = 0n;
-                            warns_message = (
-                                `<b>🏳️ Warns resetted for</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>)<b>!</b>\n\n` +
-                                `Unwarned by: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
-                                `Warn count: <b>${warnNumber}/${warnLimit}</b>\n`
-                            );
-                            warnReasons = warnReasons ?? [];
+                        warnNumber = warnNumber ?? 0n;
+                        warnNumber -= 1n;
+                        warns_message = (
+                            `<b>🏳️ Removed latest warn for</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>)<b>!</b>\n\n` +
+                            `Unwarned by: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
+                            `Warn count: <b>${warnNumber}/${warnLimit}</b>\n`
+                        );
+                        warnReasons = warnReasons ?? [];
+                        if (warnReasons.length === 1) {
                             warnReasons.pop()
                             warnReasons = []
-        
-                            await reset_all_warns(ctx.chat.id.toString(), user_info.user.id, warnReasons)
-                        }   
-                        await ctx.api.sendMessage(ctx.chat.id, warns_message, {parse_mode: "HTML"});  
+                        }
+                        else {
+                            warnReasons.pop();
+                        }
+                        await reset_warn_numbers(ctx.chat.id.toString(), user_info.user.id, warnReasons);
                     }
+                    await ctx.api.sendMessage(ctx.chat.id, warns_message, {parse_mode: "HTML"}); 
+                }
+            }
+            else {
+                await ctx.reply("The provided user ID seems to be invalid!", {reply_parameters: {message_id: ctx.message.message_id}});
+            }      
+        }
+        else {        
+            await ctx.reply("Please type the user ID next to /unwarn command or reply to a user with /unwarn command.", {reply_parameters: {message_id: ctx.message.message_id}});
+            return;
+        }
+    }
+})));
+
+bot.chatType("supergroup" || "group").command(["dwarn", "delwarn"], adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
+    if (ctx.message.reply_to_message != undefined) {
+        if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
+            await ctx.reply("Warn myself? for what!?", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+        else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
+            await ctx.reply("It's good to be self-aware.", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+        else if (await checkElevatedUser(ctx) == true) {
+            await ctx.reply("⚠️ <b>Warned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});   
+        }
+        else {
+            let getWarnNumbers = await get_warn_numbers(ctx.chat.id, ctx.message.reply_to_message.from.id);
+            let getWarnSettings = await get_warn_settings(ctx.chat.id);
+            let warnNumber = getWarnNumbers?.num_warns;
+            let warnReasons = getWarnNumbers?.reasons;
+            let warnLimit = getWarnSettings?.warn_limit;
+            let warnMode = getWarnSettings?.soft_warn;
+            
+            warnNumber = warnNumber ?? 0n;
+            warnNumber += 1n;
+            if (warnLimit == undefined) {
+                await set_warn_settings(ctx.chat.id.toString(), 3n, false);
+                warnLimit = 3n;
+            }
+            let warn_message = (
+                `<b>⚠️ Warned</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
+                `Warner: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
+                `Warns: <b>${warnNumber}/${warnLimit}</b>\n`
+            );
+            warnReasons = warnReasons ?? [];
+            let inputReason;
+            if (ctx.match) {
+                inputReason = ctx.match;
+            }
+            else {
+                inputReason = "No reason provided";
+            }
+            warnReasons.push(`${inputReason}`);
+            let warnReasonsWithBullets = warnReasons.map((reason, index) => `\n ${index + 1}. ${reason}`);
+            warn_message += `Reason: ${warnReasonsWithBullets}`;
+            await set_warn_numbers(ctx.chat.id.toString(), ctx.message.reply_to_message.from.id, [`${inputReason}`]);
+                    
+            if (warnNumber >= warnLimit) {
+                if (warnMode == true) {
+                    warn_message += "\n\n<b>🦿 Kicked out of the group!</b>"
+                    await ctx.api.unbanChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
+                    .then(() => {
+                        ctx.api.deleteMessage(ctx.chat.id, ctx.message.reply_to_message.message_id);
+                        ctx.api.sendMessage(ctx.chat.id, warn_message, {parse_mode: "HTML"});
+                    })
+                    .catch((GrammyError: any) => {
+                        ctx.reply("Failed to kick user, they can be removed manually.");
+                        logger.error(`${GrammyError}`);
+                        channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                    });
                 }
                 else {
-                    await ctx.reply("The provided user ID seems to be invalid!", {reply_parameters: {message_id: ctx.message.message_id}});
-                }      
+                    warn_message += "\n\n<b>❌ Banned out of the group!</b>"
+                    await ctx.api.banChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
+                    .then(() => {
+                        ctx.api.deleteMessage(ctx.chat.id, ctx.message.reply_to_message.message_id);
+                        ctx.api.sendMessage(ctx.chat.id, warn_message, {parse_mode: "HTML"});
+                    })
+                    .catch((GrammyError: any) => {
+                        ctx.reply("Failed to ban user, they can be removed manually.");
+                        logger.error(`${GrammyError}`);
+                        channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+                    });
+                }
             }
-            else {        
-                await ctx.reply("Please type the user ID next to /resetwarns command or reply to a user with /resetwarns command.", {reply_parameters: {message_id: ctx.message.message_id}});
-                return;
+            else {
+                await ctx.api.deleteMessage(ctx.chat.id, ctx.message.reply_to_message.message_id);
+                await ctx.api.sendMessage(ctx.chat.id, warn_message, {reply_markup: unwarnButton, parse_mode: "HTML"});
             }
+        }
+    }
+    else {
+        await ctx.reply("Please reply to a message with /dwarn command to <i>delete-warn</i> it", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+    }
+})))));
+
+bot.chatType("supergroup" || "group").command("resetwarns", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+    if (ctx.message.reply_to_message != undefined) {
+        if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
+            await ctx.reply("I can't be warned in first place.", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+        else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
+            await ctx.reply("You are an admin. Period.", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+        else if (await checkElevatedUser(ctx) == true) {
+            await ctx.reply("🏳️ <b>Warns resetted!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});   
+        }
+        else {
+            let getWarnNumbers = await get_warn_numbers(ctx.chat.id, ctx.message.reply_to_message.from.id);
+            let getWarnSettings = await get_warn_settings(ctx.chat.id);
+            let warnNumber = getWarnNumbers?.num_warns;
+            let warnReasons = getWarnNumbers?.reasons;
+            let warnLimit = getWarnSettings?.warn_limit;
+            let warns_message;
+            if (warnLimit == undefined) {
+                await set_warn_settings(ctx.chat.id.toString(), 3n, false);
+                warnLimit = 3n;
+            }
+            if (warnNumber == 0n || warnNumber == -1n || warnNumber == undefined || warnNumber == null) {
+                warnNumber = 0n;
+                warns_message = `User <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>) have no warnings yet!`
+            }
+            else {
+                warnNumber = warnNumber ?? 0n;
+                warnNumber = 0n;
+                warns_message = (
+                    `<b>🏳️ Warns resetted for</b> <a href="tg://user?id=${ctx.message.reply_to_message.from.id}">${ctx.message.reply_to_message.from.first_name}</a> (<code>${ctx.message.reply_to_message.from.id}</code>)<b>!</b>\n\n` +
+                    `Unwarned by: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
+                    `Warn count: <b>${warnNumber}/${warnLimit}</b>\n`
+                );
+                warnReasons = warnReasons ?? [];
+                warnReasons.pop()
+                warnReasons = []
+                await reset_all_warns(ctx.chat.id.toString(), ctx.message.reply_to_message.from.id, warnReasons)
+            }   
+            await ctx.api.sendMessage(ctx.chat.id, warns_message, {parse_mode: "HTML"}); 
+        }
+    }
+    else {
+        let args = ctx.match;
+        if (args) {
+            let split_args = args.split(" ");
+            let user_id = split_args[0];
+            let user_info =  await ctx.getChatMember(user_id)
+                .catch((GrammyError: any) => {
+                    return;
+                });
+            if (user_info != undefined) {
+                if (user_info.user.id == bot.botInfo.id) {
+                    await ctx.reply("I can't be warned in first place.", {reply_parameters: {message_id: ctx.message.message_id}});
+                }
+                else if (user_info.user.id == ctx.from.id) {
+                    await ctx.reply("You are an admin. Period.", {reply_parameters: {message_id: ctx.message.message_id}});
+                }
+                else if (await checkElevatedUserFrom(ctx, user_info) == true) {
+                    await ctx.reply("🏳️ <b>Warns resetted!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}});   
+                }
+                else {
+                    let getWarnNumbers = await get_warn_numbers(ctx.chat.id, user_info.user.id);
+                    let getWarnSettings = await get_warn_settings(ctx.chat.id);
+                    let warnNumber = getWarnNumbers?.num_warns;
+                    let warnReasons = getWarnNumbers?.reasons;
+                    let warnLimit = getWarnSettings?.warn_limit;
+                    let warns_message;
+                    if (warnLimit == undefined) {
+                        await set_warn_settings(ctx.chat.id.toString(), 3n, false);
+                        warnLimit = 3n;
+                    }
+                    if (warnNumber == 0n || warnNumber == -1n || warnNumber == undefined || warnNumber == null) {
+                        warnNumber = 0n;
+                        warns_message = `User <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>) have no warnings yet!`
+                    }
+                    else {
+                        warnNumber = warnNumber ?? 0n;
+                        warnNumber = 0n;
+                        warns_message = (
+                            `<b>🏳️ Warns resetted for</b> <a href="tg://user?id=${user_info.user.id}">${user_info.user.first_name}</a> (<code>${user_info.user.id}</code>)<b>!</b>\n\n` +
+                            `Unwarned by: <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n` +
+                            `Warn count: <b>${warnNumber}/${warnLimit}</b>\n`
+                        );
+                        warnReasons = warnReasons ?? [];
+                        warnReasons.pop()
+                        warnReasons = []
+    
+                        await reset_all_warns(ctx.chat.id.toString(), user_info.user.id, warnReasons)
+                    }   
+                    await ctx.api.sendMessage(ctx.chat.id, warns_message, {parse_mode: "HTML"});  
+                }
+            }
+            else {
+                await ctx.reply("The provided user ID seems to be invalid!", {reply_parameters: {message_id: ctx.message.message_id}});
+            }      
+        }
+        else {        
+            await ctx.reply("Please type the user ID next to /resetwarns command or reply to a user with /resetwarns command.", {reply_parameters: {message_id: ctx.message.message_id}});
+            return;
         }
     }
 })));
@@ -656,7 +615,7 @@ bot.chatType("supergroup" || "group").command("resetwarns", elevatedUsersOnly(bo
 //     await ctx.editMessageText("Okay fine. Tell me when you change your mind!", { parse_mode: "HTML" });
 // }));
 
-bot.chatType("supergroup" || "group").command("warnmode", elevatedUsersOnly(botCanRestrictUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("warnmode", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     let getWarnSettings = await get_warn_settings(ctx.chat.id);
     let warnMode = getWarnSettings?.soft_warn
     let whatWillHappen;
@@ -703,7 +662,7 @@ bot.chatType("supergroup" || "group").command("warnmode", elevatedUsersOnly(botC
     }
 })));
 
-bot.chatType("supergroup" || "group").command("warnlimit", elevatedUsersOnly(botCanRestrictUsers(async (ctx: any) => {
+bot.chatType("supergroup" || "group").command("warnlimit", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     let getWarnSettings = await get_warn_settings(ctx.chat.id);
     let warnLimit = getWarnSettings?.warn_limit;
 

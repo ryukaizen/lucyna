@@ -2,7 +2,8 @@ import fs from 'fs/promises';
 import bot from "./bot";
 import constants from "./config"
 import { autoRetry } from "@grammyjs/auto-retry";
-import { run } from "@grammyjs/runner";
+import { Context } from "grammy";
+import { run, sequentialize } from "@grammyjs/runner";
 //import { apiThrottler } from "@grammyjs/transformer-throttler";
 import { logger } from "./logger"
 import { channel_log } from "./logger";
@@ -26,6 +27,10 @@ bot.api.config.use(autoRetry({
     maxRetryAttempts: 1, 
     maxDelaySeconds: 5, 
 }));
+
+const constraints = (ctx: Context) => [String(ctx.chat?.id), String(ctx.from?.id)]
+
+bot.use(sequentialize(constraints))
 
 const ALL_MODULES: string[] = [];
 
