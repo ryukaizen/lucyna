@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@grammyjs/auto-retry": "^1.1.1",
-    "@grammyjs/chat-members": "^1.1.0",
+    "@grammyjs/chat-members": "^1.0.12",
     "@grammyjs/menu": "^1.2.1",
     "@grammyjs/runner": "^2.0.3",
     "@grammyjs/storage-prisma": "^2.4.2",
