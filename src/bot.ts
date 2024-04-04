@@ -19,7 +19,11 @@ const bot = new Bot<ChatContext>(constants.BOT_TOKEN)
 
 const adapter = new PrismaAdapter<ChatMember>(prisma.chat_members_data);
 
-bot.use(chatMembers(adapter, { enableAggressiveStorage: true }));
+bot.use(chatMembers(adapter, { 
+    enableAggressiveStorage: true, 
+    enableCaching: true, 
+    keepLeftChatMembers: true 
+}));
 
 bot.catch((err) => {
     const ctx = err.ctx;
