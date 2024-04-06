@@ -9,21 +9,16 @@ import {
 } from "grammy"        
 import { type ChatMembersFlavor } from "@grammyjs/chat-members";
 import { prisma } from "./database";
-import { PrismaAdapter } from "@grammyjs/storage-prisma";
+// import { PrismaAdapter } from "@grammyjs/storage-prisma";
+import { RedisAdapter } from '@grammyjs/storage-redis';
+import IORedis from 'ioredis';
 import { type ChatMember } from "grammy/types";
-import { chatMembers } from "@grammyjs/chat-members";
 
 type ChatContext = Context & ChatMembersFlavor;
 
-const bot = new Bot<ChatContext>(constants.BOT_TOKEN)
-
-const adapter = new PrismaAdapter<ChatMember>(prisma.chat_members_data);
-
-bot.use(chatMembers(adapter, { 
-    enableAggressiveStorage: true, 
-    enableCaching: true, 
-    keepLeftChatMembers: true 
-}));
+export const bot = new Bot<ChatContext>(constants.BOT_TOKEN)
+const redisInstance = new IORedis(constants.REDIS_CACHE_URL)
+export const adapter = new RedisAdapter<ChatMember>({ instance: redisInstance, ttl: 10 });
 
 bot.catch((err) => {
     const ctx = err.ctx;
@@ -42,5 +37,3 @@ bot.catch((err) => {
     var log = (`${e}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(context.update,  null, 2)}`)
     channel_log(log);
 });
-
-export default bot;
