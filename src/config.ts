@@ -15,6 +15,7 @@ const constants = cleanEnv(process.env, {
     START_GIF: str(),
     ADDED_TO_CHAT_GIF: str(),
     DATABASE_URL: str(),
+    REDIS_CACHE_URL: str(),
     GRAMJS_API_ID: str(),
     GRAMJS_API_HASH: str(),
     GRAMJS_STRING_SESSION: str()
