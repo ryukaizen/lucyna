@@ -1,4 +1,4 @@
-import bot from "../bot";
+import { bot } from "../bot";
 import os from 'os';
 import si from 'systeminformation';
 import { superusersOnly } from "../helpers/helper_func";

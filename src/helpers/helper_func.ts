@@ -76,7 +76,7 @@ export function samePersonCallbackOnly(handler: any) {
 // for reply_to_message
 export async function checkElevatedUser(ctx: any) {
     // fetch user status
-    let user = await ctx.api.getChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
+    let user = await ctx.chatMembers.getChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
     if (ctx.message.reply_to_message.from.id == constants.OWNER_ID || constants.SUPERUSERS.includes(ctx.message.reply_to_message.from.id) == true || user.status == "creator" || user.status == "administrator") {
         return true;
     }
@@ -87,7 +87,7 @@ export async function checkElevatedUser(ctx: any) {
 
 // for general stuff
 export async function checkElevatedUserFrom(ctx: any, user_info: any) {
-    let user = await ctx.api.getChatMember(ctx.chat.id, user_info.user.id)
+    let user = await ctx.chatMembers.getChatMember(ctx.chat.id, user_info.user.id)
     if (user_info.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(user_info.user.id) == true || user.status == "creator" || user.status == "administrator") {
         return true;
     }
@@ -104,7 +104,7 @@ export async function userInfo(ctx: any) {
 
 // future use maybe
 export async function isUserInChat(ctx: any, chat_id: string, user_id: number) {
-    let user = await ctx.api.getChatMember(chat_id, user_id);
+    let user = await ctx.chatMembers.getChatMember(chat_id, user_id);
     if (user.status == "member" || user.status == "restricted" || user.status == "creator" || user.status == "administrator") {
         return true;
     }
@@ -115,7 +115,7 @@ export async function isUserInChat(ctx: any, chat_id: string, user_id: number) {
 }
 
 export async function isUserRestricted(ctx: any, chat_id: string, user_id: number) {
-    let user = await ctx.api.getChatMember(chat_id, user_id);
+    let user = await ctx.chatMembers.getChatMember(chat_id, user_id);
     if (user.status == "restricted") {
         return true;
     }
@@ -125,7 +125,7 @@ export async function isUserRestricted(ctx: any, chat_id: string, user_id: numbe
 }
 
 export async function isUserBanned(ctx: any, chat_id: string, user_id: number) {
-    let user = await ctx.api.getChatMember(chat_id, user_id);
+    let user = await ctx.chatMembers.getChatMember(chat_id, user_id);
     if (user.status == "kicked") {
         return true;
     }
@@ -268,7 +268,7 @@ export function botCanRestrictUsers(hander: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+        let bot_info = ctx.chatMembers.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
             if (bot_info.can_restrict_members == true) {
                 await hander(ctx);
@@ -287,7 +287,7 @@ export function botCanRestrictUsersCallback(hander: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+        let bot_info = await ctx.chatMembers.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
             if (bot_info.can_restrict_members == true) {
                 await hander(ctx);
@@ -306,7 +306,7 @@ export function botCanDeleteMessages(handler: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+        let bot_info = await ctx.chatMembers.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
             if (bot_info.can_delete_messages == true) {
                 await handler(ctx);
@@ -325,7 +325,7 @@ export function botCanPinMessages(handler: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+        let bot_info = await ctx.chatMembers.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
             if (bot_info.can_pin_messages == true) {
                 await handler(ctx);
@@ -344,7 +344,7 @@ export function botCanInviteUsers(handler: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+        let bot_info = await ctx.chatMembers.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
             if (bot_info.can_invite_users == true) {
                 await handler(ctx);
@@ -363,7 +363,7 @@ export function botCanPromoteMembers(handler: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+        let bot_info = await ctx.chatMembers.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
             if (bot_info.can_promote_members == true) {
                 await handler(ctx);
@@ -382,7 +382,7 @@ export function botCanChangeInfo(handler: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+        let bot_info = await ctx.chatMembers.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
             if (bot_info.can_change_info == true) {
                 await handler(ctx);

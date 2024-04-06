@@ -1,4 +1,4 @@
-import bot from "../bot";
+import { bot } from "../bot";
 import { InlineKeyboard } from "grammy";
 import { logger, channel_log } from "../logger";
 import { 

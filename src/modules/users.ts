@@ -1,4 +1,4 @@
-import bot from "../bot";
+import { bot } from "../bot";
 
 bot.chatType("supergroup" || "group").command("id", (async (ctx: any) => {
     let chat_id = ctx.chat.id;

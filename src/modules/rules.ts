@@ -1,4 +1,4 @@
-import bot from "../bot";
+import { bot } from "../bot";
 import constants from "../config";
 import { get_rules, set_rules, reset_rules } from "../database/rules_sql";
 import { InlineKeyboard } from "grammy";
