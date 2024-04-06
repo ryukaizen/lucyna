@@ -1,4 +1,4 @@
-import bot from "./bot";
+import { bot } from "./bot";
 import constants from "./config"
 import { transports, format, createLogger, Logger } from "winston"
 

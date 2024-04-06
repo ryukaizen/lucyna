@@ -15,7 +15,7 @@ import { chatMembers } from "@grammyjs/chat-members";
 
 type ChatContext = Context & ChatMembersFlavor;
 
-const bot = new Bot<ChatContext>(constants.BOT_TOKEN)
+export const bot = new Bot<ChatContext>(constants.BOT_TOKEN)
 
 const adapter = new PrismaAdapter<ChatMember>(prisma.chat_members_data);
 
@@ -42,5 +42,3 @@ bot.catch((err) => {
     var log = (`${e}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(context.update,  null, 2)}`)
     channel_log(log);
 });
-
-export default bot;
