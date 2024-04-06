@@ -1,4 +1,4 @@
-import bot from "../bot";
+import { bot } from "../bot";
 import { logger, channel_log } from "../logger";
 import { GrammyError, InlineKeyboard } from "grammy";
 import { 

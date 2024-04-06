@@ -1,4 +1,4 @@
-import bot from "../bot";
+import { bot } from "../bot";
 import { get_report_settings, set_report_settings } from "../database/reports_sql";
 import { checkElevatedUser, elevatedUsersOnly } from "../helpers/helper_func";
 
