@@ -1,4 +1,4 @@
-import bot from "../bot"
+import { bot } from "../bot"
 import constants from "../config"
 import { Menu } from "@grammyjs/menu";
 import { InlineKeyboard } from "grammy";
