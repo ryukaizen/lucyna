@@ -370,7 +370,7 @@ bot.chatType("supergroup" || "group").command("setgtitle", adminCanChangeInfo(bo
     }
 
     async function setGroupTitle(title: string) {
-        let title_string = title.substring(0, 128)
+        let title_string = title.substring(1, 128)
         await ctx.api.setChatTitle(ctx.chat.id, title_string)
         .then(() => {
             ctx.reply(`Group title is set to <code>${title_string}</code>!`, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
@@ -394,8 +394,8 @@ bot.chatType("supergroup" || "group").command(["setgdesc", "setdescription"], ad
         await ctx.reply("Did you forget to provide the title?", {reply_parameters: {message_id: ctx.message.message_id}});
     }
 
-    async function setGroupDesc(title: string) {
-        let desc_string = title.substring(0, 128)
+    async function setGroupDesc(desc: string) {
+        let desc_string = desc.substring(0, 255)
         await ctx.api.setChatDescription(ctx.chat.id, desc_string)
         .then(() => {
             ctx.reply(`Successfully set group description!`, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
