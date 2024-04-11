@@ -261,9 +261,44 @@ export function adminCanPromoteUsers(handler: any) {
     };
 }
 
+export function adminCanChangeInfo(handler: any) {
+    return async (ctx: any) => {
+        const chatMember = await ctx.chatMembers.getChatMember();
+        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
+            await handler(ctx);
+        }
+        else if (chatMember.status == "administrator") {
+            if (chatMember.can_change_info == true) {
+                await handler(ctx);
+            }
+            else {
+                await ctx.reply("You don't have enough rights to change group information!", {reply_parameters: {message_id: ctx.message.message_id}});
+            }  
+        }
+        else {
+            await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+
+        }
+    };  
+}
+
 // ====================================================
 
 // ==================== BOT STUFF ====================
+export function isBotAdmin(hander: any) {
+    return async (ctx: any) => {
+        let bot_id = ctx.me.id;
+        let chat_id = ctx.chat.id;
+        let bot_info = ctx.chatMembers.getChatMember(chat_id, bot_id);
+        if (bot_info.status == "administrator") {
+                await hander(ctx);
+        }
+        else {
+            await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+    }
+}
+
 export function botCanRestrictUsers(hander: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;

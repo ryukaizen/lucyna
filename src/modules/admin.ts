@@ -1,10 +1,14 @@
+import * as fs from "fs";
+import * as path from "path";
+import sharp from "sharp";
 import { bot } from "../bot";
-import { InlineKeyboard } from "grammy";
+import { InlineKeyboard, InputFile } from "grammy";
 import { logger, channel_log } from "../logger";
 import { 
     adminCanPinMessages,
     adminCanInviteUsers,
     adminCanPromoteUsers,
+    adminCanChangeInfo,
     botCanInviteUsers, 
     botCanPinMessages, 
     botCanPromoteMembers,
@@ -13,6 +17,7 @@ import {
     checkElevatedUserFrom,
     elevatedUsersOnly, 
     samePersonCallbackOnly, 
+    isBotAdmin
 } from "../helpers/helper_func";
 
 const promote = {
@@ -286,65 +291,152 @@ bot.chatType("supergroup" || "group").command("title", adminCanPromoteUsers(botC
     }
 })));
 
-// will write this later
-// bot.chatType("supergroup" || "group").command("setgpic", elevatedUsersOnly(botCanChangeInfo(async (ctx: any) => {
-//     let user_info = await userInfo(ctx);
-//     if (user_info.can_change_info == false) {
-//         await ctx.reply("You don't have enough rights to change group profile picture!", {reply_parameters: {message_id: ctx.message.message_id}});
-//         return;
-//     }
-//     else {
-//         if (ctx.message.reply_to_message != undefined) {
-//             console.log(JSON.stringify(ctx.message.reply_to_message), null, 2)
-  
-//         }
-     
-//        else {        
-//             await ctx.reply("Please reply to an image with /setgpic command to set it as a profile picture for this group.", {reply_parameters: {message_id: ctx.message.message_id}});
-//         }
-//     }
-// })));
 
-// bot.chatType("supergroup" || "group").command("delgpic", elevatedUsersOnly(botCanChangeInfo(async (ctx: any) => {
-//     let user_info = await userInfo(ctx);
-//     if (user_info.can_change_info == false) {
-//         await ctx.reply("You don't have enough rights to remove group profile picture!", {reply_parameters: {message_id: ctx.message.message_id}});
-//         return;
-//     }
-//     else {
-// 
-//     }
-// })));
+bot.chatType("supergroup" || "group").command(["setgpic", "setgpfp"], adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
+    if (ctx.message.reply_to_message != undefined) {
+        let pic_id: string;
+        let sticker_id: string;
+        if (ctx.message.reply_to_message.photo) {
+            pic_id = ctx.message.reply_to_message.photo[2].file_id;
+            await setGroupPic(pic_id)
+        }
+        else if (ctx.message.reply_to_message.document) {
+            pic_id = ctx.message.reply_to_message.document.file_id;
+            await setGroupPic(pic_id)
+        }
+        else if (ctx.message.reply_to_message.sticker) {
+            if (ctx.message.reply_to_message.sticker.is_animated == false && ctx.message.reply_to_message.sticker.is_video == false) {
+                sticker_id = ctx.message.reply_to_message.sticker.file_id;
+                await setGroupPic(sticker_id)
+            }
+            else {
+                await ctx.reply("Only static stickers are supported for group profile picture!", {reply_parameters: {message_id: ctx.message.message_id}})
+            }
+        }
+        else {
+            await ctx.reply("You can only set an image as chat profile picture!", {reply_parameters: {message_id: ctx.message.message_id}})
+        }
+    }
+    else {        
+        await ctx.reply("Please reply to an image with /setgpic command to set it as a profile picture for this group.", {reply_parameters: {message_id: ctx.message.message_id}});
+    }
+    
+    async function setGroupPic(file_id: string) {
+        let file = await ctx.api.getFile(file_id);
+        let file_path = await file.download();
 
-// bot.chatType("supergroup" || "group").command("setgtitle", elevatedUsersOnly(botCanChangeInfo(async (ctx: any) => {
-//     let user_info = await userInfo(ctx);
-//     if (user_info.can_change_info == false) {
-//         await ctx.reply("You don't have enough rights to change group title!", {reply_parameters: {message_id: ctx.message.message_id}});
-//         return;
-//     }
-//     else {
-//
-//     }
-// })));
+        if (ctx.message.reply_to_message.sticker) {
+            const resizedFilePath = path.join(__dirname, 'resized-photo.jpg');
+            await sharp(file_path)
+                .resize({ width: 512, height: 512, fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } })
+                .toFile(resizedFilePath);
+            file_path = resizedFilePath;
+        }
 
-// bot.chatType("supergroup" || "group").command("setgdesc", elevatedUsersOnly(botCanChangeInfo(async (ctx: any) => {
-//     let user_info = await userInfo(ctx);
-//     if (user_info.can_change_info == false) {
-//         await ctx.reply("You don't have enough rights to change group description!", {reply_parameters: {message_id: ctx.message.message_id}});
-//         return;
-//     }
-//     else {
-//
-//     }
-// })));
+        const fileObject = new InputFile(file_path)
+        await ctx.api.setChatPhoto(ctx.chat.id, fileObject)
+        .then(() => {
+            ctx.reply("Group profile picture updated successfully!", {reply_parameters: {message_id: ctx.message.message_id}});
+        })
+        .catch((GrammyError: any) => {
+            ctx.reply("Failed to update group profile picture, make sure the image size is not too big.", {reply_parameters: {message_id: ctx.message.message_id}});
+            logger.error(`${GrammyError}`);
+            channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+        });
+    }
+})));
 
-// bot.chatType("supergroup" || "group").command("setgsticker", elevatedUsersOnly(botCanChangeInfo(async (ctx: any) => {
-//     let user_info = await userInfo(ctx);
-//     if (user_info.can_change_info == false) {
-//         await ctx.reply("You don't have enough rights to change group stickerpack!", {reply_parameters: {message_id: ctx.message.message_id}});
-//         return;
-//     }
-//     else {
-//
-//     }
+bot.chatType("supergroup" || "group").command(["delgpic", "delgpfp", "rmgpic", "rmgpfp"], adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
+        await ctx.api.deleteChatPhoto(ctx.chat.id)
+        .then(() => {
+            ctx.reply("Group profile picture deleted successfully!", {reply_parameters: {message_id: ctx.message.message_id}});
+        })
+        .catch((GrammyError: any) => {
+            ctx.reply("Failed to delete group profile picture.", {reply_parameters: {message_id: ctx.message.message_id}});
+            logger.error(`${GrammyError}`);
+            channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+        });
+})));
+
+bot.chatType("supergroup" || "group").command("setgtitle", adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
+    if (ctx.match) {
+        await setGroupTitle(ctx.match)
+    }
+    else if (ctx.message.reply_to_message) {
+        await setGroupTitle(ctx.message.reply_to_message.text)
+    }
+    else {
+        await ctx.reply("Did you forget to provide the title?", {reply_parameters: {message_id: ctx.message.message_id}});
+    }
+
+    async function setGroupTitle(title: string) {
+        let title_string = title.substring(0, 128)
+        await ctx.api.setChatTitle(ctx.chat.id, title_string)
+        .then(() => {
+            ctx.reply(`Group title is set to <code>${title_string}</code>!`, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+        })
+        .catch((GrammyError: any) => {
+            ctx.reply("Failed to set group title, it can be done manually.", {reply_parameters: {message_id: ctx.message.message_id}});
+            logger.error(`${GrammyError}`);
+            channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+        });
+    }
+})));
+
+bot.chatType("supergroup" || "group").command(["setgdesc", "setdescription"], adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
+    if (ctx.match) {
+        await setGroupDesc(ctx.match)
+    }
+    else if (ctx.message.reply_to_message) {
+        await setGroupDesc(ctx.message.reply_to_message.text)
+    }
+    else {
+        await ctx.reply("Did you forget to provide the title?", {reply_parameters: {message_id: ctx.message.message_id}});
+    }
+
+    async function setGroupDesc(title: string) {
+        let desc_string = title.substring(0, 128)
+        await ctx.api.setChatDescription(ctx.chat.id, desc_string)
+        .then(() => {
+            ctx.reply(`Successfully set group description!`, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+        })
+        .catch((GrammyError: any) => {
+            ctx.reply("Failed to set group description, it can be done manually.", {reply_parameters: {message_id: ctx.message.message_id}});
+            logger.error(`${GrammyError}`);
+            channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+        });
+    }
+})));
+
+bot.chatType("supergroup" || "group").command(["setgsticker", "setsticker"], adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
+    if (ctx.message.reply_to_message) {
+        await ctx.api.setChatTitle(ctx.chat.id, ctx.message.reply_to_message.sticker.set_name)
+        .then(() => {
+            ctx.reply(`Group stickerpack is set to <code>${ctx.message.reply_to_message.sticker.set_name}</code>!`, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+        })
+        .catch((GrammyError: any) => {
+            ctx.reply("Failed to set group stickerpack!", {reply_parameters: {message_id: ctx.message.message_id}});
+            logger.error(`${GrammyError}`);
+            channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+        });
+    }
+    else {
+        await ctx.reply("You need to reply to some sticker to set chat sticker set!", {reply_parameters: {message_id: ctx.message.message_id}});
+    }
+})));
+
+bot.chatType("supergroup" || "group").command(["delgsticker", "delsticker", "rmgsticker", "rmsticker"], adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
+    await ctx.api.deleteChatStickerSet(ctx.chat.id)
+    .then(() => {
+        ctx.reply("Removed group's stickerpack for everyone!", {reply_parameters: {message_id: ctx.message.message_id}});
+    })
+    .catch((GrammyError: any) => {
+        ctx.reply("Failed to remove group stickerpack!", {reply_parameters: {message_id: ctx.message.message_id}});
+        logger.error(`${GrammyError}`);
+        channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+    });
+})));
+
+// bot.chatType("supergroup" || "group").command(["admincache", "reload"], elevatedUsersOnly(isBotAdmin(async (ctx: any) => {
+
 // })));

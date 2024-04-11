@@ -5,6 +5,7 @@ import { autoRetry } from "@grammyjs/auto-retry";
 import { Context } from "grammy";
 import { run, sequentialize } from "@grammyjs/runner";
 import { chatMembers } from "@grammyjs/chat-members";
+import { hydrateFiles } from '@grammyjs/files';
 import { logger } from "./logger"
 import { channel_log } from "./logger";
 import { gramjs } from './utility';
@@ -29,6 +30,7 @@ bot.use(chatMembers(adapter, {
     enableCaching: true, 
     keepLeftChatMembers: true 
 }));
+bot.api.config.use(hydrateFiles(bot.token));
 
 const ALL_MODULES: string[] = [];
 

@@ -11,12 +11,15 @@ import { type ChatMembersFlavor } from "@grammyjs/chat-members";
 import { prisma } from "./database";
 // import { PrismaAdapter } from "@grammyjs/storage-prisma";
 import { RedisAdapter } from '@grammyjs/storage-redis';
+import { FileFlavor } from "@grammyjs/files";
 import IORedis from 'ioredis';
 import { type ChatMember } from "grammy/types";
 
 type ChatContext = Context & ChatMembersFlavor;
+type FileContext = FileFlavor<Context>
+type MyContext = ChatContext & FileContext;
 
-export const bot = new Bot<ChatContext>(constants.BOT_TOKEN)
+export const bot = new Bot<MyContext>(constants.BOT_TOKEN)
 const redisInstance = new IORedis(constants.REDIS_CACHE_URL)
 export const adapter = new RedisAdapter<ChatMember>({ instance: redisInstance, ttl: 10 });
 
