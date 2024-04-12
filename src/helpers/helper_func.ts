@@ -464,29 +464,13 @@ async function userIdExtractor(args: string) {
     return user_id;
 }
 
-export async function resolveUserhandle(ctx: any) {
-    let args = ctx.match;
-    let userhandle;
-    let username = await usernameExtractor(args);
-    let user_id = await userIdExtractor(args);
-
-    if (username != undefined && username.length > 0) {
-        const user = await gramjs.invoke(
-            new gramJsApi.users.GetFullUser({
-              id: username,
-            })
-        );
-        userhandle = user;
-    }
-    else if (user_id != undefined && user_id.length > 0) {
-        const user = await gramjs.invoke(
-            new gramJsApi.users.GetFullUser({
-              id: user_id,
-            })
-        );
-        userhandle = user;
-    }
-    return userhandle;
+export async function resolveUserhandle(userhandle: string) {
+    const user = await gramjs.invoke(
+        new gramJsApi.users.GetFullUser({
+          id: userhandle,
+        })
+    );
+    return user;
 }
 
 export async function extract_time(ctx: any, time_val: string) {

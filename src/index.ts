@@ -44,8 +44,8 @@ const ALL_MODULES: string[] = [];
         }
     }
     await bot.api.deleteWebhook({ drop_pending_updates: true });
+    await gramjs.setLogLevel(LogLevel.NONE)
     await gramjs.start({botAuthToken: constants.BOT_TOKEN});  
-    gramjs.setLogLevel(LogLevel.NONE)
 })();
 
 bot.init().then(async() => {
