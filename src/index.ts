@@ -9,6 +9,7 @@ import { hydrateFiles } from '@grammyjs/files';
 import { logger } from "./logger"
 import { channel_log } from "./logger";
 import { gramjs } from './utility';
+import { LogLevel } from 'telegram/extensions/Logger';
 
 // Initialize grammY runner
 const runner = run(bot, { 
@@ -44,6 +45,7 @@ const ALL_MODULES: string[] = [];
     }
     await bot.api.deleteWebhook({ drop_pending_updates: true });
     await gramjs.start({botAuthToken: constants.BOT_TOKEN});  
+    gramjs.setLogLevel(LogLevel.NONE)
 })();
 
 bot.init().then(async() => {
@@ -57,7 +59,6 @@ bot.init().then(async() => {
         `• Privacy Mode: ${bot.botInfo.can_read_all_group_messages ? `Disabled` : `Enabled`}\n` +
         `• Inline Mode: ${bot.botInfo.supports_inline_queries ? `Enabled` : `Disabled`}\n`
     );
-    
     console.log(bot_info + `\nLoaded modules: [ ${ALL_MODULES.join(", ")} ]\n`);
     channel_log(bot_info + `\nLoaded modules: [ <code>${ALL_MODULES.join(", ")}</code> ]`);
 });
