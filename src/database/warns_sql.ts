@@ -169,5 +169,18 @@ export async function reset_all_warns(chatId: string, userId: bigint, reasons: s
         return false;    
     }
 }
-// later use
-// export async function reset_all_chat_warns 
+
+export async function reset_all_chat_warns(chatId: string) {
+    try {
+        let reset_all_warns = await prisma.warns.deleteMany({
+            where: {
+            chat_id: chatId,
+            }
+        })
+        return true;
+    }
+    catch (e) {
+        console.error(e)
+        return false;    
+    }
+}

@@ -25,18 +25,17 @@ export const adapter = new RedisAdapter<ChatMember>({ instance: redisInstance, t
 
 bot.catch((err) => {
     const ctx = err.ctx;
-    const context = ctx;
     let err_template = `while handling update ${ctx.update.update_id.toString()}`;
     const e = err.error;
     if (e instanceof BotError) {
-        logger.error(`${err_template} | ${e.ctx}`);
+        logger.error(`${err_template} | ${e}`);
     } else if (e instanceof GrammyError) {
-        logger.error(`${err_template} | ${e.description}`);
+        console.error(`${err_template} | ${e}`);
     } else if (e instanceof HttpError) {
         logger.error(`${err_template} | ${e}`);
     } else {
         logger.error(`${err_template} | ${e}`);
     }
-    var log = (`${e}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(context.update,  null, 2)}`)
+    let log = (`${e}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
     channel_log(log);
 });
