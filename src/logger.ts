@@ -42,3 +42,8 @@ export async function channel_log(log: string) {
         logger.error("Failed to post message on LOG_CHANNEL: ", err);
     }
 }
+
+export async function grammyErrorLog(ctx: any, GrammyError: any) {
+    logger.error(`${GrammyError}`);
+    channel_log(`${GrammyError}\n\n` + `Timestamp: ${new Date().toLocaleString()}\n\n` + `Update object:\n${JSON.stringify(ctx.update,  null, 2)}`)
+}

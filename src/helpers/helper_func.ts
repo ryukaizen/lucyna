@@ -1,5 +1,6 @@
 import constants from "../config";
 import { gramjs, gramJsApi } from "../utility";
+import { promisify } from 'util';
 
 // ==================== USER STUFF ====================
 
@@ -86,9 +87,9 @@ export async function checkElevatedUser(ctx: any) {
 }
 
 // for general stuff
-export async function checkElevatedUserFrom(ctx: any, user_info: any) {
-    let user = await ctx.chatMembers.getChatMember(ctx.chat.id, user_info.user.id)
-    if (user_info.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(user_info.user.id) == true || user.status == "creator" || user.status == "administrator") {
+export async function checkElevatedUserFrom(ctx: any, user_id: any) {
+    let user = await ctx.chatMembers.getChatMember(ctx.chat.id, user_id)
+    if (user_id == constants.OWNER_ID || constants.SUPERUSERS.includes(user_id) == true || user.status == "creator" || user.status == "administrator") {
         return true;
     }
     else {
@@ -289,7 +290,7 @@ export function isBotAdmin(hander: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = ctx.chatMembers.getChatMember(chat_id, bot_id);
+        let bot_info = await ctx.chatMembers.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
                 await hander(ctx);
         }
@@ -303,7 +304,7 @@ export function botCanRestrictUsers(hander: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = ctx.chatMembers.getChatMember(chat_id, bot_id);
+        let bot_info = await ctx.chatMembers.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
             if (bot_info.can_restrict_members == true) {
                 await hander(ctx);
@@ -464,6 +465,16 @@ async function userIdExtractor(args: string) {
     return user_id;
 }
 
+export async function getUserInstance(user: any) {
+    let _user = user?.users?.[0];
+    if (_user?.className === "User") {
+        return _user;
+    }
+    else {
+        return undefined;
+    }
+}
+
 export async function resolveUserhandle(userhandle: string) {
     const user = await gramjs.invoke(
         new gramJsApi.users.GetFullUser({
@@ -528,3 +539,5 @@ export function convertUnixTime(unixTime: number): string {
 
     return result.trim();
 }
+
+export const sleep = promisify(setTimeout);
