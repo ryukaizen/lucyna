@@ -89,10 +89,10 @@ bot.chatType("supergroup" || "group").command("report", (async (ctx: any) => {
                 let admins = await ctx.api.getChatAdministrators(reported_user_chat_id);
                 for (let admin of admins) {
                     if (admin.user.is_bot == false) {
-                        await ctx.api.sendMessage(admin.user.id, report_message, {parse_mode: "HTML"});
+                        await ctx.api.sendMessage(admin.user.id, report_message, {parse_mode: "HTML"}).catch(() => {})
                     }
                 }
-                await ctx.reply(`Report <a href="tg://user?id=${reported_user_id}">${reported_user_first_name}</a> to the admins!`, {reply_parameters: {message_id: ctx.message.message_id}});
+                await ctx.reply(`Reported <a href="tg://user?id=${reported_user_id}">${reported_user_first_name}</a> to the admins!`, {reply_parameters: {message_id: ctx.message.message_id}});
             }
         }
     }
