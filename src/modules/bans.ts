@@ -8,8 +8,7 @@ import {
     botCanRestrictUsers, 
     botCanRestrictUsersCallback, 
     botCanDeleteMessages,
-    checkElevatedUser,
-    checkElevatedUserFrom,
+    isUserAdmin,
     isUserBanned,
     isUserInChat,
     resolveUserhandle,
@@ -89,7 +88,7 @@ async function tban(ctx: any, user_id: number | string, duration: any, message: 
         ctx.api.sendMessage(ctx.chat.id, message, {reply_markup: unbanButton, parse_mode: "HTML"});
     })
     .catch((GrammyError: any) => {
-        ctx.reply("Failed to tmute user: invalid user / user probably does not exist.");
+        ctx.reply("Failed to temp-ban user: invalid user / user probably does not exist.");
         grammyErrorLog(ctx, GrammyError);
     });
 
@@ -102,7 +101,7 @@ async function dban(ctx: any, user_id: number | string, message: string) {
         ctx.api.sendMessage(ctx.chat.id, message, {reply_markup: unbanButton, parse_mode: "HTML"});
     })
     .catch((GrammyError: any) => {
-        ctx.reply("Failed to ban user: invalid user / user probably does not exist.");
+        ctx.reply("Failed to delete-ban user: invalid user / user probably does not exist.");
         grammyErrorLog(ctx, GrammyError);
     });
 }
@@ -115,6 +114,18 @@ async function kick(ctx: any, user_id: number | string, message: string) {
     .catch((GrammyError: any) => {
         ctx.reply("Failed to kick user: invalid user / user probably does not exist.");
         grammyErrorLog(ctx, GrammyError); 
+    });
+}
+
+async function dkick(ctx: any, user_id: number | string, message: string) {
+    await ctx.api.unbanChatMember(ctx.chat.id, user_id, {revoke_messages: true})
+    .then(() => {
+        ctx.api.deleteMessage(ctx.chat.id, ctx.message.reply_to_message.message_id)
+        ctx.api.sendMessage(ctx.chat.id, message, {parse_mode: "HTML"});
+    })
+    .catch((GrammyError: any) => {
+        ctx.reply("Failed to delete-kick user: invalid user / user probably does not exist.");
+        grammyErrorLog(ctx, GrammyError);
     });
 }
 
@@ -148,7 +159,7 @@ bot.chatType("supergroup" || "group").command("ban", adminCanRestrictUsers(botCa
         else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
             await ctx.reply("Imagine trying to ban yourself...", {reply_parameters: {message_id: ctx.message.message_id}});
         }
-        else if (await checkElevatedUser(ctx) == true) {
+        else if (await isUserAdmin(ctx, ctx.message.reply_to_message.from.id)) {
             await ctx.reply("Whoops, can't ban elevated users!", {reply_parameters: {message_id: ctx.message.message_id}});   
         }
         else {
@@ -178,7 +189,7 @@ bot.chatType("supergroup" || "group").command("ban", adminCanRestrictUsers(botCa
                 else if (user_id == ctx.from.id) {
                     await ctx.reply("Imagine trying to ban yourself...", {reply_parameters: {message_id: ctx.message.message_id}});
                 }
-                else if (await checkElevatedUserFrom(ctx, user_id) == true) {
+                else if (await isUserAdmin(ctx, user_id)) {
                     await ctx.reply("Whoops, can't ban elevated users!", {reply_parameters: {message_id: ctx.message.message_id}});   
                 }
                 else {
@@ -252,7 +263,7 @@ bot.chatType("supergroup" || "group").command("dban", adminCanRestrictUsers(admi
         else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
             await ctx.reply("Imagine trying to ban yourself...", {reply_parameters: {message_id: ctx.message.message_id}});
         }
-        else if (await checkElevatedUser(ctx) == true) {
+        else if (await isUserAdmin(ctx, ctx.message.reply_to_message.from.id)) {
             await ctx.reply("Whoops, can't ban elevated users!", {reply_parameters: {message_id: ctx.message.message_id}});   
         }
         else {
@@ -280,7 +291,7 @@ bot.chatType("supergroup" || "group").command(["sban", "pew"], adminCanRestrictU
         else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
             return;
         }
-        else if (await checkElevatedUser(ctx) == true) {
+        else if (await isUserAdmin(ctx, ctx.message.reply_to_message.from.id)) {
             return;
         }
         else {
@@ -305,7 +316,7 @@ bot.chatType("supergroup" || "group").command(["sban", "pew"], adminCanRestrictU
                 else if (user_id == ctx.from.id) {
                     return;
                 }
-                else if (await checkElevatedUserFrom(ctx, user_id) == true) {
+                else if (await isUserAdmin(ctx, user_id)) {
                     return;
                 }
                 else {
@@ -333,7 +344,7 @@ bot.chatType("supergroup" || "group").command(["tban", "tempban"], adminCanRestr
         else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
             await ctx.reply("Imagine trying to ban yourself...", {reply_parameters: {message_id: ctx.message.message_id}});
         }
-        else if (await checkElevatedUser(ctx) == true) {
+        else if (await isUserAdmin(ctx, ctx.message.reply_to_message.from.id)) {
             await ctx.reply("Whoops, can't ban elevated users!", {reply_parameters: {message_id: ctx.message.message_id}});   
         }
         else {
@@ -371,13 +382,13 @@ bot.chatType("supergroup" || "group").command(["tban", "tempban"], adminCanRestr
                 let userInstance = await getUserInstance(user);
                 let user_id = Number(user?.fullUser?.id)
                 if (user_id == bot.botInfo.id) {
-                    await ctx.reply("YOU CAN'T MAKE ME STAY QUIET!!!", {reply_parameters: {message_id: ctx.message.message_id}});
+                    await ctx.reply("Imagine making me ban myself...", {reply_parameters: {message_id: ctx.message.message_id}});    
                 }
                 else if (user_id == ctx.from.id) {
-                    await ctx.reply("You can just stop typing, you know?", {reply_parameters: {message_id: ctx.message.message_id}});
+                    await ctx.reply("Imagine trying to ban yourself...", {reply_parameters: {message_id: ctx.message.message_id}});
                 }
-                else if (await checkElevatedUserFrom(ctx, user_id) == true) {
-                    await ctx.reply("Muting the privileged users is out of my league :(", {reply_parameters: {message_id: ctx.message.message_id}});   
+                else if (await isUserAdmin(ctx, user_id)) {
+                    await ctx.reply("Whoops, can't ban elevated users!", {reply_parameters: {message_id: ctx.message.message_id}});   
                 }
                 else {
                     let ban_message = (
@@ -419,7 +430,7 @@ bot.chatType("supergroup" || "group").command("kick", adminCanRestrictUsers(botC
         else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
             await ctx.reply("You can just leave this group, you know?", {reply_parameters: {message_id: ctx.message.message_id}});
         }
-        else if (await checkElevatedUser(ctx) == true) {
+        else if (await isUserAdmin(ctx, ctx.message.reply_to_message.from.id)) {
             await ctx.reply("Special guys can't be kicked, sorry to say.", {reply_parameters: {message_id: ctx.message.message_id}});   
         }
         else {
@@ -448,7 +459,7 @@ bot.chatType("supergroup" || "group").command("kick", adminCanRestrictUsers(botC
                 else if (user_id == ctx.from.id) {
                     await ctx.reply("You can just leave this group, you know?", {reply_parameters: {message_id: ctx.message.message_id}});
                 }
-                else if (await checkElevatedUserFrom(ctx, user_id) == true) {
+                else if (await isUserAdmin(ctx, user_id)) {
                     await ctx.reply("Special guys can't be kicked, sorry to say.", {reply_parameters: {message_id: ctx.message.message_id}});   
                 }
                 else {
@@ -468,6 +479,28 @@ bot.chatType("supergroup" || "group").command("kick", adminCanRestrictUsers(botC
         }    
     }       
 })));
+
+
+bot.chatType("supergroup" || "group").command("dkick", adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
+    if (ctx.message.reply_to_message != undefined) {
+        if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
+            await ctx.reply("WHY WOULD YOU WANT TO DO THAT!?", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+        else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
+            await ctx.reply("You can just leave this group, you know?", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+        else if (await isUserAdmin(ctx, ctx.message.reply_to_message.from.id)) {
+            await ctx.reply("Special guys can't be kicked, sorry to say.", {reply_parameters: {message_id: ctx.message.message_id}});   
+        }
+        else {
+            let kick_message: string = (`${kick_responses[Math.floor(Math.random() * kick_responses.length)]} ${ctx.message.reply_to_message.from.first_name}.`);
+            await dkick(ctx, ctx.message.reply_to_message.from.id, kick_message);
+        }
+    }
+    else {
+        await ctx.reply("Please reply to a message with /dkick command to <i>delete-kick</i> it", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+    }       
+})))));
 
 bot.chatType("supergroup" || "group").command("kickme", (botCanRestrictUsers(async (ctx: any) => {
     let kick_message: string = (`${kick_responses[Math.floor(Math.random() * kick_responses.length)]} ${ctx.from.first_name}.`);

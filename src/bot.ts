@@ -30,7 +30,7 @@ bot.catch((err) => {
     if (e instanceof BotError) {
         logger.error(`${err_template} | ${e}`);
     } else if (e instanceof GrammyError) {
-        console.error(`${err_template} | ${e}`);
+        logger.error(`${err_template} | ${e}`);
     } else if (e instanceof HttpError) {
         logger.error(`${err_template} | ${e}`);
     } else {

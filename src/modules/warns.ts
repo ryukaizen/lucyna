@@ -19,8 +19,7 @@ import {
     botCanRestrictUsers, 
     botCanRestrictUsersCallback, 
     botCanDeleteMessages, 
-    checkElevatedUser,
-    checkElevatedUserFrom,
+    isUserAdmin,
     ownerOnly,
     ownerOnlyCallback,
     resolveUserhandle,
@@ -355,7 +354,7 @@ bot.chatType("supergroup" || "group").command("warn", adminCanRestrictUsers(botC
         else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
             await ctx.reply("It's good to be self-aware.", {reply_parameters: {message_id: ctx.message.message_id}});
         }
-        else if (await checkElevatedUser(ctx) == true) {
+        else if (await isUserAdmin(ctx, ctx.message.reply_to_message.from.id)) {
             await ctx.reply("⚠️ <b>Warned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});   
         }
         else {
@@ -385,7 +384,7 @@ bot.chatType("supergroup" || "group").command("warn", adminCanRestrictUsers(botC
                 else if (user_id == ctx.from.id) {
                     await ctx.reply("It's good to be self-aware.", {reply_parameters: {message_id: ctx.message.message_id}});
                 }
-                else if (await checkElevatedUserFrom(ctx, user_id) == true) {
+                else if (await isUserAdmin(ctx, user_id)) {
                     await ctx.reply("⚠️ <b>Warned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}});   
                 }
                 else {
@@ -418,7 +417,7 @@ bot.chatType("supergroup" || "group").command(["unwarn", "rmwarn"], adminCanRest
         else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
             await ctx.reply("You are an admin. Period.", {reply_parameters: {message_id: ctx.message.message_id}});
         }
-        else if (await checkElevatedUser(ctx) == true) {
+        else if (await isUserAdmin(ctx, ctx.message.reply_to_message.from.id)) {
             await ctx.reply("🏳️ <b>Unwarned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});   
         }
         else {
@@ -441,7 +440,7 @@ bot.chatType("supergroup" || "group").command(["unwarn", "rmwarn"], adminCanRest
                 else if (user_id == ctx.from.id) {
                     await ctx.reply("You are an admin. Period.", {reply_parameters: {message_id: ctx.message.message_id}});
                 }
-                else if (await checkElevatedUserFrom(ctx, user_id) == true) {
+                else if (await isUserAdmin(ctx, user_id)) {
                     await ctx.reply("🏳️ <b>Unwarned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}});   
                 }
                 else {
@@ -466,7 +465,7 @@ bot.chatType("supergroup" || "group").command(["dwarn", "delwarn"], adminCanRest
         else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
             await ctx.reply("It's good to be self-aware.", {reply_parameters: {message_id: ctx.message.message_id}});
         }
-        else if (await checkElevatedUser(ctx) == true) {
+        else if (await isUserAdmin(ctx, ctx.message.reply_to_message.from.id)) {
             await ctx.reply("⚠️ <b>Warned!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});   
         }
         else {
@@ -486,7 +485,7 @@ bot.chatType("supergroup" || "group").command(["resetwarns", "rmwarns"], adminCa
         else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
             await ctx.reply("You are an admin. Period.", {reply_parameters: {message_id: ctx.message.message_id}});
         }
-        else if (await checkElevatedUser(ctx) == true) {
+        else if (await isUserAdmin(ctx, ctx.message.reply_to_message.from.id)) {
             await ctx.reply("🏳️ <b>Warns resetted!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});   
         }
         else {
@@ -509,7 +508,7 @@ bot.chatType("supergroup" || "group").command(["resetwarns", "rmwarns"], adminCa
                 else if (user_id == ctx.from.id) {
                     await ctx.reply("You are an admin. Period.", {reply_parameters: {message_id: ctx.message.message_id}});
                 }
-                else if (await checkElevatedUserFrom(ctx, user_id) == true) {
+                else if (await isUserAdmin(ctx, user_id)) {
                     await ctx.reply("🏳️ <b>Warns resetted!</b> <tg-spoiler>Just kidding.</tg-spoiler>", {reply_parameters: {message_id: ctx.message.message_id}});   
                 }
                 else {
