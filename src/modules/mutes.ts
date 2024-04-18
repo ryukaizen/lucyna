@@ -8,8 +8,7 @@ import {
     botCanRestrictUsers, 
     botCanRestrictUsersCallback, 
     botCanDeleteMessages, 
-    checkElevatedUser,
-    checkElevatedUserFrom,
+    isUserAdmin,
     isUserRestricted,
     extract_time,
     convertUnixTime,
@@ -118,7 +117,7 @@ bot.chatType("supergroup" || "group").command("mute", adminCanRestrictUsers(botC
         else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
             await ctx.reply("You can just stop typing, you know?", {reply_parameters: {message_id: ctx.message.message_id}});
         }
-        else if (await checkElevatedUser(ctx) == true) {
+        else if (await isUserAdmin(ctx, ctx.message.reply_to_message.from.id)) {
             await ctx.reply("Muting the privileged users is out of my league :(", {reply_parameters: {message_id: ctx.message.message_id}});   
         }
         else {
@@ -156,7 +155,7 @@ bot.chatType("supergroup" || "group").command("mute", adminCanRestrictUsers(botC
                 else if (user_id == ctx.from.id) {
                     await ctx.reply("You can just stop typing, you know?", {reply_parameters: {message_id: ctx.message.message_id}});
                 }
-                else if (await checkElevatedUserFrom(ctx, user_id) == true) {
+                else if (await isUserAdmin(ctx, user_id)) {
                     await ctx.reply("Muting the privileged users is out of my league :(", {reply_parameters: {message_id: ctx.message.message_id}});   
                 }
                 else {
@@ -238,7 +237,7 @@ bot.chatType("supergroup" || "group").command(["tmute", "tempmute"], adminCanRes
         else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
             await ctx.reply("You can just stop typing, you know?", {reply_parameters: {message_id: ctx.message.message_id}});
         }
-        else if (await checkElevatedUser(ctx) == true) {
+        else if (await isUserAdmin(ctx, ctx.message.reply_to_message.from.id)) {
             await ctx.reply("Muting the privileged users is out of my league :(", {reply_parameters: {message_id: ctx.message.message_id}});   
         }
         else {
@@ -281,7 +280,7 @@ bot.chatType("supergroup" || "group").command(["tmute", "tempmute"], adminCanRes
                 else if (user_id == ctx.from.id) {
                     await ctx.reply("You can just stop typing, you know?", {reply_parameters: {message_id: ctx.message.message_id}});
                 }
-                else if (await checkElevatedUserFrom(ctx, user_id) == true) {
+                else if (await isUserAdmin(ctx, user_id)) {
                     await ctx.reply("Muting the privileged users is out of my league :(", {reply_parameters: {message_id: ctx.message.message_id}});   
                 }
                 else {
@@ -324,7 +323,7 @@ bot.chatType("supergroup" || "group").command(["smute", "pss"], adminCanRestrict
         else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
             return;
         }
-        else if (await checkElevatedUser(ctx) == true) {
+        else if (await isUserAdmin(ctx, ctx.message.reply_to_message.from.id)) {
             return;
         }
         else {
@@ -367,7 +366,7 @@ bot.chatType("supergroup" || "group").command(["smute", "pss"], adminCanRestrict
                 else if (user_id == ctx.from.id) {
                     return;
                 }
-                else if (await checkElevatedUserFrom(ctx, user_id) == true) {
+                else if (await isUserAdmin(ctx, user_id)) {
                     return;
                 }
                 else {
@@ -410,7 +409,7 @@ bot.chatType("supergroup" || "group").command(["dmute", "delmute"], adminCanRest
         else if (ctx.message.reply_to_message.from.id == ctx.from.id) {
             await ctx.reply("You can just stop typing, you know?", {reply_parameters: {message_id: ctx.message.message_id}});
         }
-        else if (await checkElevatedUser(ctx) == true) {
+        else if (await isUserAdmin(ctx, ctx.message.reply_to_message.from.id)) {
             await ctx.reply("Muting the privileged users is out of my league :(", {reply_parameters: {message_id: ctx.message.message_id}});   
         }
         else {

@@ -1,7 +1,7 @@
 {
   "name": "Lucy",
-  "version": "1.0.0",
-  "description": "A multi-featured, anime themed bot. Built with grammY.",
+  "version": "1.0.5",
+  "description": "A multi-featured, anime themed bot. Built with grammY & GramJS.",
   "main": "dist/index.js",
   "scripts": {
     "start": "tsc && node dist/index.js"
@@ -13,14 +13,16 @@
   "keywords": [
     "anime",
     "telegram",
+    "group",
+    "group-management",
+    "chat",
     "bot",
     "typescript",
     "grammY",
+    "gramjs",
     "nodejs",
-    "chat",
-    "mongoose",
-    "lucyna",
-    "lucyna-kushinada"
+    "prisma",
+    "redis"
   ],
   "author": "Ryukaizen",
   "license": "MIT",

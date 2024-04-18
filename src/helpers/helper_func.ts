@@ -3,7 +3,6 @@ import { gramjs, gramJsApi } from "../utility";
 import { promisify } from 'util';
 
 // ==================== USER STUFF ====================
-
 export function ownerOnly(handler: any) {
     return async (ctx: any) => {
         let user = await ctx.getAuthor();
@@ -74,22 +73,9 @@ export function samePersonCallbackOnly(handler: any) {
     };
 }
 
-// for reply_to_message
-export async function checkElevatedUser(ctx: any) {
-    // fetch user status
-    let user = await ctx.chatMembers.getChatMember(ctx.chat.id, ctx.message.reply_to_message.from.id)
-    if (ctx.message.reply_to_message.from.id == constants.OWNER_ID || constants.SUPERUSERS.includes(ctx.message.reply_to_message.from.id) == true || user.status == "creator" || user.status == "administrator") {
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-// for general stuff
-export async function checkElevatedUserFrom(ctx: any, user_id: any) {
+export async function isUserAdmin(ctx: any, user_id: any) {
     let user = await ctx.chatMembers.getChatMember(ctx.chat.id, user_id)
-    if (user_id == constants.OWNER_ID || constants.SUPERUSERS.includes(user_id) == true || user.status == "creator" || user.status == "administrator") {
+    if (user_id == constants.OWNER_ID || constants.SUPERUSERS.includes(user_id) || user.status == "creator" || user.status == "administrator" || user_id == "1087968824") {
         return true;
     }
     else {
@@ -97,11 +83,15 @@ export async function checkElevatedUserFrom(ctx: any, user_id: any) {
     }
 }
 
-export async function userInfo(ctx: any) {
-    const user_info = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
-    return user_info;
+export async function isUserCreator(ctx: any, user_id: number) {
+    let user = await ctx.chatMembers.getChatMember(ctx.chat.id, user_id);
+    if (user.status == "creator") {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
-
 
 // future use maybe
 export async function isUserInChat(ctx: any, chat_id: string, user_id: number) {
@@ -112,7 +102,6 @@ export async function isUserInChat(ctx: any, chat_id: string, user_id: number) {
     else {
         return false;
     }
-
 }
 
 export async function isUserRestricted(ctx: any, chat_id: string, user_id: number) {
@@ -136,11 +125,23 @@ export async function isUserBanned(ctx: any, chat_id: string, user_id: number) {
 }
 // ====================================================
 
+// ============== ANONYMOUS ADMIN CHECK ===============
+// const anonCheckButton = new Menu("anonkeyboard")  
+// bot.use(anonCheckButton);
+
+// async function anonymousAdminCheck(ctx: any) {
+//     await ctx.api.sendMessage(ctx.chat.id, "Due to being anonymous, you need to pass the admin check before using this command.", {reply_markup: anonCheckButton, reply_parameters: {message_id: ctx.message.message_id}});
+// }
+// ====================================================
+
 // ==================== ADMIN STUFF ====================
 export function adminCanRestrictUsers(handler: any) {
     return async (ctx: any) => {
         const chatMember = await ctx.chatMembers.getChatMember();
         if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
+            await handler(ctx);
+        }
+        else if (chatMember.user.id == "1087968824") {
             await handler(ctx);
         }
         else if (chatMember.status == "administrator") {
@@ -164,6 +165,9 @@ export function adminCanRestrictUsersCallback(handler: any) {
         if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator" ) {
             await handler(ctx);
         }
+        else if (chatMember.user.id == "1087968824") {
+            await handler(ctx);
+        }
         else if (chatMember.status == "administrator") {
             if (chatMember.can_restrict_members == true) {
                 await handler(ctx);
@@ -182,6 +186,9 @@ export function adminCanDeleteMessages(handler: any) {
     return async (ctx: any) => {
         const chatMember = await ctx.chatMembers.getChatMember();
         if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
+            await handler(ctx);
+        }
+        else if (chatMember.user.id == "1087968824") {
             await handler(ctx);
         }
         else if (chatMember.status == "administrator") {
@@ -205,6 +212,9 @@ export function adminCanPinMessages(handler: any) {
         if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
             await handler(ctx);
         }
+        else if (chatMember.user.id == "1087968824") {
+            await handler(ctx);
+        }
         else if (chatMember.status == "administrator") {
             if (chatMember.can_pin_messages == true) {
                 await handler(ctx);
@@ -224,6 +234,9 @@ export function adminCanInviteUsers(handler: any) {
     return async (ctx: any) => {
         const chatMember = await ctx.chatMembers.getChatMember();
         if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
+            await handler(ctx);
+        }
+        else if (chatMember.user.id == "1087968824") {
             await handler(ctx);
         }
         else if (chatMember.status == "administrator") {
@@ -247,6 +260,9 @@ export function adminCanPromoteUsers(handler: any) {
         if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
             await handler(ctx);
         }
+        else if (chatMember.user.id == "1087968824") {
+            await handler(ctx);
+        }
         else if (chatMember.status == "administrator") {
             if (chatMember.can_promote_members == true) {
                 await handler(ctx);
@@ -266,6 +282,9 @@ export function adminCanChangeInfo(handler: any) {
     return async (ctx: any) => {
         const chatMember = await ctx.chatMembers.getChatMember();
         if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
+            await handler(ctx);
+        }
+        else if (chatMember.user.id == "1087968824") {
             await handler(ctx);
         }
         else if (chatMember.status == "administrator") {
@@ -475,6 +494,16 @@ export async function getUserInstance(user: any) {
     }
 }
 
+export async function getUserFullInstance(user: any) {
+    let _user = user;
+    if (_user?.fullUser.className === "UserFull") {
+        return _user;
+    }
+    else {
+        return undefined;
+    }
+}
+
 export async function resolveUserhandle(userhandle: string) {
     const user = await gramjs.invoke(
         new gramJsApi.users.GetFullUser({
@@ -482,6 +511,19 @@ export async function resolveUserhandle(userhandle: string) {
         })
     );
     return user;
+}
+
+export async function datacenterLocation(dcId: number | string) {
+    let datacenter = dcId.toString();
+    if (datacenter == "1" || datacenter == "3") {
+        return `Miami, Florida, USA (<code>DC ${datacenter}</code>)`;
+    }
+    else if (datacenter == "2" || datacenter == "4") {
+        return `Amsterdam, Netherlands, Europe (<code>DC ${datacenter}</code>)`;
+    }
+    else if (datacenter == "5") {
+        return `Singapore, Asia (<code>DC ${datacenter}</code>)`;
+    }
 }
 
 export async function extract_time(ctx: any, time_val: string) {
