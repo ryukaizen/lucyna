@@ -287,8 +287,8 @@ async function warnlimit(ctx: any) {
 
     if (warnLimit == undefined) {
         await set_warn_settings(ctx.chat.id.toString(), 3n, false); // default limit to 3, and soft_warn is disabled
+        warnLimit = 3n;
     }
-
     if (ctx.match) {
         let split_args = ctx.match.split(" ");
         let limit = split_args[0];

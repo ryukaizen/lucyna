@@ -58,8 +58,8 @@ export async function set_warn_settings(chatId: string, warnLimit: bigint, softW
             },
             create: {
                 chat_id: chatId,
-                warn_limit: 3, // default is 3
-                soft_warn: false // ban instead of kick
+                warn_limit: warnLimit,
+                soft_warn: softWarn 
             }
         })
         return true;
@@ -82,7 +82,7 @@ export async function set_warn_mode(chatId: string, softWarn: boolean) {
             create: {
                 chat_id: chatId,
                 warn_limit: 3, // default is 3
-                soft_warn: false // ban instead of kick
+                soft_warn: softWarn // ban instead of kick
             }
         })
         return true;
@@ -104,7 +104,7 @@ export async function set_warn_limit(chatId: string, warnLimit: bigint) {
             },
             create: {
                 chat_id: chatId,
-                warn_limit: 3, // default is 3
+                warn_limit: warnLimit, // default is 3
                 soft_warn: false // ban instead of kick
             }
         })
