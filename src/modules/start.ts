@@ -138,6 +138,7 @@ bot.chatType("private").command("start", (async(ctx: any) => {
 
     // if no payload, send the start message
     else {
+        await ctx.react("🎉");
         await ctx.api.sendAnimation(ctx.chat.id, constants.START_GIF, {caption: pm_start_text, reply_markup: start_menu, parse_mode: "HTML"});
     }
 }));
