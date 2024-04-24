@@ -5,8 +5,11 @@ import {
     botCanDeleteMessages
 } from "../helpers/helper_func";
 import { gramjs, gramJsApi } from "../utility";
+import { Composer } from "grammy";
 
-bot.chatType("supergroup" || "group").command("del", adminCanDeleteMessages(botCanDeleteMessages(async (ctx: any) => {
+const composer = new Composer();
+
+composer.chatType("supergroup" || "group").command("del", adminCanDeleteMessages(botCanDeleteMessages(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         await ctx.api.deleteMessage(ctx.chat.id, ctx.message.message_id)
         .then(() => {
@@ -22,7 +25,7 @@ bot.chatType("supergroup" || "group").command("del", adminCanDeleteMessages(botC
     }
 })));
 
-bot.chatType("supergroup" || "group").command("purge", adminCanDeleteMessages(botCanDeleteMessages(async (ctx: any) => {
+composer.chatType("supergroup" || "group").command("purge", adminCanDeleteMessages(botCanDeleteMessages(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         let message = await ctx.reply(`Purging initiated...`)
         let message_ids = [];
@@ -49,3 +52,5 @@ bot.chatType("supergroup" || "group").command("purge", adminCanDeleteMessages(bo
     }
 }
 )));
+
+export { composer as purge_plugin };

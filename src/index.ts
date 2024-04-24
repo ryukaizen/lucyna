@@ -1,17 +1,33 @@
-import fs from 'fs/promises';
 import { bot, adapter }from "./bot";
 import constants from "./config"
-import { autoRetry } from "@grammyjs/auto-retry";
-import { Context } from "grammy";
+import { gramjs } from './utility';
+import { logger, channel_log } from "./logger"
+import { Composer, Context } from "grammy";
 import { run, sequentialize } from "@grammyjs/runner";
+import { autoRetry } from "@grammyjs/auto-retry";
 import { chatMembers } from "@grammyjs/chat-members";
 import { hydrateFiles } from '@grammyjs/files';
-import { logger } from "./logger"
-import { channel_log } from "./logger";
-import { gramjs } from './utility';
 import { LogLevel } from 'telegram/extensions/Logger';
 
-// Initialize grammY runner
+import {
+    admin_plugin, 
+    antiflood_plugin,
+    ban_plugin,
+    filter_plugin,
+    misc_plugin,
+    mute_plugin,
+    purge_plugin,
+    report_plugin,
+    rule_plugin,
+    start_plugin,
+    test_plugin,
+    users_plugin,
+    warn_plugin,
+    welcome_plugin 
+} from './modules';
+
+const composer = new Composer();
+
 const runner = run(bot, { 
     runner: { 
         fetch: { 
@@ -33,16 +49,24 @@ bot.use(chatMembers(adapter, {
 }));
 bot.api.config.use(hydrateFiles(bot.token));
 
-const ALL_MODULES: string[] = [];
+composer.use(admin_plugin);
+composer.use(antiflood_plugin);
+composer.use(ban_plugin);
+composer.use(filter_plugin);
+composer.use(misc_plugin);
+composer.use(mute_plugin);
+composer.use(purge_plugin);
+composer.use(report_plugin);
+composer.use(rule_plugin);
+composer.use(start_plugin);
+composer.use(test_plugin);
+composer.use(users_plugin);
+composer.use(warn_plugin);
+composer.use(welcome_plugin);
+
+bot.use(composer);
 
 (async function () {
-    const modules = await fs.readdir("./dist/modules");
-    for (const file of modules) {
-        if (file.match(/.*\.(js)$/)) {
-            await import(`./modules/${file}`);
-            ALL_MODULES.push(`${file.replace(/\.[^\/.]+$/, "").toUpperCase()}`);
-        }
-    }
     await bot.api.deleteWebhook({ drop_pending_updates: true });
     await gramjs.setLogLevel(LogLevel.NONE)
     await gramjs.start({botAuthToken: constants.BOT_TOKEN});  
@@ -57,10 +81,10 @@ bot.init().then(async() => {
         `• Bot ID: ${bot.botInfo.id}\n` +
         `• Allow Groups: ${bot.botInfo.can_join_groups ? `Enabled` : `Disabled`}\n` +
         `• Privacy Mode: ${bot.botInfo.can_read_all_group_messages ? `Disabled` : `Enabled`}\n` +
-        `• Inline Mode: ${bot.botInfo.supports_inline_queries ? `Enabled` : `Disabled`}\n`
+        `• Inline Mode: ${bot.botInfo.supports_inline_queries ? `Enabled` : `Disabled`}\n\n`
     );
-    console.log(bot_info + `\nLoaded modules: [ ${ALL_MODULES.join(", ")} ]\n`);
-    channel_log(bot_info + `\nLoaded modules: [ <code>${ALL_MODULES.join(", ")}</code> ]`);
+    console.log(bot_info);
+    channel_log(bot_info);
 });
 
 async function exitSignal(signal: String) {

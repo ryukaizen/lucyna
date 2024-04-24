@@ -2,8 +2,11 @@ import { bot } from "../bot";
 import os from 'os';
 import si from 'systeminformation';
 import { superusersOnly } from "../helpers/helper_func";
+import { Composer } from "grammy";
 
-bot.command("ping", superusersOnly(async (ctx: any) => {
+const composer = new Composer(); 
+
+composer.command("ping", superusersOnly(async (ctx: any) => {
     let start = Date.now();
     await ctx.api.sendDice(ctx.chat.id, {emoji: "🎰"});
     let end = Date.now();
@@ -13,7 +16,7 @@ bot.command("ping", superusersOnly(async (ctx: any) => {
     );
 }));
 
-bot.chatType("supergroup" || "group").command("sysinfo", superusersOnly(async (ctx: any) => {
+composer.chatType("supergroup" || "group").command("sysinfo", superusersOnly(async (ctx: any) => {
     let cpu = await si.cpu();
     let osys = await si.osInfo();
     let mem = await si.mem();
@@ -55,3 +58,4 @@ bot.chatType("supergroup" || "group").command("sysinfo", superusersOnly(async (c
     await ctx.reply(sysinfo, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
 }));
         
+export { composer as misc_plugin };

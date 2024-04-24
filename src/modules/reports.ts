@@ -1,8 +1,10 @@
 import { bot } from "../bot";
-import { InlineKeyboard } from "grammy";
+import { Composer, InlineKeyboard } from "grammy";
 import { get_report_settings, set_report_settings } from "../database/reports_sql";
 import { datacenterLocation, elevatedUsersOnly, getUserInstance, getUserFullInstance, resolveUserhandle, isUserAdmin } from "../helpers/helper_func";
 import { gramjs, gramJsApi } from "../utility";
+
+const composer = new Composer();
 
 async function reportSettings(ctx: any) {
     let reports = await get_report_settings(ctx.chat.id.toString());
@@ -119,20 +121,20 @@ async function reportHandler(ctx: any) {
     }
 }
 
-bot.chatType("supergroup" || "group").command("reports", elevatedUsersOnly((async (ctx: any) => {
+composer.chatType("supergroup" || "group").command("reports", elevatedUsersOnly((async (ctx: any) => {
     await reportSettings(ctx);
 })));
 
-bot.chatType("supergroup" || "group").command("report", (async (ctx: any) => {
+composer.chatType("supergroup" || "group").command("report", (async (ctx: any) => {
     await reportHandler(ctx);
 }));
 
-bot.on(':text').hears(/.*(\s|^)(@admins?)\b.*/g, (async (ctx: any) => {
+composer.on(':text').hears(/.*(\s|^)(@admins?)\b.*/g, (async (ctx: any) => {
     await reportHandler(ctx);
 }));
 
 // data format is like this: "d:<chat ID>_<user ID>_<message ID>" #L79
-bot.callbackQuery(RegExp(/d:(.*)/), (async(ctx: any) => {
+composer.callbackQuery(RegExp(/d:(.*)/), (async(ctx: any) => {
     let data = (ctx.callbackQuery.data.split(":")[1]).split("_");
     let chat_id = data[0];
     let user_id = data[1]; // future use
@@ -142,7 +144,7 @@ bot.callbackQuery(RegExp(/d:(.*)/), (async(ctx: any) => {
     .then(ctx.answerCallbackQuery({text: `Deleted!`}))
 }));
 
-bot.callbackQuery(RegExp(/k:(.*)/), (async(ctx: any) => {
+composer.callbackQuery(RegExp(/k:(.*)/), (async(ctx: any) => {
     let data = (ctx.callbackQuery.data.split(":")[1]).split("_");
     let chat_id = data[0];
     let user_id = data[1]; 
@@ -152,7 +154,7 @@ bot.callbackQuery(RegExp(/k:(.*)/), (async(ctx: any) => {
     .then(ctx.answerCallbackQuery({text: `Kicked!`}))
 }));
 
-bot.callbackQuery(RegExp(/b:(.*)/), (async(ctx: any) => {
+composer.callbackQuery(RegExp(/b:(.*)/), (async(ctx: any) => {
     let data = (ctx.callbackQuery.data.split(":")[1]).split("_");
     let chat_id = data[0];
     let user_id = data[1]; 
@@ -162,7 +164,7 @@ bot.callbackQuery(RegExp(/b:(.*)/), (async(ctx: any) => {
     .then(ctx.answerCallbackQuery({text: `Banned!`}))
 }));
 
-bot.callbackQuery(RegExp(/u:(.*)/), (async(ctx: any) => {
+composer.callbackQuery(RegExp(/u:(.*)/), (async(ctx: any) => {
     let data = (ctx.callbackQuery.data.split(":")[1]).split("_");
     let chat_id = data[0]; // future use
     let user_id = data[1]; 
@@ -242,3 +244,5 @@ bot.callbackQuery(RegExp(/u:(.*)/), (async(ctx: any) => {
     await ctx.answerCallbackQuery({text: "Loaded..."}).catch((GrammyError: any) => {return}) //catching errors in error handlers itself yeah
     
 }));
+
+export { composer as report_plugin };

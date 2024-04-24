@@ -1,8 +1,10 @@
 import { bot } from "../bot"
 import constants from "../config"
 import { Menu } from "@grammyjs/menu";
-import { InlineKeyboard } from "grammy";
+import { Composer, InlineKeyboard } from "grammy";
 import { get_rules } from "../database/rules_sql"
+
+const composer = new Composer();
 
 const greets: string[] = [
     "That's what she said,", "Sir, this is a Wendy's,", "At your service,", "Hi!", "Hello!", "Hey!", "Hey there!", "Hiya!", "Greetings!", "Howdy!", "G'day!", "Salutations!", "What's up?", "How's it going?", "Wassup?",
@@ -110,7 +112,7 @@ help_submenu_2.register(news_feeds_submenu);
 
 bot.use(start_menu);  
 
-bot.chatType("private").command("start", (async(ctx: any) => { 
+composer.chatType("private").command("start", (async(ctx: any) => { 
     let pm_start_text: string = (`${greets[Math.floor(Math.random() * greets.length)]} ${ctx.from?.first_name}.\n\n${start_text}`);
     let payload = ctx.match;
 
@@ -143,7 +145,7 @@ bot.chatType("private").command("start", (async(ctx: any) => {
     }
 }));
 
-bot.chatType("supergroup" || "group").command("start", (async(ctx: any) => {
+composer.chatType("supergroup" || "group").command("start", (async(ctx: any) => {
     let grp_start_text: string = `${greets[Math.floor(Math.random() * greets.length)]} <a href="tg://user?id=${ctx.from?.id}">${ctx.from?.first_name}</a>.`;    
     let payload = ctx.match;
     if (payload == "new") {
@@ -154,10 +156,12 @@ bot.chatType("supergroup" || "group").command("start", (async(ctx: any) => {
     }
 }));
 
-bot.chatType("private").command("help", (async(ctx: any) => {
+composer.chatType("private").command("help", (async(ctx: any) => {
     await ctx.api.sendAnimation(ctx.chat.id, constants.START_GIF, {caption: help_text, reply_markup: help_submenu, parse_mode: "HTML"});
 }));
 
-bot.chatType("supergroup" || "group").command("help", (async(ctx: any) => {
+composer.chatType("supergroup" || "group").command("help", (async(ctx: any) => {
     await ctx.reply("Need help?", {reply_parameters: {message_id: ctx.message.message_id}, reply_markup: helpButton, parse_mode: "HTML"});
 }));
+
+export { composer as start_plugin };

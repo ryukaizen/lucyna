@@ -1,10 +1,12 @@
 import { bot } from "../bot";
 import constants from "../config";
 import { get_rules, set_rules, reset_rules } from "../database/rules_sql";
-import { InlineKeyboard } from "grammy";
+import { Composer, InlineKeyboard } from "grammy";
 import { elevatedUsersOnly } from "../helpers/helper_func";
 
-bot.chatType("supergroup" || "group").command(["rule", "rules"], (async(ctx: any) => {
+const composer = new Composer();
+
+composer.chatType("supergroup" || "group").command(["rule", "rules"], (async(ctx: any) => {
     let chatId = ctx.chat.id.toString();
     let rules_button = new InlineKeyboard()
         .url("Rules❕", `https://telegram.me/${constants.BOT_USERNAME}?start=rules_${chatId}`);
@@ -23,7 +25,7 @@ bot.chatType("supergroup" || "group").command(["rule", "rules"], (async(ctx: any
     }
 }));
 
-bot.chatType("supergroup" || "group").command(["setrule", "setrules", "addrule", "addrules"], elevatedUsersOnly(async(ctx: any) => {
+composer.chatType("supergroup" || "group").command(["setrule", "setrules", "addrule", "addrules"], elevatedUsersOnly(async(ctx: any) => {
     let chatId = ctx.chat.id.toString();
 
     const rulesPreview = new InlineKeyboard()
@@ -60,7 +62,7 @@ bot.chatType("supergroup" || "group").command(["setrule", "setrules", "addrule",
     }
 }));
 
-bot.chatType("supergroup" || "group").command(["resetrule", "resetrules", "rmrule", "rmrules"], elevatedUsersOnly(async(ctx: any) => {
+composer.chatType("supergroup" || "group").command(["resetrule", "resetrules", "rmrule", "rmrules"], elevatedUsersOnly(async(ctx: any) => {
     let chatId = ctx.chat.id.toString();
     let rules = await get_rules(chatId);
     if (rules == null) {
@@ -77,3 +79,5 @@ bot.chatType("supergroup" || "group").command(["resetrule", "resetrules", "rmrul
         }       
     }
 }));
+
+export { composer as rule_plugin };

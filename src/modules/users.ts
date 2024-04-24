@@ -1,6 +1,11 @@
 import { bot } from "../bot";
 import { gramjs, gramJsApi } from "../utility";
 import { resolveUserhandle, getUserInstance, getUserFullInstance, datacenterLocation } from "../helpers/helper_func"
+import { Composer } from "grammy";
+
+const composer = new Composer();
+
+
 // TODO: SEND PROFILE PICTURE AS DOCUMENT IN GROUP CHATS (userInfoPublic)
 async function userInfoPublic(ctx: any, user_id: string) {
     let user = await resolveUserhandle(user_id);
@@ -177,7 +182,7 @@ async function fetchId(ctx: any) {
     await ctx.api.sendMessage(ctx.chat.id, response, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
 }
 
-bot.chatType("supergroup" || "group").command("info", (async (ctx: any) => {
+composer.chatType("supergroup" || "group").command("info", (async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         let user_id = ctx.message.reply_to_message.from.id;
         await userInfoPublic(ctx, user_id);
@@ -200,11 +205,11 @@ bot.chatType("supergroup" || "group").command("info", (async (ctx: any) => {
     }
 }));
 
-bot.chatType("supergroup" || "group").command("id", (async (ctx: any) => {
+composer.chatType("supergroup" || "group").command("id", (async (ctx: any) => {
     await fetchId(ctx);
 }));
 
-bot.chatType("private").command("info", (async (ctx: any) => {
+composer.chatType("private").command("info", (async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         let user_id = ctx.message.reply_to_message.from.id;
         await userInfoPrivate(ctx, user_id);
@@ -227,6 +232,8 @@ bot.chatType("private").command("info", (async (ctx: any) => {
     }
 }));
 
-bot.chatType("private").command("id", (async (ctx: any) => {
+composer.chatType("private").command("id", (async (ctx: any) => {
     await fetchId(ctx);
 }));
+
+export { composer as users_plugin };
