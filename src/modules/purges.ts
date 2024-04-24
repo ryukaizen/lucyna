@@ -53,4 +53,4 @@ composer.chatType("supergroup" || "group").command("purge", adminCanDeleteMessag
 }
 )));
 
-export { composer as purge_plugin };
+export default composer;

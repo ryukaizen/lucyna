@@ -164,4 +164,4 @@ composer.chatType("supergroup" || "group").command("help", (async(ctx: any) => {
     await ctx.reply("Need help?", {reply_parameters: {message_id: ctx.message.message_id}, reply_markup: helpButton, parse_mode: "HTML"});
 }));
 
-export { composer as start_plugin };
+export default composer;

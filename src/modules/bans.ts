@@ -557,4 +557,4 @@ composer.callbackQuery("unban-the-dawg", adminCanRestrictUsersCallback(botCanRes
     }       
 })));
 
-export { composer as ban_plugin };
+export default composer;

@@ -80,4 +80,4 @@ composer.chatType("supergroup" || "group").command(["resetrule", "resetrules", "
     }
 }));
 
-export { composer as rule_plugin };
+export default composer;

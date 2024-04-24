@@ -9,22 +9,7 @@ import { chatMembers } from "@grammyjs/chat-members";
 import { hydrateFiles } from '@grammyjs/files';
 import { LogLevel } from 'telegram/extensions/Logger';
 
-import {
-    admin_plugin, 
-    antiflood_plugin,
-    ban_plugin,
-    filter_plugin,
-    misc_plugin,
-    mute_plugin,
-    purge_plugin,
-    report_plugin,
-    rule_plugin,
-    start_plugin,
-    test_plugin,
-    users_plugin,
-    warn_plugin,
-    welcome_plugin 
-} from './modules';
+import Commands from "./modules/index";
 
 const composer = new Composer();
 
@@ -49,22 +34,7 @@ bot.use(chatMembers(adapter, {
 }));
 bot.api.config.use(hydrateFiles(bot.token));
 
-composer.use(admin_plugin);
-composer.use(antiflood_plugin);
-composer.use(ban_plugin);
-composer.use(filter_plugin);
-composer.use(misc_plugin);
-composer.use(mute_plugin);
-composer.use(purge_plugin);
-composer.use(report_plugin);
-composer.use(rule_plugin);
-composer.use(start_plugin);
-composer.use(test_plugin);
-composer.use(users_plugin);
-composer.use(warn_plugin);
-composer.use(welcome_plugin);
-
-bot.use(composer);
+bot.use(Commands);
 
 (async function () {
     await bot.api.deleteWebhook({ drop_pending_updates: true });

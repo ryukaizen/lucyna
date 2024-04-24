@@ -245,4 +245,4 @@ composer.callbackQuery(RegExp(/u:(.*)/), (async(ctx: any) => {
     
 }));
 
-export { composer as report_plugin };
+export default composer;

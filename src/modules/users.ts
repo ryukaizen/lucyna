@@ -236,4 +236,4 @@ composer.chatType("private").command("id", (async (ctx: any) => {
     await fetchId(ctx);
 }));
 
-export { composer as users_plugin };
+export default composer;

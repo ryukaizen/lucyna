@@ -38,4 +38,4 @@ composer.on("message:new_chat_members", async (ctx: any) => {
     await ctx.reply(`Welcome new member ${ctx.from?.first_name}`, {reply_parameters: {message_id: ctx.message.message_id}})
 });
 
-export { composer as welcome_plugin };
+export default composer;
