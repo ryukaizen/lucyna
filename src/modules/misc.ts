@@ -58,4 +58,4 @@ composer.chatType("supergroup" || "group").command("sysinfo", superusersOnly(asy
     await ctx.reply(sysinfo, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
 }));
         
-export { composer as misc_plugin };
+export default composer;

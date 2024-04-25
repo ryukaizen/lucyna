@@ -482,4 +482,4 @@ composer.callbackQuery("unmute-our-fella", adminCanRestrictUsersCallback(botCanR
     }       
 })));
 
-export { composer as mute_plugin };
+export default composer;

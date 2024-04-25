@@ -597,4 +597,4 @@ composer.callbackQuery("no-reset", ownerOnlyCallback(async(ctx: any) => {
     await ctx.editMessageText("Okay fine. Tell me when you change your mind!", { parse_mode: "HTML" });
 }));
 
-export { composer as warn_plugin };
+export default composer;

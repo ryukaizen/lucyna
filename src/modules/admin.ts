@@ -479,4 +479,4 @@ composer.chatType("supergroup" || "group").command(["delgsticker", "delsticker",
 //         await ctx.editMessageText("Okay fine. Tell me when you change your mind!", { parse_mode: "HTML" });
 // }));
 
-export { composer as admin_plugin };
+export default composer;
