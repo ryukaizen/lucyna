@@ -1,5 +1,9 @@
 import admin from './admin';
+import antiflood from './antiflood';
 import bans from './bans';
+import blacklists from './blacklists'
+import filters from './filters';
+import locks from './locks';
 import misc from './misc';
 import mutes from './mutes';
 import purges from './purges';
@@ -17,7 +21,11 @@ const composer = new Composer();
 
 composer.use(
     admin,
+    antiflood,
     bans,
+    blacklists,
+    filters,
+    locks,
     misc,
     mutes,
     purges,

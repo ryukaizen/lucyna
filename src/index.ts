@@ -2,7 +2,7 @@ import { bot, adapter }from "./bot";
 import constants from "./config"
 import { gramjs } from './utility';
 import { logger, channel_log } from "./logger"
-import { Composer, Context } from "grammy";
+import { Context } from "grammy";
 import { run, sequentialize } from "@grammyjs/runner";
 import { autoRetry } from "@grammyjs/auto-retry";
 import { chatMembers } from "@grammyjs/chat-members";
@@ -10,8 +10,6 @@ import { hydrateFiles } from '@grammyjs/files';
 import { LogLevel } from 'telegram/extensions/Logger';
 
 import Commands from "./modules/index";
-
-const composer = new Composer();
 
 const runner = run(bot, { 
     runner: { 
