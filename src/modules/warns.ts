@@ -1,6 +1,6 @@
 import { bot } from "../bot";
 import { grammyErrorLog } from "../logger";
-import { InlineKeyboard } from "grammy";
+import { Composer, InlineKeyboard } from "grammy";
 import { 
     get_warn_numbers, 
     get_warn_settings, 
@@ -25,6 +25,8 @@ import {
     resolveUserhandle,
     getUserInstance
 } from "../helpers/helper_func";
+
+const composer = new Composer();
 
 const unwarnButton = new InlineKeyboard()
     .text("*️⃣ Remove Warn", "unwarn-once-my-beloved")
@@ -321,7 +323,7 @@ async function resetallwarns(ctx: any) {
 await ctx.api.sendMessage(ctx.chat.id, "Are you sure you want to reset <b>everyone's</b> warnings in this chat?\n\n<i>This action cannot be undone.</i>", {reply_markup: confirmReset, reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});     
 }
 
-bot.chatType("supergroup" || "group").command("warns", (async (ctx: any) => {
+composer.chatType("supergroup" || "group").command("warns", (async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         await warns(ctx, ctx.message.reply_to_message.from.id, ctx.message.reply_to_message.from.first_name);
     }
@@ -346,7 +348,7 @@ bot.chatType("supergroup" || "group").command("warns", (async (ctx: any) => {
     }
 }));
 
-bot.chatType("supergroup" || "group").command("warn", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType("supergroup" || "group").command("warn", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("Warn myself? for what!?", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -409,7 +411,7 @@ bot.chatType("supergroup" || "group").command("warn", adminCanRestrictUsers(botC
     }
 })));
 
-bot.chatType("supergroup" || "group").command(["unwarn", "rmwarn"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType("supergroup" || "group").command(["unwarn", "rmwarn"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("I can't be warned in first place.", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -457,7 +459,7 @@ bot.chatType("supergroup" || "group").command(["unwarn", "rmwarn"], adminCanRest
     }
 })));
 
-bot.chatType("supergroup" || "group").command(["dwarn", "delwarn"], adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
+composer.chatType("supergroup" || "group").command(["dwarn", "delwarn"], adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("Warn myself? for what!?", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -477,7 +479,7 @@ bot.chatType("supergroup" || "group").command(["dwarn", "delwarn"], adminCanRest
     }
 })))));
 
-bot.chatType("supergroup" || "group").command(["resetwarns", "rmwarns"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType("supergroup" || "group").command(["resetwarns", "rmwarns"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("I can't be warned in first place.", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -525,19 +527,19 @@ bot.chatType("supergroup" || "group").command(["resetwarns", "rmwarns"], adminCa
     }
 })));
 
-bot.chatType("supergroup" || "group").command("warnmode", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType("supergroup" || "group").command("warnmode", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     await warnmode(ctx);
 })));
 
-bot.chatType("supergroup" || "group").command("warnlimit", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType("supergroup" || "group").command("warnlimit", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     await warnlimit(ctx); 
 })));
 
-bot.chatType("supergroup" || "group").command("resetallwarns", ownerOnly(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType("supergroup" || "group").command("resetallwarns", ownerOnly(botCanRestrictUsers(async (ctx: any) => {
     await resetallwarns(ctx);
 })));
 
-bot.callbackQuery("unwarn-once-my-beloved", adminCanRestrictUsersCallback(botCanRestrictUsersCallback(async(ctx: any) => {
+composer.callbackQuery("unwarn-once-my-beloved", adminCanRestrictUsersCallback(botCanRestrictUsersCallback(async(ctx: any) => {
     let text = ctx.callbackQuery.message?.text || "";
     let username = text.match(/(?<=⚠️ Warned )\S+/);
     let userid = text.match(/(?<=\()\d+(?=\))/);
@@ -581,7 +583,7 @@ bot.callbackQuery("unwarn-once-my-beloved", adminCanRestrictUsersCallback(botCan
     }
 })));
 
-bot.callbackQuery("yes-reset", ownerOnlyCallback(async(ctx: any) => {
+composer.callbackQuery("yes-reset", ownerOnlyCallback(async(ctx: any) => {
     let resetted = await reset_all_chat_warns(ctx.chat.id.toString()) 
     if (resetted == true) {
         await ctx.editMessageText("All warnings in this chat have been resetted!", { parse_mode: "HTML" });
@@ -591,6 +593,8 @@ bot.callbackQuery("yes-reset", ownerOnlyCallback(async(ctx: any) => {
     }
 }));
 
-bot.callbackQuery("no-reset", ownerOnlyCallback(async(ctx: any) => {
+composer.callbackQuery("no-reset", ownerOnlyCallback(async(ctx: any) => {
     await ctx.editMessageText("Okay fine. Tell me when you change your mind!", { parse_mode: "HTML" });
 }));
+
+export default composer;

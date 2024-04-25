@@ -1,6 +1,6 @@
 import { bot } from "../bot";
 import { grammyErrorLog } from "../logger";
-import { InlineKeyboard } from "grammy";
+import { Composer, InlineKeyboard } from "grammy";
 import { 
     adminCanRestrictUsers,
     adminCanRestrictUsersCallback,
@@ -16,6 +16,8 @@ import {
     getUserInstance,
     sleep
 } from "../helpers/helper_func";
+
+const composer = new Composer();
 
 const mutePermissions = { 
     can_send_messages: false, 
@@ -109,7 +111,7 @@ async function dmute(ctx: any, user_id: number | string, message_id: number, dur
     });
 }
 
-bot.chatType("supergroup" || "group").command("mute", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType("supergroup" || "group").command("mute", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("YOU CAN'T MAKE ME STAY QUIET!!!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -190,7 +192,7 @@ bot.chatType("supergroup" || "group").command("mute", adminCanRestrictUsers(botC
 }
 })));
 
-bot.chatType("supergroup" || "group").command("unmute", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType("supergroup" || "group").command("unmute", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         let is_user_restricted = await isUserRestricted(ctx, ctx.message.reply_to_message.chat.id, ctx.message.reply_to_message.from.id);
         if (is_user_restricted == false) {
@@ -229,7 +231,7 @@ bot.chatType("supergroup" || "group").command("unmute", adminCanRestrictUsers(bo
     }
 })));
 
-bot.chatType("supergroup" || "group").command(["tmute", "tempmute"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType("supergroup" || "group").command(["tmute", "tempmute"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("YOU CAN'T MAKE ME STAY QUIET!!!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -315,7 +317,7 @@ bot.chatType("supergroup" || "group").command(["tmute", "tempmute"], adminCanRes
     }
 })));
 
-bot.chatType("supergroup" || "group").command(["smute", "pss"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType("supergroup" || "group").command(["smute", "pss"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             return;
@@ -401,7 +403,7 @@ bot.chatType("supergroup" || "group").command(["smute", "pss"], adminCanRestrict
     }
 })));
 
-bot.chatType("supergroup" || "group").command(["dmute", "delmute"], adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
+composer.chatType("supergroup" || "group").command(["dmute", "delmute"], adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("YOU CAN'T MAKE ME STAY QUIET!!!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -437,7 +439,7 @@ bot.chatType("supergroup" || "group").command(["dmute", "delmute"], adminCanRest
     }
 })))));
 
-bot.callbackQuery("unmute-our-fella", adminCanRestrictUsersCallback(botCanRestrictUsersCallback(async(ctx: any) => {
+composer.callbackQuery("unmute-our-fella", adminCanRestrictUsersCallback(botCanRestrictUsersCallback(async(ctx: any) => {
     let text = ctx.callbackQuery.message?.text || "";
     let username = text.match(/(?<=🔇 Stay quiet )\S+/);
     let userid = text.match(/(?<=\()\d+(?=\))/);
@@ -479,3 +481,5 @@ bot.callbackQuery("unmute-our-fella", adminCanRestrictUsersCallback(botCanRestri
         }).catch((GrammyError: any) => {return})
     }       
 })));
+
+export default composer;

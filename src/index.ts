@@ -1,17 +1,18 @@
-import fs from 'fs/promises';
 import { bot, adapter }from "./bot";
 import constants from "./config"
-import { autoRetry } from "@grammyjs/auto-retry";
-import { Context } from "grammy";
+import { gramjs } from './utility';
+import { logger, channel_log } from "./logger"
+import { Composer, Context } from "grammy";
 import { run, sequentialize } from "@grammyjs/runner";
+import { autoRetry } from "@grammyjs/auto-retry";
 import { chatMembers } from "@grammyjs/chat-members";
 import { hydrateFiles } from '@grammyjs/files';
-import { logger } from "./logger"
-import { channel_log } from "./logger";
-import { gramjs } from './utility';
 import { LogLevel } from 'telegram/extensions/Logger';
 
-// Initialize grammY runner
+import Commands from "./modules/index";
+
+const composer = new Composer();
+
 const runner = run(bot, { 
     runner: { 
         fetch: { 
@@ -33,16 +34,9 @@ bot.use(chatMembers(adapter, {
 }));
 bot.api.config.use(hydrateFiles(bot.token));
 
-const ALL_MODULES: string[] = [];
+bot.use(Commands);
 
 (async function () {
-    const modules = await fs.readdir("./dist/modules");
-    for (const file of modules) {
-        if (file.match(/.*\.(js)$/)) {
-            await import(`./modules/${file}`);
-            ALL_MODULES.push(`${file.replace(/\.[^\/.]+$/, "").toUpperCase()}`);
-        }
-    }
     await bot.api.deleteWebhook({ drop_pending_updates: true });
     await gramjs.setLogLevel(LogLevel.NONE)
     await gramjs.start({botAuthToken: constants.BOT_TOKEN});  
@@ -57,10 +51,10 @@ bot.init().then(async() => {
         `• Bot ID: ${bot.botInfo.id}\n` +
         `• Allow Groups: ${bot.botInfo.can_join_groups ? `Enabled` : `Disabled`}\n` +
         `• Privacy Mode: ${bot.botInfo.can_read_all_group_messages ? `Disabled` : `Enabled`}\n` +
-        `• Inline Mode: ${bot.botInfo.supports_inline_queries ? `Enabled` : `Disabled`}\n`
+        `• Inline Mode: ${bot.botInfo.supports_inline_queries ? `Enabled` : `Disabled`}\n\n`
     );
-    console.log(bot_info + `\nLoaded modules: [ ${ALL_MODULES.join(", ")} ]\n`);
-    channel_log(bot_info + `\nLoaded modules: [ <code>${ALL_MODULES.join(", ")}</code> ]`);
+    console.log(bot_info);
+    channel_log(bot_info);
 });
 
 async function exitSignal(signal: String) {

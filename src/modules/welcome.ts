@@ -1,14 +1,16 @@
 import { bot } from "../bot";
 import constants from "../config";
 import { channel_log } from "../logger";
-import { InlineKeyboard } from "grammy";
+import { Composer, InlineKeyboard } from "grammy";
+
+const composer = new Composer();
 
 // when the bot is added to a chat
 const added_to_chat_text = "Thank you for adding me to the group!\n<i>(Ensure that I've been made an <b>admin</b> & have <b>all the permissions.</b>)</i>\n\nExplore my functionalities by using the button below.";
 const help_inlinekeyboard = new InlineKeyboard()
     .url("Usage Guide", `https://telegram.me/${constants.BOT_USERNAME}?start=help_me_im_dumb`)
 
-bot.on("message:new_chat_members:me", async (ctx: any) => {
+composer.on("message:new_chat_members:me", async (ctx: any) => {
     let currentTime = new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true });
     let log_message = (
         `${bot.botInfo.first_name}\n` + 
@@ -32,6 +34,8 @@ bot.on("message:new_chat_members:me", async (ctx: any) => {
 });
 
 // when a new member joins the chat
-bot.on("message:new_chat_members", async (ctx: any) => {
+composer.on("message:new_chat_members", async (ctx: any) => {
     await ctx.reply(`Welcome new member ${ctx.from?.first_name}`, {reply_parameters: {message_id: ctx.message.message_id}})
 });
+
+export default composer;
