@@ -198,6 +198,13 @@ composer.callbackQuery(RegExp(/u:(.*)/), (async(ctx: any) => {
 
     // User ID
     message_body += `\n<b>ID</b>: <code>${userinstance.id}</code>`;
+
+    
+    // User bio
+    if (userfull.fullUser.about) {
+        message_body += `\n<b>Bio</b>: ${userfull.fullUser.about}`;
+    };
+        
     
     // Datacenter
     if (userinstance.photo != null) {
@@ -220,9 +227,6 @@ composer.callbackQuery(RegExp(/u:(.*)/), (async(ctx: any) => {
     }
     message_body += `\n<b>Premium</b>: ${premium_status}`;
 
-    // User mention
-    message_body += `\n<b>Permalink</b>: <a href="tg://user?id=${userinstance.id}">User Profile</a>`;
-
     // Profile picture count
     let photos_string = JSON.stringify(photos);
     let regex = /"count"\s*:\s*(\d+)/;
@@ -232,11 +236,9 @@ composer.callbackQuery(RegExp(/u:(.*)/), (async(ctx: any) => {
             message_body += `\n<b>Profile Photo Count</b>: <code>${count}</code>`;
     }   
 
-    // User bio
-    if (userfull.fullUser.about) {
-        message_body += `\n<b>About</b>: ${userfull.fullUser.about}`;
-    };
-    
+    // User mention
+    message_body += `\n<b>Permalink</b>: <a href="tg://user?id=${userinstance.id}">User Profile</a>`;
+
     await gramjs.sendMessage(ctx.chat.id, {
         file:photos.photos[0], message: message_body, parseMode: "html"
     });

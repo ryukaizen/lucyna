@@ -37,6 +37,12 @@ async function userInfoPublic(ctx: any, user_id: string) {
 
     // User ID
     message_body += `\n<b>ID</b>: <code>${userinstance.id}</code>`;
+
+    // User bio
+    if (userfull.fullUser.about) {
+        message_body += `\n<b>Bio</b>: <code>${userfull.fullUser.about}</code>`;
+    };
+    
     
     // Datacenter
     if (userinstance.photo != null) {
@@ -58,8 +64,6 @@ async function userInfoPublic(ctx: any, user_id: string) {
     }
     message_body += `\n<b>Premium</b>: ${premium_status}`;
 
-    // User mention
-    message_body += `\n<b>Permalink</b>: <a href="tg://user?id=${userinstance.id}">User Profile</a>`;
 
     // Profile picture count
     let photos_string = JSON.stringify(photos);
@@ -70,10 +74,8 @@ async function userInfoPublic(ctx: any, user_id: string) {
             message_body += `\n<b>Profile Photo Count</b>: <code>${count}</code>`;
     } 
 
-    // User bio
-    if (userfull.fullUser.about) {
-        message_body += `\n<b>About</b>: <code>${userfull.fullUser.about}</code>`;
-    };
+    // User mention
+    message_body += `\n<b>Permalink</b>: <a href="tg://user?id=${userinstance.id}">User Profile</a>`;
 
     await gramjs.sendMessage(ctx.chat.id, {
         file:photos.photos[0], message: message_body, parseMode: "html"
@@ -111,6 +113,11 @@ async function userInfoPrivate(ctx: any, user_id: string) {
     // User ID
     message_body += `\n<b>ID</b>: <code>${userinstance.id}</code>`;
     
+    // User bio
+    if (userfull.fullUser.about) {
+        message_body += `\n<b>Bio</b>: ${userfull.fullUser.about}`;
+    };
+
     // Datacenter
     if (userinstance.photo != null) {
         let datacenter = await datacenterLocation(userinstance.photo.dcId);;
@@ -132,9 +139,6 @@ async function userInfoPrivate(ctx: any, user_id: string) {
     }
     message_body += `\n<b>Premium</b>: ${premium_status}`;
 
-    // User mention
-    message_body += `\n<b>Permalink</b>: <a href="tg://user?id=${userinstance.id}">User Profile</a>`;
-
     // Profile picture count
     let photos_string = JSON.stringify(photos);
     let regex = /"count"\s*:\s*(\d+)/;
@@ -143,12 +147,10 @@ async function userInfoPrivate(ctx: any, user_id: string) {
         let count = parseInt(match[1]);
             message_body += `\n<b>Profile Photo Count</b>: <code>${count}</code>`;
     }   
-
-    // User bio
-    if (userfull.fullUser.about) {
-        message_body += `\n<b>About</b>: ${userfull.fullUser.about}`;
-    };
     
+    // User mention
+    message_body += `\n<b>Permalink</b>: <a href="tg://user?id=${userinstance.id}">User Profile</a>`;
+
     await gramjs.sendMessage(ctx.chat.id, {
         file:photos.photos[0], message: message_body, parseMode: "html"
     });
