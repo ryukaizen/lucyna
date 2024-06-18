@@ -583,3 +583,7 @@ export function convertUnixTime(unixTime: number): string {
 }
 
 export const sleep = promisify(setTimeout);
+
+export function format_json(json: any) {
+    return JSON.stringify(json, null, 2);
+}
