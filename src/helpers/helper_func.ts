@@ -505,12 +505,18 @@ export async function getUserFullInstance(user: any) {
 }
 
 export async function resolveUserhandle(userhandle: string) {
-    const user = await gramjs.invoke(
-        new gramJsApi.users.GetFullUser({
-          id: userhandle,
-        })
-    );
-    return user;
+    try {
+        const user = await gramjs.invoke(
+            new gramJsApi.users.GetFullUser({
+            id: userhandle,
+            })
+        );
+        return user;
+    }
+    catch (ValueError) {
+        return undefined;
+    } 
+        
 }
 
 export async function datacenterLocation(dcId: number | string) {
@@ -584,6 +590,6 @@ export function convertUnixTime(unixTime: number): string {
 
 export const sleep = promisify(setTimeout);
 
-export function format_json(json: any) {
+export async function format_json(json: any) {
     return JSON.stringify(json, null, 2);
 }
