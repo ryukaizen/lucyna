@@ -1,5 +1,5 @@
 import { gramjs, gramJsApi } from "../utility";
-import { resolveUserhandle, getUserInstance, getUserFullInstance, datacenterLocation, generateRandomFilename } from "../helpers/helper_func"
+import { resolveUserhandle, getUserInstance, getUserFullInstance, datacenterLocation } from "../helpers/helper_func"
 import { Composer } from "grammy";
 
 const composer = new Composer();
