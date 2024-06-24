@@ -8,12 +8,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model chat_members_data {
-  id    Int    @id @default(autoincrement())
-  key   String @unique
-  value String
-}
-
 model access_connection {
   chat_id               String   @id @db.VarChar(14)
   allow_connect_to_chat Boolean?
@@ -288,7 +282,7 @@ model note_urls {
 model notes {
   chat_id     String   @db.VarChar(14)
   name        String
-  value       String
+  value       String?
   file        String?
   is_reply    Boolean?
   has_buttons Boolean?
@@ -340,11 +334,6 @@ model rss_feed {
 model rules {
   chat_id String  @id @db.VarChar(14)
   rules   String?
-}
-
-model sessions {
-  key   String  @unique(map: "idx_sessions") @db.VarChar
-  value String?
 }
 
 model spotifycreds {
