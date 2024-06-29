@@ -593,3 +593,7 @@ export const sleep = promisify(setTimeout);
 export async function format_json(json: any) {
     return JSON.stringify(json, null, 2);
 }
+
+export async function escapeMarkdownV2(text: string): Promise<string> {
+    return text.replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
+}
