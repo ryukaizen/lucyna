@@ -1,6 +1,6 @@
 import { Composer } from "grammy";
-import { get_all_chat_notes, get_note, get_note_buttons, save_note } from "../database/notes_sql";
-import { escapeMarkdownV2, format_json } from "../helpers/helper_func"; 
+import { clear_note, get_all_chat_notes, get_note, get_note_buttons, save_note } from "../database/notes_sql";
+import { escapeMarkdownV2 } from "../helpers/helper_func"; 
 import { Menu, MenuRange } from "@grammyjs/menu";
 import { bot } from "../bot";
 
@@ -70,7 +70,6 @@ async function saveNote(captionedcmd: boolean, ctx: any, note_name: string, valu
         noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.VIDEO_NOTE, file, is_reply, has_buttons)
     }
 
-
     if (noted) {
         await ctx.reply("Note saved successfully!", {reply_parameters: {message_id: ctx.message.message_id}})
     }
@@ -80,7 +79,7 @@ async function saveNote(captionedcmd: boolean, ctx: any, note_name: string, valu
     }
 }
 
-async function sendNote(ctx: any, message_type: number, text: string | null | undefined, file: string | null | undefined, reply_id: any, parseMode: string, keyboard: any) {
+async function sendNote(ctx: any, message_type: number, text: string | null | undefined, file: string | null | undefined, reply_id: any, parseMode: string, keyboard: any, handlertype: string) {
     if (message_type == 0) {
         await ctx.reply(text, {reply_parameters: {message_id: reply_id}, parse_mode: parseMode, reply_markup: keyboard});
     }
@@ -109,9 +108,20 @@ async function sendNote(ctx: any, message_type: number, text: string | null | un
         await ctx.api.sendVideoNote(ctx.chat.id, file, {caption: text, reply_parameters: {message_id: reply_id}, parse_mode: parseMode, reply_markup: keyboard});
     }
     else {
-        await ctx.reply("Unknown message type!")
+        if (handlertype == "command") {
+            await ctx.reply("This note does not exist!", {reply_parameters: {message_id: ctx.message.message_id}})
+        }
     }
+}
 
+async function clearNote(ctx: any, note_name: string) {
+    let cleared = await clear_note(ctx.chat.id, note_name);
+    if (cleared) {
+        await ctx.reply("Note cleared successfully!", {reply_parameters: {message_id: ctx.message.message_id}})
+    }
+    else {
+        await ctx.reply(`Couldn't clear the note (<code>${note_name}</code>) for some reason!`, {reply_parameters: {message_id: ctx.message.message_id}, parseMode: "HTML"})
+    }
 }
 
 function createNoteButtonsMenu() {
@@ -174,8 +184,8 @@ composer.chatType("supergroup" || "group").on("message").hears(/^#[^\s#]+(?:\s|$
         } else {
             keyboard = undefined;
         }
-
-        await sendNote(ctx, message_type, text, file, reply_id, parseMode, keyboard);
+        let handlertype = "regex";
+        await sendNote(ctx, message_type, text, file, reply_id, parseMode, keyboard, handlertype);
     }
 });
 
@@ -210,7 +220,8 @@ composer.chatType("supergroup" || "group").command(["get", "getnote"], (async (c
             keyboard = undefined;
         }
 
-        await sendNote(ctx, message_type, text, file, reply_id, parseMode, keyboard);     
+        let handlertype = "command";
+        await sendNote(ctx, message_type, text, file, reply_id, parseMode, keyboard, handlertype);     
     }
     else {
         await ctx.reply("Please give me a note name to fetch!", {reply_parameters: {message_id: ctx.message.message_id}})
@@ -272,7 +283,6 @@ composer.chatType("supergroup" || "group").on("message").hears(/^\/save\b/, (asy
     }
 }));
 
-
 composer.chatType("supergroup" || "group").command(["notes", "saved"], (async (ctx: any) => {
     let notes = await get_all_chat_notes(ctx.chat.id);
     let message;
@@ -286,10 +296,21 @@ composer.chatType("supergroup" || "group").command(["notes", "saved"], (async (c
     await ctx.reply(message, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
 }));
 
+composer.chatType("supergroup" || "group").command("clear", (async (ctx: any) => {
+    let args = ctx.match;
+    let note_name = args.toLowerCase();
 
-// composer.chatType("supergroup" || "group").command("clear", (async (ctx: any) => {
+    if (args.startsWith('#')) {
+        note_name = note_name.slice(1);
+    }
 
-// }));
+    if (!note_name) {
+        await ctx.reply("Please give me a note name to clear!\n\n<i>To list group's notes, send /notes</i>", {reply_parameters: {message_id: ctx.message.message_id}, parseMode: "HTML"});
+    }
+    else {
+        await clearNote(ctx, note_name);
+    }
+}));
 
 // composer.chatType("supergroup" || "group").command("rmallnotes", (async (ctx: any) => {
 
