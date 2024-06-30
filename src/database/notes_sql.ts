@@ -59,3 +59,18 @@ export async function get_all_chat_notes(chatId: string) {
     });
     return notes;
 }
+
+export async function clear_note(chatId: string, name: string) {
+    try {
+        await prisma.notes.delete({
+            where: {
+                chat_id_name: {chat_id: chatId.toString(), name: name}
+            }
+        });
+        return true;
+    }
+    catch (e) {
+        console.error(e);
+        return false;
+    }
+}
