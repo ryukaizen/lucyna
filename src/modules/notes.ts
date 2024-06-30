@@ -18,6 +18,8 @@ enum MessageTypes {
     VIDEO_NOTE = 8
 }
 
+// THIS CODE NEEDS TO BE UPDATED, ALSO BEFORE THAT THE SCHEMA NEEDS TO BE UPDATED FOR NEW DB STRUCTURE, CURRENTLY USING WHAT AKENO WAS USING
+// has_buttons, and BUTTON_TEXT message type are not being used in the current implementation
 async function saveNote(captionedcmd: boolean, ctx: any, note_name: string, value: string | null = null, is_reply: boolean = false, has_buttons: boolean = false) {
     let message;
     let noted;
@@ -112,11 +114,38 @@ async function sendNote(ctx: any, message_type: number, text: string | null | un
 
 }
 
-let noteButtons = new Menu("notebuttons", {onMenuOutdated: "Buttons updated!"})
-bot.use(noteButtons)
+function createNoteButtonsMenu() {
+    let currentButtons: any[] = [];
 
+    const noteButtons = new Menu("note-buttons");
+
+    noteButtons.dynamic(() => {
+        const range = new MenuRange();
+        currentButtons.forEach(button => {
+            range.url(button.name, button.url);
+            if (!button.same_line) {
+                range.row();
+            }
+        });
+        return range;
+    });
+
+    return {
+        menu: noteButtons,
+        setButtons: (buttons: any[]) => {
+            currentButtons = buttons;
+        },
+        clearButtons: () => {
+            currentButtons = [];
+        }
+    };
+}
+
+const { menu: noteButtonsMenu, setButtons, clearButtons } = createNoteButtonsMenu();
+bot.use(noteButtonsMenu);
 
 composer.chatType("supergroup" || "group").on("message").hears(/^#[^\s#]+(?:\s|$)/, async (ctx: any) => {
+    clearButtons();
     if (ctx.message.text.startsWith('#')) {
         let name = ctx.message.text.slice(1).toLowerCase()
         let note = await get_note(ctx.chat.id, name);
@@ -139,28 +168,19 @@ composer.chatType("supergroup" || "group").on("message").hears(/^#[^\s#]+(?:\s|$
             reply_id = ctx.message.message_id;
         }
 
-        if (note_buttons.length > 0) {
-            noteButtons.dynamic(() => {
-                const range = new MenuRange();
-                note_buttons.forEach(button => {
-                    range.url(button.name, button.url);
-                    if (!button.same_line) {
-                        range.row();
-                    }
-                });
-                return range;
-            });
+        if (note_buttons && note_buttons.length > 0) {
+            setButtons(note_buttons);
+            keyboard = noteButtonsMenu;
+        } else {
+            keyboard = undefined;
         }
 
-        keyboard = noteButtons;
-        
         await sendNote(ctx, message_type, text, file, reply_id, parseMode, keyboard);
-
-        
     }
 });
 
 composer.chatType("supergroup" || "group").command(["get", "getnote"], (async (ctx: any) => {
+    clearButtons();
     let name = ctx.match.toLowerCase();
     if (name) {
         let note = await get_note(ctx.chat.id, name);
@@ -183,20 +203,12 @@ composer.chatType("supergroup" || "group").command(["get", "getnote"], (async (c
             reply_id = ctx.message.message_id;
         }
 
-        if (note_buttons) {
-            noteButtons.dynamic(() => {
-                const range = new MenuRange();
-                note_buttons.forEach(button => {
-                    range.url(button.name, button.url);
-                    if (!button.same_line) {
-                        range.row();
-                    }
-                });
-                return range;
-            });
+        if (note_buttons && note_buttons.length > 0) {
+            setButtons(note_buttons);
+            keyboard = noteButtonsMenu;
+        } else {
+            keyboard = undefined;
         }
-        
-        keyboard = noteButtons;
 
         await sendNote(ctx, message_type, text, file, reply_id, parseMode, keyboard);     
     }
