@@ -462,28 +462,6 @@ export function typingAction(handler: any) {
     };
 }
 
-async function usernameExtractor(args: string) {
-    let regex = /@([a-zA-Z][a-zA-Z0-9]{4,})/g;
-    let username;
-    let match: RegExpExecArray | null;
-
-    while ((match = regex.exec(args)) !== null) {
-        username = match[1];
-    }
-    return username;
-}
-
-async function userIdExtractor(args: string) {
-    let regex = /(\b\d{9,10}\b)/g; // filter out 9 or 10 digit integers
-    let user_id;
-    let match: RegExpExecArray | null;
-
-    while ((match = regex.exec(args)) !== null) {
-        user_id = match[1];
-    }
-    return user_id;
-}
-
 export async function getUserInstance(user: any) {
     let _user = user?.users?.[0];
     if (_user?.className === "User") {
@@ -596,4 +574,54 @@ export async function format_json(json: any) {
 
 export async function escapeMarkdownV2(text: string): Promise<string> {
     return text.replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
+}
+
+export async function extractButtons(text: string | undefined) {
+    if (!text) {
+        return { text: '', buttons: [] };
+    }
+
+    const buttonRegex = /\[([^\]]+)\]\(buttonurl:(?:\/\/)?([^)]+?)(?::same)?\)/g;
+    let match;
+    let buttons: { name: string; url: string; same_line: boolean }[] = [];
+    let lastIndex = 0;
+    let newText = '';
+
+    while ((match = buttonRegex.exec(text)) !== null) {
+        newText += text.slice(lastIndex, match.index);
+        lastIndex = buttonRegex.lastIndex;
+
+        const [fullMatch, name, url] = match;
+        const same_line = fullMatch.endsWith(':same)');
+        const cleanedUrl = url.startsWith('//') ? url.slice(2) : url;
+
+        buttons.push({ name, url: cleanedUrl, same_line });
+    }
+
+    newText += text.slice(lastIndex);
+    newText = newText.trim();
+
+    return { text: newText, buttons };
+}
+
+export function iterateInlineKeyboard(inlineKeyboard: any[][]) {
+    let iteratedButtons = [];
+    
+    for (let i = 0; i < inlineKeyboard.length; i++) {
+
+        let row = inlineKeyboard[i];
+
+        for (let j = 0; j < row.length; j++) {
+
+            let button = row[j];
+
+            iteratedButtons.push({
+                name: button.text,
+                url: button.url,
+                same_line: j !== 0  
+            });
+        }
+    }
+
+    return iteratedButtons;
 }

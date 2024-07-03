@@ -1,6 +1,7 @@
-import { Composer } from "grammy";
-import { clear_note, get_all_chat_notes, get_note, get_note_buttons, save_note } from "../database/notes_sql";
-import { escapeMarkdownV2 } from "../helpers/helper_func"; 
+import { Composer, InlineKeyboard } from "grammy";
+import { clear_note, get_all_chat_notes, get_note, remove_all_chat_notes, save_note } from "../database/notes_sql";
+import { get_note_urls, set_note_urls } from "../database/note_urls_sql";
+import { escapeMarkdownV2, extractButtons, iterateInlineKeyboard, format_json, ownerOnly, ownerOnlyCallback } from "../helpers/helper_func"; 
 import { Menu, MenuRange } from "@grammyjs/menu";
 import { bot } from "../bot";
 
@@ -30,14 +31,13 @@ async function saveNote(captionedcmd: boolean, ctx: any, note_name: string, valu
     else {
         message = ctx.message;
     }
-
     if (message.caption && captionedcmd) {
-        caption = message.caption;
+        let text = await extractButtons(message.caption);
+        caption = text.text.replace(/^\/save\s*/, '') // remove the command from the caption
     }
     else {
         caption = value;
-    }
-    
+    } 
     if (message.text) {
         noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.TEXT, null, is_reply, has_buttons)
     }
@@ -71,12 +71,19 @@ async function saveNote(captionedcmd: boolean, ctx: any, note_name: string, valu
     }
 
     if (noted) {
-        await ctx.reply("Note saved successfully!", {reply_parameters: {message_id: ctx.message.message_id}})
+        await ctx.reply(`Note saved as <code>${note_name}</code>!`, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"})
     }
     else {
         await ctx.reply("Couldn't save the note for some reason!", {reply_parameters: {message_id: ctx.message.message_id}})
     
     }
+}
+
+async function saveNoteButtons(ctx: any, note_name: string, buttons: any) {
+    for (let button of buttons) {
+        await set_note_urls(ctx.chat.id, note_name, button.name, button.url, button.same_line)
+    }
+
 }
 
 async function sendNote(ctx: any, message_type: number, text: string | null | undefined, file: string | null | undefined, reply_id: any, parseMode: string, keyboard: any, handlertype: string) {
@@ -120,9 +127,18 @@ async function clearNote(ctx: any, note_name: string) {
         await ctx.reply("Note cleared successfully!", {reply_parameters: {message_id: ctx.message.message_id}})
     }
     else {
-        await ctx.reply(`Couldn't clear the note (<code>${note_name}</code>) for some reason!`, {reply_parameters: {message_id: ctx.message.message_id}, parseMode: "HTML"})
+        await ctx.reply(`Couldn't clear the note (<code>${note_name}</code>) for some reason!`, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"})
     }
 }
+
+async function removeallnotes(ctx: any) {
+    let confirmReset = new InlineKeyboard()
+    .text("Yes", "yes-remove-all-chat-notes")
+    .text("No", "no-dont-remove-all-chat-notes")
+
+    await ctx.api.sendMessage(ctx.chat.id, "Are you sure you want to <b>REMOVE ALL THE NOTES</b> from this chat?\n\n<i>This action cannot be undone.</i>", {reply_markup: confirmReset, reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});     
+}
+
 
 function createNoteButtonsMenu() {
     let currentButtons: any[] = [];
@@ -132,10 +148,10 @@ function createNoteButtonsMenu() {
     noteButtons.dynamic(() => {
         const range = new MenuRange();
         currentButtons.forEach(button => {
-            range.url(button.name, button.url);
             if (!button.same_line) {
                 range.row();
             }
+            range.url(button.name, button.url);
         });
         return range;
     });
@@ -159,7 +175,7 @@ composer.chatType("supergroup" || "group").on("message").hears(/^#[^\s#]+(?:\s|$
     if (ctx.message.text.startsWith('#')) {
         let name = ctx.message.text.slice(1).toLowerCase()
         let note = await get_note(ctx.chat.id, name);
-        let note_buttons = await get_note_buttons(ctx.chat.id, name);
+        let note_buttons = await get_note_urls(ctx.chat.id, name);
         let text = note?.value;
         let file = note?.file;
         let message_type = Number(note?.msgtype);
@@ -194,7 +210,7 @@ composer.chatType("supergroup" || "group").command(["get", "getnote"], (async (c
     let name = ctx.match.toLowerCase();
     if (name) {
         let note = await get_note(ctx.chat.id, name);
-        let note_buttons = await get_note_buttons(ctx.chat.id, name);
+        let note_buttons = await get_note_urls(ctx.chat.id, name);
         let text = note?.value;
         let file = note?.file;
         let message_type = Number(note?.msgtype);
@@ -232,18 +248,35 @@ composer.chatType("supergroup" || "group").command("save", (async (ctx: any) => 
     let args = ctx.match;
     let split_args = args.split(" ");
     let note_name = split_args[0].toLowerCase();
-    let value = split_args.slice(1).join(" ");
 
     if (ctx.message.reply_to_message) {
         if (!note_name) {
             await ctx.reply("Please provide a note name!", {reply_parameters: {message_id: ctx.message.message_id}});
         }
         else {
-            if (value) {
-                await saveNote(true, ctx, note_name, value)
+            let value = ctx.message.reply_to_message.text;
+            if (ctx.message.reply_to_message.caption) {
+                value = ctx.message.reply_to_message.caption;
+            }   
+            let result = await extractButtons(value);
+            let text = result.text;
+
+            if (text.length == 0) {
+                text = note_name;
+            }
+
+            if (ctx.message.reply_to_message.reply_markup) {
+                let inlineKeyboard = ctx.message.reply_to_message.reply_markup.inline_keyboard;
+                let buttons = iterateInlineKeyboard(inlineKeyboard);
+                await saveNoteButtons(ctx, note_name, buttons);
+                await saveNote(true, ctx, note_name, text);
+            }
+            else if (result.buttons.length != 0) {
+                await saveNoteButtons(ctx, note_name, result.buttons);
+                await saveNote(true, ctx, note_name, text);
             }
             else {
-                await saveNote(true, ctx, note_name)
+                await saveNote(true, ctx, note_name, value);
             }
         }
     }
@@ -253,13 +286,20 @@ composer.chatType("supergroup" || "group").command("save", (async (ctx: any) => 
         let note_name = split_args[0].toLowerCase();
         let value = split_args.slice(1).join(" ");
         if (!value) {
-            await ctx.reply("Please provide some content for the note!\n\n(Example: <i>/save mynotename hello this is my note!</i>)", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+            await ctx.reply("Please provide some content for the note!\n\n(<i>Example: /save mynotename hello this is my note!</i>)", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
         }
         else if (!note_name) {
             await ctx.reply("Please give me a note name to save!", {reply_parameters: {message_id: ctx.message.message_id}});
         }
         else {
-            await saveNote(ctx, note_name, value)
+            let result = await extractButtons(value);
+            if (result.buttons.length != 0) {
+                await saveNoteButtons(ctx, note_name, result.buttons);
+                await saveNote(false, ctx, note_name, result.text);
+            }
+            else {
+                await saveNote(false, ctx, note_name, value);
+            }
         }
     }
 }));
@@ -267,18 +307,18 @@ composer.chatType("supergroup" || "group").command("save", (async (ctx: any) => 
 // this one's only for media messages containing "/save notename" in their captions
 composer.chatType("supergroup" || "group").on("message").hears(/^\/save\b/, (async (ctx: any) => {
     if (ctx.message.caption) {
-        const regex = /^\/save\s+(\w+)(?:\s+(.*))?$/;
-        const match = (ctx.message.caption).match(regex);
-        let note_name = match ? match[1].toLowerCase() : '';
-        let value = match ? match[2] : '';
-        if (!note_name) {
-            await ctx.reply("Please provide a note name!", {reply_parameters: {message_id: ctx.message.message_id}});
+        let note = ctx.message.caption.split(" ");
+        let note_name = note[1].toLowerCase();
+        let value = note.slice(2).join(" ");
+        let result = await extractButtons(value);
+        let text = result.text;
+
+        if (result.buttons.length != 0) {
+            await saveNoteButtons(ctx, note_name, result.buttons);
+            await saveNote(true, ctx, note_name, text);
         }
-        else if (value) {
-            await saveNote(false, ctx, note_name, value);
-        } 
         else {
-            await saveNote(false, ctx, note_name);
+            await saveNote(true, ctx, note_name, value);
         }
     }
 }));
@@ -288,7 +328,7 @@ composer.chatType("supergroup" || "group").command(["notes", "saved"], (async (c
     let message;
     if (notes.length > 0) {
         let note_names = notes.map(note => note.name);
-        message = `Notes saved in <b>${ctx.message.chat.title}</b>:\n\n${note_names.map((note, index) => `${index + 1}. <code>${note}</code>`).join("\n")}`;
+        message = `Notes saved in <b>${ctx.message.chat.title}</b>:\n\n${note_names.map((note, index) => `${index + 1}. <code>${note}</code>`).join("\n")}\n\nSend /get notename, or #notename to retrieve one of these notes.`;
     }
     else {
         message = "No notes saved in this chat yet!";
@@ -312,8 +352,22 @@ composer.chatType("supergroup" || "group").command("clear", (async (ctx: any) =>
     }
 }));
 
-// composer.chatType("supergroup" || "group").command("rmallnotes", (async (ctx: any) => {
+composer.chatType("supergroup" || "group").command(["rmallnotes", "clearallnotes"], ownerOnly(async (ctx: any) => {
+    await removeallnotes(ctx);
+}));
 
-// }));
+composer.callbackQuery("yes-remove-all-chat-notes", ownerOnlyCallback(async(ctx: any) => {
+    let resetted = await remove_all_chat_notes(ctx.chat.id.toString()) 
+    if (resetted == true) {
+        await ctx.editMessageText("All notes in this chat have been cleared!", { parse_mode: "HTML" });
+    }
+    else {
+        await ctx.editMessageText("Failed to reset all warnings of this chat!", { parse_mode: "HTML" });
+    }
+}));
+
+composer.callbackQuery("no-dont-remove-all-chat-notes", ownerOnlyCallback(async(ctx: any) => {
+    await ctx.editMessageText("Okay fine. Tell me when you change your mind!", { parse_mode: "HTML" });
+}));
 
 export default composer;
