@@ -6,6 +6,9 @@ export async function get_note_urls(chatId: string, name: string) {
             chat_id: chatId.toString(),
             note_name: name,
         },
+        orderBy: {
+            id: 'asc',
+        }
     });
     return note_buttons;
 };

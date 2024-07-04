@@ -121,6 +121,41 @@ async function sendNote(ctx: any, message_type: number, text: string | null | un
     }
 }
 
+async function sendNoteNoformat(ctx: any, message_type: number, text: string | null | undefined, file: string | null | undefined, reply_id: any, handlertype: string) {
+    if (message_type == 0) {
+        await ctx.reply(text, {reply_parameters: {message_id: reply_id}});
+    }
+    else if (message_type == 1) {
+        await ctx.reply(text, {reply_parameters: {message_id: reply_id}});
+    }
+    else if (message_type == 2) {
+        await ctx.api.sendSticker(ctx.chat.id, file, {reply_parameters: {message_id: reply_id}});
+    }
+    else if (message_type == 3) {
+        await ctx.api.sendDocument(ctx.chat.id, file, {caption: text, reply_parameters: {message_id: reply_id}});
+    }
+    else if (message_type == 4) {
+        await ctx.api.sendPhoto(ctx.chat.id, file, {caption: text, reply_parameters: {message_id: reply_id}});
+    }
+    else if (message_type == 5) {
+        await ctx.api.sendAudio(ctx.chat.id, file, {caption: text, reply_parameters: {message_id: reply_id}});
+    }
+    else if (message_type == 6) {
+        await ctx.api.sendVoice(ctx.chat.id, file, {caption: text, reply_parameters: {message_id: reply_id}});
+    }
+    else if (message_type == 7) {
+        await ctx.api.sendVideo(ctx.chat.id, file, {caption: text, reply_parameters: {message_id: reply_id}});
+    }
+    else if (message_type == 8) {
+        await ctx.api.sendVideoNote(ctx.chat.id, file, {caption: text, reply_parameters: {message_id: reply_id}});
+    }
+    else {
+        if (handlertype == "command") {
+            await ctx.reply("This note does not exist!", {reply_parameters: {message_id: ctx.message.message_id}})
+        }
+    }
+}
+
 async function clearNote(ctx: any, note_name: string) {
     let cleared = await clear_note(ctx.chat.id, note_name);
     if (cleared) {
@@ -173,19 +208,18 @@ bot.use(noteButtonsMenu);
 composer.chatType("supergroup" || "group").on("message").hears(/^#[^\s#]+(?:\s|$)/, async (ctx: any) => {
     clearButtons();
     if (ctx.message.text.startsWith('#')) {
-        let name = ctx.message.text.slice(1).toLowerCase()
+        let args = ctx.message.text.slice(1).toLowerCase().split(" ")
+        let name = args[0]
+        let noformat = args[1];
         let note = await get_note(ctx.chat.id, name);
         let note_buttons = await get_note_urls(ctx.chat.id, name);
         let text = note?.value;
         let file = note?.file;
         let message_type = Number(note?.msgtype);
         let parseMode = "MarkdownV2";
+        let handlertype = "regex";
         let reply_id; 
         let keyboard;
-
-        if (text) {
-            text = await escapeMarkdownV2(text);
-        }
 
         if (ctx.message?.reply_to_message) {
             reply_id = ctx.message.reply_to_message.message_id;
@@ -194,20 +228,45 @@ composer.chatType("supergroup" || "group").on("message").hears(/^#[^\s#]+(?:\s|$
             reply_id = ctx.message.message_id;
         }
 
-        if (note_buttons && note_buttons.length > 0) {
-            setButtons(note_buttons);
-            keyboard = noteButtonsMenu;
-        } else {
-            keyboard = undefined;
+        if (noformat == "noformat") {
+            if (note_buttons && note_buttons.length > 0) {
+                text += "\n"
+                for (let button of note_buttons) {
+                    text += `[${button.name}](buttonurl://${button.url}`;
+                    if (button.same_line) {
+                        text += ":same)\n";
+                    }
+                    else {
+                        text += ")\n";
+                }
+            }
+
+            await sendNoteNoformat(ctx, message_type, text, file, reply_id, handlertype);     
+            }
         }
-        let handlertype = "regex";
-        await sendNote(ctx, message_type, text, file, reply_id, parseMode, keyboard, handlertype);
+        else {
+
+            if (note_buttons && note_buttons.length > 0) {
+                setButtons(note_buttons);
+                keyboard = noteButtonsMenu;
+            } 
+            else {
+                keyboard = undefined;
+            }
+        
+            if (text) {
+                text = await escapeMarkdownV2(text);
+            }
+            await sendNote(ctx, message_type, text, file, reply_id, parseMode, keyboard, handlertype);     
+        }        
     }
 });
 
 composer.chatType("supergroup" || "group").command(["get", "getnote"], (async (ctx: any) => {
     clearButtons();
-    let name = ctx.match.toLowerCase();
+    let args = ctx.match.toLowerCase().split(" ");
+    let name = args[0]
+    let noformat = args[1];
     if (name) {
         let note = await get_note(ctx.chat.id, name);
         let note_buttons = await get_note_urls(ctx.chat.id, name);
@@ -215,12 +274,9 @@ composer.chatType("supergroup" || "group").command(["get", "getnote"], (async (c
         let file = note?.file;
         let message_type = Number(note?.msgtype);
         let parseMode = "MarkdownV2";
+        let handlertype = "command";
         let reply_id; 
         let keyboard;
-
-        if (text) {
-            text = await escapeMarkdownV2(text);
-        }
 
         if (ctx.message?.reply_to_message) {
             reply_id = ctx.message.reply_to_message.message_id;
@@ -229,15 +285,39 @@ composer.chatType("supergroup" || "group").command(["get", "getnote"], (async (c
             reply_id = ctx.message.message_id;
         }
 
-        if (note_buttons && note_buttons.length > 0) {
-            setButtons(note_buttons);
-            keyboard = noteButtonsMenu;
-        } else {
-            keyboard = undefined;
-        }
+        if (noformat == "noformat") {
 
-        let handlertype = "command";
-        await sendNote(ctx, message_type, text, file, reply_id, parseMode, keyboard, handlertype);     
+            if (note_buttons && note_buttons.length > 0) {
+                text += "\n"
+                for (let button of note_buttons) {
+                    text += `[${button.name}](buttonurl://${button.url}`;
+                    if (button.same_line) {
+                        text += ":same)\n";
+                    }
+                    else {
+                        text += ")\n";
+                }
+            }
+
+            await sendNoteNoformat(ctx, message_type, text, file, reply_id, handlertype);     
+            }
+        }
+        else {
+
+            if (note_buttons && note_buttons.length > 0) {
+                setButtons(note_buttons);
+                keyboard = noteButtonsMenu;
+            } 
+            else {
+                keyboard = undefined;
+            }
+            
+            if (text) {
+                text = await escapeMarkdownV2(text);
+            }
+
+            await sendNote(ctx, message_type, text, file, reply_id, parseMode, keyboard, handlertype);     
+        }        
     }
     else {
         await ctx.reply("Please give me a note name to fetch!", {reply_parameters: {message_id: ctx.message.message_id}})
