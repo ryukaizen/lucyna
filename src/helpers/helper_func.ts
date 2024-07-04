@@ -453,7 +453,19 @@ export function botCanChangeInfo(handler: any) {
 }
 // ===================================================================
 
-// ===================== MISCELLANEOUS STUFF =========================
+// ================ OTHER HELPING FUNCTIONS STUFF ====================
+
+export enum MessageTypes {
+    TEXT = 0,
+    BUTTON_TEXT = 1,
+    STICKER = 2,
+    DOCUMENT = 3,
+    PHOTO = 4,
+    AUDIO = 5,
+    VOICE = 6,
+    VIDEO = 7,
+    VIDEO_NOTE = 8
+}
 
 export function typingAction(handler: any) {
     return async (ctx: any) => {

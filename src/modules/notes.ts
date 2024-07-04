@@ -1,23 +1,11 @@
 import { Composer, InlineKeyboard } from "grammy";
 import { clear_note, get_all_chat_notes, get_note, remove_all_chat_notes, save_note } from "../database/notes_sql";
 import { get_note_urls, set_note_urls } from "../database/note_urls_sql";
-import { escapeMarkdownV2, extractButtons, iterateInlineKeyboard, format_json, ownerOnly, ownerOnlyCallback } from "../helpers/helper_func"; 
+import { escapeMarkdownV2, extractButtons, iterateInlineKeyboard, format_json, ownerOnly, ownerOnlyCallback, MessageTypes } from "../helpers/helper_func"; 
 import { Menu, MenuRange } from "@grammyjs/menu";
 import { bot } from "../bot";
 
 const composer = new Composer();
-
-enum MessageTypes {
-    TEXT = 0,
-    BUTTON_TEXT = 1,
-    STICKER = 2,
-    DOCUMENT = 3,
-    PHOTO = 4,
-    AUDIO = 5,
-    VOICE = 6,
-    VIDEO = 7,
-    VIDEO_NOTE = 8
-}
 
 // THIS CODE NEEDS TO BE UPDATED, ALSO BEFORE THAT THE SCHEMA NEEDS TO BE UPDATED FOR NEW DB STRUCTURE, CURRENTLY USING WHAT AKENO WAS USING
 // has_buttons, and BUTTON_TEXT message type are not being used in the current implementation
