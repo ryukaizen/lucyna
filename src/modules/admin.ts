@@ -252,6 +252,10 @@ composer.chatType("supergroup" || "group").command("promote", adminCanPromoteUse
         }
         else {
             await promoteUser(ctx, ctx.message.reply_to_message.from.id, ctx.message.reply_to_message.from.first_name);
+            if (ctx.match) {
+                await ctx.api.setChatAdministratorCustomTitle(ctx.chat.id, ctx.message.reply_to_message.from.id, ctx.match);
+ 
+            }
         }   
     }
     else {
