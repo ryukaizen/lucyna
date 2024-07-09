@@ -401,7 +401,7 @@ model welcome_pref {
   welcome_type   BigInt?
   custom_leave   String?
   leave_type     BigInt?
-  clean_welcome  BigInt?
+  clean_welcome  Boolean?
 }
 
 model welcome_urls {
