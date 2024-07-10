@@ -427,6 +427,10 @@ composer.on("message:new_chat_members", async (ctx: any) => {
     }
 });
 
+composer.on("message:left_chat_member:is_bot", async (ctx: any) => {
+    await ctx.reply("That bot was useless anyways, nicely done.", {parse_mode: "HTML"})
+});
+
 composer.on("message:left_chat_member", async (ctx: any) => {
     let goodbye = await get_goodbye(ctx.chat.id);
 
@@ -446,7 +450,7 @@ composer.on("message:left_chat_member", async (ctx: any) => {
             await sendGoodbye(ctx, leave_type, filledMessage, parseMode);
         }
         else {
-            await ctx.reply(`See you again, ${ctx.from?.first_name}! (<tg-spoiler>maybe never</tg-spoiler>)!`, {parse_mode: "HTML"})
+            await ctx.reply(`See you again, ${ctx.from?.first_name}! (<tg-spoiler>maybe never</tg-spoiler>)`, {parse_mode: "HTML"})
         }
     }
 
