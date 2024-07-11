@@ -376,85 +376,99 @@ composer.on("message:new_chat_members:me", async (ctx: any) => {
     channel_log(log_message) 
 });
 
-composer.on("message:new_chat_members", async (ctx: any) => {
-    clearButtons();
+composer.on("chat_member", async (ctx: any, next) => {
+    if (ctx.chat?.type !== "group" && ctx.chat?.type !== "supergroup") {
+        return await next();
+    }
+  
+    let oldStatus = ctx.chatMember.old_chat_member.status;
+    let newStatus = ctx.chatMember.new_chat_member.status;
+  
+    let chat = ctx.update.chat_member.chat;
 
-    let greet = await get_welcome(ctx.chat.id);
-    let greet_buttons = await get_greet_urls(ctx.chat.id);
+    if (oldStatus === "left" && (newStatus === "member" || newStatus === "restricted")) {
+        clearButtons();
 
-    let should_welcome = greet?.should_welcome;
-    let custom_content = greet?.custom_content;
-    let custom_welcome = greet?.custom_welcome;
-    let welcome_type = Number(greet?.welcome_type);
-    let clean_welcome = greet?.clean_welcome;
-    let previous_welcome = greet?.previous_welcome;
-    let parseMode = "MarkdownV2";
-    let keyboard;
-
-    // parsing the fillings
-    let user = ctx.message.new_chat_members;
-    let chat = ctx.chat;
+        let greet = await get_welcome(ctx.chat.id);
+        let greet_buttons = await get_greet_urls(ctx.chat.id);
     
+        let should_welcome = greet?.should_welcome;
+        let custom_content = greet?.custom_content;
+        let custom_welcome = greet?.custom_welcome;
+        let welcome_type = Number(greet?.welcome_type);
+        let clean_welcome = greet?.clean_welcome;
+        let previous_welcome = greet?.previous_welcome;
+        let parseMode = "MarkdownV2";
+        let keyboard;
 
-    if (should_welcome) {
-        let message;
+        let user = ctx.chatMember.new_chat_member.user;
 
-        if (greet_buttons && greet_buttons.length > 0) {
-            setButtons(greet_buttons);
-            keyboard = greetButtonsMenu;
-        } 
-        else {
-            keyboard = undefined;
-        } 
-
-        if (custom_welcome) {
-            let memberCount = await ctx.api.getChatMemberCount(ctx.chat.id);           
-            message = messageFillings(custom_welcome, user[0], chat, memberCount)
-        }
-
-        if (!custom_content && !custom_welcome) {
-            await ctx.reply(`Welcome, new member ${ctx.from?.first_name}!`);
-        }
-        else {
-            let current_message = await sendWelcome(ctx, welcome_type, message, custom_content, parseMode, keyboard);   
-
-            if (clean_welcome) {
-                await ctx.api.deleteMessage(ctx.chat.id, Number(previous_welcome)) 
-                await set_clean_welcome(ctx.chat.id, current_message.message_id);
+        if (should_welcome) {
+            let message;
+    
+            if (greet_buttons && greet_buttons.length > 0) {
+                setButtons(greet_buttons);
+                keyboard = greetButtonsMenu;
+            } 
+            else {
+                keyboard = undefined;
+            } 
+    
+            if (custom_welcome) {
+                let memberCount = await ctx.api.getChatMemberCount(ctx.chat.id);           
+                message = messageFillings(custom_welcome, user, chat, memberCount)
             }
-
+    
+            if (!custom_content && !custom_welcome) {
+                await ctx.reply(`Welcome, new member ${user.first_name}!`);
+            }
+            else {
+                let current_message = await sendWelcome(ctx, welcome_type, message, custom_content, parseMode, keyboard);   
+    
+                if (clean_welcome) {
+                    await ctx.api.deleteMessage(ctx.chat.id, Number(previous_welcome)) 
+                    await set_clean_welcome(ctx.chat.id, current_message.message_id);
+                }
+    
+            }
         }
     }
+  
+    if ((oldStatus === "member" || oldStatus === "restricted") && newStatus === "left") {
+        let goodbye = await get_goodbye(ctx.chat.id);
+
+        let should_goodbye = goodbye?.should_goodbye;
+        let custom_leave = goodbye?.custom_leave;
+        let leave_type = Number(goodbye?.leave_type);
+        let parseMode = "MarkdownV2";
+
+        let user = ctx.chatMember.old_chat_member.user;
+    
+        if (should_goodbye) {
+            if (custom_leave) {
+                let memberCount = await ctx.api.getChatMemberCount(ctx.chat.id);           
+                let filledMessage = messageFillings(custom_leave, user, chat, memberCount)
+                await sendGoodbye(ctx, leave_type, filledMessage, parseMode);
+            }
+            else {
+                await ctx.reply(`See you again, ${user.first_name}! (<tg-spoiler>maybe never</tg-spoiler>)`, {parse_mode: "HTML"})
+            }
+        }
+    }
+    await next();
 });
+
+// composer.on("message:new_chat_members", async (ctx: any) => {
+    
+// });
 
 composer.on("message:left_chat_member:is_bot", async (ctx: any) => {
     await ctx.reply("That bot was useless anyways, nicely done.", {parse_mode: "HTML"})
 });
 
-composer.on("message:left_chat_member", async (ctx: any) => {
-    let goodbye = await get_goodbye(ctx.chat.id);
+// composer.on("message:left_chat_member", async (ctx: any) => {
 
-    let should_goodbye = goodbye?.should_goodbye;
-    let custom_leave = goodbye?.custom_leave;
-    let leave_type = Number(goodbye?.leave_type);
-    let parseMode = "MarkdownV2";
-
-    // parsing the fillings
-    let user = ctx.message.left_chat_member;
-    let chat = ctx.chat;
-
-    if (should_goodbye) {
-        if (custom_leave) {
-            let memberCount = await ctx.api.getChatMemberCount(ctx.chat.id);           
-            let filledMessage = messageFillings(custom_leave, user, chat, memberCount)
-            await sendGoodbye(ctx, leave_type, filledMessage, parseMode);
-        }
-        else {
-            await ctx.reply(`See you again, ${ctx.from?.first_name}! (<tg-spoiler>maybe never</tg-spoiler>)`, {parse_mode: "HTML"})
-        }
-    }
-
-});
+// });
 
 composer.chatType("supergroup" || "group").command("welcome", elevatedUsersOnly((async (ctx: any) => {
     clearButtons();
@@ -658,7 +672,7 @@ composer.chatType("supergroup" || "group").command("resetgoodbye", elevatedUsers
 })));
 
 composer.chatType("supergroup" || "group").command("cleanwelcome", elevatedUsersOnly((async (ctx: any) => {
-    let args = ctx.match;
+    let args = ctx.match.toLowerCase();
     if (args) {;
         if (args == "on" || args == "yes") {
             await cleanWelcomeSwitch(ctx, ctx.chat.id, true);
