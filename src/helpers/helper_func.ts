@@ -639,16 +639,16 @@ export function iterateInlineKeyboard(inlineKeyboard: any[][]) {
 }
 
 export function messageFillings(text: string, user: any, chat: any, memberCount: number): string {
-
+    
     const replacements: { [key: string]: string } = {
-        '{first}': user.first_name,
-        '{last}': user.last_name || '',
-        '{fullname}': `${user.first_name} ${user.last_name || ''}`.trim(),
-        '{username}': user.username ? `@${user.username}` : `[${user.first_name}](tg://user?id=${user.id})`,
-        '{mention}': `[${user.first_name}](tg://user?id=${user.id})`,
-        '{id}': user.id.toString(),
-        '{count}': memberCount.toString(),
-        '{chatname}': chat.title
+        '{first}': user?.first_name || '',
+        '{last}': user?.last_name || '',
+        '{fullname}': `${user?.first_name || ''} ${user?.last_name || ''}`.trim(),
+        '{username}': user?.username ? `@${user.username}` : (user?.first_name ? `[${user.first_name}](tg://user?id=${user?.id})` : ''),
+        '{mention}': user?.first_name && user?.id ? `[${user.first_name}](tg://user?id=${user.id})` : '',
+        '{id}': user?.id?.toString() || '',
+        '{count}': memberCount?.toString() || '',
+        '{chatname}': chat?.title || ''
     };
 
     Object.keys(replacements).forEach(key => {
