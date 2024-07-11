@@ -1,4 +1,4 @@
-import { Composer, Filter, FilterQuery  } from "grammy";
+import { Composer, FilterQuery  } from "grammy";
 import { botCanDeleteMessages, elevatedUsersOnly } from "../helpers/helper_func";
 import { get_clean_service, set_clean_service } from "../database/clean_service_sql";
 
