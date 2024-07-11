@@ -160,7 +160,7 @@ export async function set_clean_welcome(chatId: string, previous_welcome: bigint
 }
 
 
-export async function reset_welcome(chatId: string, ) {
+export async function reset_welcome(chatId: string) {
     try {
         let reset_welcome = await prisma.welcome_pref.upsert({
             where: {
