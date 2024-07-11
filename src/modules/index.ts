@@ -2,10 +2,12 @@ import admin from './admin';
 import antiflood from './antiflood';
 import bans from './bans';
 import blacklists from './blacklists'
+import cleanservice from './cleanservice'
 import filters from './filters';
 import locks from './locks';
 import misc from './misc';
 import mutes from './mutes';
+import notes from './notes';
 import purges from './purges';
 import reports from './reports';
 import rules from './rules';
@@ -24,10 +26,12 @@ composer.use(
     antiflood,
     bans,
     blacklists,
+    cleanservice,
     filters,
     locks,
     misc,
     mutes,
+    notes,
     purges,
     reports,
     rules,
