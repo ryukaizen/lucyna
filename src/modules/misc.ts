@@ -16,7 +16,7 @@ composer.command("ping", superusersOnly(async (ctx: any) => {
     );
 }));
 
-composer.chatType("supergroup" || "group").command("sysinfo", superusersOnly(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("sysinfo", superusersOnly(async (ctx: any) => {
     let cpu = await si.cpu();
     let osys = await si.osInfo();
     let mem = await si.mem();

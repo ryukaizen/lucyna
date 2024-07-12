@@ -111,7 +111,7 @@ async function dmute(ctx: any, user_id: number | string, message_id: number, dur
     });
 }
 
-composer.chatType("supergroup" || "group").command("mute", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("mute", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("YOU CAN'T MAKE ME STAY QUIET!!!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -192,7 +192,7 @@ composer.chatType("supergroup" || "group").command("mute", adminCanRestrictUsers
 }
 })));
 
-composer.chatType("supergroup" || "group").command("unmute", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("unmute", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         let is_user_restricted = await isUserRestricted(ctx, ctx.message.reply_to_message.chat.id, ctx.message.reply_to_message.from.id);
         if (is_user_restricted == false) {
@@ -231,7 +231,7 @@ composer.chatType("supergroup" || "group").command("unmute", adminCanRestrictUse
     }
 })));
 
-composer.chatType("supergroup" || "group").command(["tmute", "tempmute"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["tmute", "tempmute"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("YOU CAN'T MAKE ME STAY QUIET!!!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -317,7 +317,7 @@ composer.chatType("supergroup" || "group").command(["tmute", "tempmute"], adminC
     }
 })));
 
-composer.chatType("supergroup" || "group").command(["smute", "pss"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["smute", "pss"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             return;
@@ -403,7 +403,7 @@ composer.chatType("supergroup" || "group").command(["smute", "pss"], adminCanRes
     }
 })));
 
-composer.chatType("supergroup" || "group").command(["dmute", "delmute"], adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["dmute", "delmute"], adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("YOU CAN'T MAKE ME STAY QUIET!!!", {reply_parameters: {message_id: ctx.message.message_id}});

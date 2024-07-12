@@ -9,7 +9,7 @@ import { Composer } from "grammy";
 
 const composer = new Composer();
 
-composer.chatType("supergroup" || "group").command("del", adminCanDeleteMessages(botCanDeleteMessages(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("del", adminCanDeleteMessages(botCanDeleteMessages(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         await ctx.api.deleteMessage(ctx.chat.id, ctx.message.message_id)
         .then(() => {
@@ -25,7 +25,7 @@ composer.chatType("supergroup" || "group").command("del", adminCanDeleteMessages
     }
 })));
 
-composer.chatType("supergroup" || "group").command("purge", adminCanDeleteMessages(botCanDeleteMessages(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("purge", adminCanDeleteMessages(botCanDeleteMessages(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         let message = await ctx.reply(`Purging initiated...`)
         let message_ids = [];

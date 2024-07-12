@@ -153,7 +153,7 @@ async function banme(ctx: any, user_id: number | string, message: string, sticke
     });
 }
 
-composer.chatType("supergroup" || "group").command("ban", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("ban", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("Imagine making me ban myself...", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -215,7 +215,7 @@ composer.chatType("supergroup" || "group").command("ban", adminCanRestrictUsers(
     }
 })));
 
-composer.chatType("supergroup" || "group").command("unban", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("unban", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         let is_user_in_chat = await isUserBanned(ctx, ctx.message.reply_to_message.chat.id, ctx.message.reply_to_message.from.id);
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
@@ -257,7 +257,7 @@ composer.chatType("supergroup" || "group").command("unban", adminCanRestrictUser
     }
 })));
 
-composer.chatType("supergroup" || "group").command("dban", adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("dban", adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("Imagine making me ban myself...", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -285,7 +285,7 @@ composer.chatType("supergroup" || "group").command("dban", adminCanRestrictUsers
     }       
 })))));
 
-composer.chatType("supergroup" || "group").command(["sban", "pew"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["sban", "pew"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             return;
@@ -338,7 +338,7 @@ composer.chatType("supergroup" || "group").command(["sban", "pew"], adminCanRest
     }
 })));
 
-composer.chatType("supergroup" || "group").command(["tban", "tempban"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["tban", "tempban"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("Imagine making me ban myself...", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -424,7 +424,7 @@ composer.chatType("supergroup" || "group").command(["tban", "tempban"], adminCan
     }
 })));
 
-composer.chatType("supergroup" || "group").command("kick", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("kick", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("WHY WOULD YOU WANT TO DO THAT!?", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -483,7 +483,7 @@ composer.chatType("supergroup" || "group").command("kick", adminCanRestrictUsers
 })));
 
 
-composer.chatType("supergroup" || "group").command("dkick", adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("dkick", adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("WHY WOULD YOU WANT TO DO THAT!?", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -504,14 +504,14 @@ composer.chatType("supergroup" || "group").command("dkick", adminCanRestrictUser
     }       
 })))));
 
-composer.chatType("supergroup" || "group").command("kickme", (botCanRestrictUsers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("kickme", (botCanRestrictUsers(async (ctx: any) => {
     let kick_message: string = (`${kick_responses[Math.floor(Math.random() * kick_responses.length)]} ${ctx.from.first_name}.`);
     let kick_sticker = "CAACAgUAAxkBAAFVoJdl5143l3aQas2IfSFEUqovfKwmAQACnxIAAhQLOFf6_XYxuhju8DQE"
     
     await kickme(ctx, ctx.from.id, kick_message, kick_sticker);
 })));
 
-composer.chatType("supergroup" || "group").command("banme", (botCanRestrictUsers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("banme", (botCanRestrictUsers(async (ctx: any) => {
     let ban_message = `${ctx.from.first_name} banned themselves!`;
     let ban_sticker = "CAACAgUAAxkBAAFVnsdl5vx8BAvmJFo1HivZppw_lwHb2wACFg4AAn-LOVdoTyZHers4xjQE"
 

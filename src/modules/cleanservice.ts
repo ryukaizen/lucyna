@@ -45,7 +45,7 @@ async function cleanServiceSwitch(ctx: any, chatId: string, cleanService: boolea
     }
 }
 
-composer.chatType("supergroup" || "group").on(serviceMessageTypes, async (ctx) => {
+composer.chatType(["supergroup", "group"]).on(serviceMessageTypes, async (ctx) => {
 
     let clean_service = await get_clean_service(ctx.chat.id.toString());
     if (clean_service?.clean_service) {
@@ -53,7 +53,7 @@ composer.chatType("supergroup" || "group").on(serviceMessageTypes, async (ctx) =
     }
 });
 
-composer.chatType("supergroup" || "group").command("cleanservice", elevatedUsersOnly(botCanDeleteMessages(async(ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("cleanservice", elevatedUsersOnly(botCanDeleteMessages(async(ctx: any) => {
     let args = ctx.match.toLowerCase();
 
     if (args) {;

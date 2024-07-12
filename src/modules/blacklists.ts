@@ -14,19 +14,19 @@ async function blacklist(ctx: any) {
     
 }
 
-// composer.chatType("supergroup" || "group").command(["blacklist", "blacklists"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+// composer.chatType(["supergroup", "group"]).command(["blacklist", "blacklists"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
 //     await blacklist(ctx);
 // })));
 
-// composer.chatType("supergroup" || "group").command("addblacklist", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+// composer.chatType(["supergroup", "group"]).command("addblacklist", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
 //     
 // })));
 
-// composer.chatType("supergroup" || "group").command(["unblacklist", "rmblacklist"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+// composer.chatType(["supergroup", "group"]).command(["unblacklist", "rmblacklist"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
 //     
 // })));
 
-// composer.chatType("supergroup" || "group").command("blacklistmode", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+// composer.chatType(["supergroup", "group"]).command("blacklistmode", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
 //     
 // })));
 

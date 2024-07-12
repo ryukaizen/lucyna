@@ -217,23 +217,23 @@ async function removeGroupSticker(ctx: any) {
     });
 }
 
-composer.chatType("supergroup" || "group").command("pin", adminCanPinMessages(botCanPinMessages(async(ctx: any) => {
-    await pin(ctx);
+composer.chatType(["supergroup", "group"]).command("pin", adminCanPinMessages(botCanPinMessages(async(ctx: any) => {
+    await pin(ctx)
 })));
 
-composer.chatType("supergroup" || "group").command("unpin", adminCanPinMessages(botCanPinMessages(async(ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("unpin", adminCanPinMessages(botCanPinMessages(async(ctx: any) => {
     await unpin(ctx);
 })));
 
-composer.chatType("supergroup" || "group").command("unpinall", adminCanPinMessages(botCanPinMessages(async(ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("unpinall", adminCanPinMessages(botCanPinMessages(async(ctx: any) => {
     await unpinall(ctx);
 })));
     
-composer.chatType("supergroup" || "group").command("invitelink", adminCanInviteUsers(botCanInviteUsers(async(ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("invitelink", adminCanInviteUsers(botCanInviteUsers(async(ctx: any) => {
     await invitelink(ctx);
 })));
 
-composer.chatType("supergroup" || "group").command("promote", adminCanPromoteUsers(botCanPromoteMembers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("promote", adminCanPromoteUsers(botCanPromoteMembers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("I already am an admin, good sir/ma'am.", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -296,7 +296,7 @@ composer.chatType("supergroup" || "group").command("promote", adminCanPromoteUse
     }
 })));
 
-composer.chatType("supergroup" || "group").command("demote", adminCanPromoteUsers(botCanPromoteMembers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("demote", adminCanPromoteUsers(botCanPromoteMembers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (ctx.message.reply_to_message.from.id == bot.botInfo.id) {
             await ctx.reply("Heyy noooo!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -355,7 +355,7 @@ composer.chatType("supergroup" || "group").command("demote", adminCanPromoteUser
     }
 })));
 
-composer.chatType("supergroup" || "group").command("title", adminCanPromoteUsers(botCanPromoteMembers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("title", adminCanPromoteUsers(botCanPromoteMembers(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         if (await isUserCreator(ctx, ctx.message.reply_to_message.from.id)) {
             await ctx.reply("Only owners can change their title themselves, that too manually!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -403,7 +403,7 @@ composer.chatType("supergroup" || "group").command("title", adminCanPromoteUsers
 })));
 
 
-composer.chatType("supergroup" || "group").command(["setgpic", "setgpfp"], adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["setgpic", "setgpfp"], adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
     if (ctx.message.reply_to_message != undefined) {
         let pic_id: string;
         let sticker_id: string;
@@ -433,11 +433,11 @@ composer.chatType("supergroup" || "group").command(["setgpic", "setgpfp"], admin
     }
 })));
 
-composer.chatType("supergroup" || "group").command(["delgpic", "delgpfp", "rmgpic", "rmgpfp"], adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["delgpic", "delgpfp", "rmgpic", "rmgpfp"], adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
     await removeGroupPic(ctx);
 })));
 
-composer.chatType("supergroup" || "group").command("setgtitle", adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("setgtitle", adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
     if (ctx.match) {
         await setGroupTitle(ctx, ctx.match)
     }
@@ -449,7 +449,7 @@ composer.chatType("supergroup" || "group").command("setgtitle", adminCanChangeIn
     }
 })));
 
-composer.chatType("supergroup" || "group").command(["setgdesc", "setdescription"], adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["setgdesc", "setdescription"], adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
     if (ctx.match) {
         await setGroupDesc(ctx, ctx.match)
     }
@@ -461,15 +461,15 @@ composer.chatType("supergroup" || "group").command(["setgdesc", "setdescription"
     }
 })));
 
-composer.chatType("supergroup" || "group").command(["setgsticker", "setsticker"], adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["setgsticker", "setsticker"], adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
     await setGroupSticker(ctx);
 })));
 
-composer.chatType("supergroup" || "group").command(["delgsticker", "delsticker", "rmgsticker", "rmsticker"], adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["delgsticker", "delsticker", "rmgsticker", "rmsticker"], adminCanChangeInfo(botCanChangeInfo(async (ctx: any) => {
     await removeGroupSticker(ctx);
 })));
 
-// composer.chatType("supergroup" || "group").command(["admincache", "reload"], elevatedUsersOnly(isBotAdmin(async (ctx: any) => {
+// composer.chatType(["supergroup", "group"]).command(["admincache", "reload"], elevatedUsersOnly(isBotAdmin(async (ctx: any) => {
 
 // })));
 

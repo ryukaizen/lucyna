@@ -188,19 +188,19 @@ async function setfloodmode(ctx: any) {
     
 // }));
 
-composer.chatType("supergroup" || "group").command(["flood", "antiflood"], (async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["flood", "antiflood"], (async (ctx: any) => {
     await flood(ctx);
 }));
 
-composer.chatType("supergroup" || "group").command(["floodmode", "antifloodmode"], (async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["floodmode", "antifloodmode"], (async (ctx: any) => {
     await floodmode(ctx);
 }));
 
-composer.chatType("supergroup" || "group").command(["setflood", "setantiflood"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["setflood", "setantiflood"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     await setflood(ctx);
 })));
 
-composer.chatType("supergroup" || "group").command(["setfloodmode", "setantifloodmode"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["setfloodmode", "setantifloodmode"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
     await setfloodmode(ctx);
 })));
 

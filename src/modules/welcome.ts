@@ -470,7 +470,7 @@ composer.on("message:left_chat_member:is_bot", async (ctx: any) => {
 
 // });
 
-composer.chatType("supergroup" || "group").command("welcome", elevatedUsersOnly((async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("welcome", elevatedUsersOnly((async (ctx: any) => {
     clearButtons();
     let args = ctx.match.toLowerCase();
 
@@ -537,7 +537,7 @@ composer.chatType("supergroup" || "group").command("welcome", elevatedUsersOnly(
     }
 })));
 
-composer.chatType("supergroup" || "group").command("goodbye", elevatedUsersOnly((async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("goodbye", elevatedUsersOnly((async (ctx: any) => {
     clearButtons();
     let args = ctx.match.toLowerCase();
 
@@ -589,7 +589,7 @@ composer.chatType("supergroup" || "group").command("goodbye", elevatedUsersOnly(
     }
 })));
 
-composer.chatType("supergroup" || "group").command("setwelcome", elevatedUsersOnly((async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("setwelcome", elevatedUsersOnly((async (ctx: any) => {
     clearButtons(); 
     let custom_welcome;  
     if (ctx.message.reply_to_message) {
@@ -639,7 +639,7 @@ composer.chatType("supergroup" || "group").command("setwelcome", elevatedUsersOn
     }
 })));
 
-composer.chatType("supergroup" || "group").command("setgoodbye", elevatedUsersOnly((async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("setgoodbye", elevatedUsersOnly((async (ctx: any) => {
     let custom_leave;  
     if (ctx.message.reply_to_message) {
         custom_leave = ctx.message.reply_to_message.text;
@@ -663,15 +663,15 @@ composer.chatType("supergroup" || "group").command("setgoodbye", elevatedUsersOn
     }
 })));
 
-composer.chatType("supergroup" || "group").command("resetwelcome", elevatedUsersOnly((async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("resetwelcome", elevatedUsersOnly((async (ctx: any) => {
     await resetWelcome(ctx);
 })));
 
-composer.chatType("supergroup" || "group").command("resetgoodbye", elevatedUsersOnly((async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("resetgoodbye", elevatedUsersOnly((async (ctx: any) => {
     await resetGoodbye(ctx);
 })));
 
-composer.chatType("supergroup" || "group").command("cleanwelcome", elevatedUsersOnly((async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("cleanwelcome", elevatedUsersOnly((async (ctx: any) => {
     let args = ctx.match.toLowerCase();
     if (args) {;
         if (args == "on" || args == "yes") {

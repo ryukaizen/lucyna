@@ -202,7 +202,7 @@ async function fetchId(ctx: any) {
     await ctx.api.sendMessage(ctx.chat.id, response, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
 }
 
-composer.chatType("supergroup" || "group").command("info", (async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("info", (async (ctx: any) => {
     if (ctx.message.reply_to_message) {
         let user_id = ctx.message.reply_to_message.from.id;
         if (ctx.message.reply_to_message?.forward_origin) {
@@ -245,7 +245,7 @@ composer.chatType("supergroup" || "group").command("info", (async (ctx: any) => 
     }
 }));
 
-composer.chatType("supergroup" || "group").command("id", (async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("id", (async (ctx: any) => {
     await fetchId(ctx);
 }));
 

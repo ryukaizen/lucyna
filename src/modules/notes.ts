@@ -193,7 +193,7 @@ function createNoteButtonsMenu() {
 const { menu: noteButtonsMenu, setButtons, clearButtons } = createNoteButtonsMenu();
 bot.use(noteButtonsMenu);
 
-composer.chatType("supergroup" || "group").on("message").hears(/^#[^\s#]+(?:\s|$)/, async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).on("message").hears(/^#[^\s#]+(?:\s|$)/, async (ctx: any) => {
     clearButtons();
     if (ctx.message.text.startsWith('#')) {
         let args = ctx.message.text.slice(1).toLowerCase().split(" ")
@@ -250,7 +250,7 @@ composer.chatType("supergroup" || "group").on("message").hears(/^#[^\s#]+(?:\s|$
     }
 });
 
-composer.chatType("supergroup" || "group").command(["get", "getnote"], (async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["get", "getnote"], (async (ctx: any) => {
     clearButtons();
     let args = ctx.match.toLowerCase().split(" ");
     let name = args[0]
@@ -312,7 +312,7 @@ composer.chatType("supergroup" || "group").command(["get", "getnote"], (async (c
     }
 }));
 
-composer.chatType("supergroup" || "group").command("save", (async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("save", (async (ctx: any) => {
     let args = ctx.match;
     let split_args = args.split(" ");
     let note_name = split_args[0].toLowerCase();
@@ -373,7 +373,7 @@ composer.chatType("supergroup" || "group").command("save", (async (ctx: any) => 
 }));
 
 // this one's only for media messages containing "/save notename" in their captions
-composer.chatType("supergroup" || "group").on("message").hears(/^\/save\b/, (async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).on("message").hears(/^\/save\b/, (async (ctx: any) => {
     if (ctx.message.caption) {
         let note = ctx.message.caption.split(" ");
         let note_name = note[1].toLowerCase();
@@ -391,7 +391,7 @@ composer.chatType("supergroup" || "group").on("message").hears(/^\/save\b/, (asy
     }
 }));
 
-composer.chatType("supergroup" || "group").command(["notes", "saved"], (async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["notes", "saved"], (async (ctx: any) => {
     let notes = await get_all_chat_notes(ctx.chat.id);
     let message;
     if (notes.length > 0) {
@@ -404,7 +404,7 @@ composer.chatType("supergroup" || "group").command(["notes", "saved"], (async (c
     await ctx.reply(message, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
 }));
 
-composer.chatType("supergroup" || "group").command("clear", (async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("clear", (async (ctx: any) => {
     let args = ctx.match;
     let note_name = args.toLowerCase();
 
@@ -420,7 +420,7 @@ composer.chatType("supergroup" || "group").command("clear", (async (ctx: any) =>
     }
 }));
 
-composer.chatType("supergroup" || "group").command(["rmallnotes", "clearallnotes"], ownerOnly(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["rmallnotes", "clearallnotes"], ownerOnly(async (ctx: any) => {
     await removeallnotes(ctx);
 }));
 

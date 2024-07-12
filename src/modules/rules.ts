@@ -6,7 +6,7 @@ import { elevatedUsersOnly } from "../helpers/helper_func";
 
 const composer = new Composer();
 
-composer.chatType("supergroup" || "group").command(["rule", "rules"], (async(ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["rule", "rules"], (async(ctx: any) => {
     let chatId = ctx.chat.id.toString();
     let rules_button = new InlineKeyboard()
         .url("Rules❕", `https://telegram.me/${constants.BOT_USERNAME}?start=rules_${chatId}`);
@@ -25,7 +25,7 @@ composer.chatType("supergroup" || "group").command(["rule", "rules"], (async(ctx
     }
 }));
 
-composer.chatType("supergroup" || "group").command(["setrule", "setrules", "addrule", "addrules"], elevatedUsersOnly(async(ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["setrule", "setrules", "addrule", "addrules"], elevatedUsersOnly(async(ctx: any) => {
     let chatId = ctx.chat.id.toString();
 
     const rulesPreview = new InlineKeyboard()
@@ -62,7 +62,7 @@ composer.chatType("supergroup" || "group").command(["setrule", "setrules", "addr
     }
 }));
 
-composer.chatType("supergroup" || "group").command(["resetrule", "resetrules", "rmrule", "rmrules"], elevatedUsersOnly(async(ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["resetrule", "resetrules", "rmrule", "rmrules"], elevatedUsersOnly(async(ctx: any) => {
     let chatId = ctx.chat.id.toString();
     let rules = await get_rules(chatId);
     if (rules == null) {

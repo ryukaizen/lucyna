@@ -145,7 +145,7 @@ composer.chatType("private").command("start", (async(ctx: any) => {
     }
 }));
 
-composer.chatType("supergroup" || "group").command("start", (async(ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("start", (async(ctx: any) => {
     let grp_start_text: string = `${greets[Math.floor(Math.random() * greets.length)]} <a href="tg://user?id=${ctx.from?.id}">${ctx.from?.first_name}</a>.`;    
     let payload = ctx.match;
     if (payload == "new") {
@@ -160,7 +160,7 @@ composer.chatType("private").command("help", (async(ctx: any) => {
     await ctx.api.sendAnimation(ctx.chat.id, constants.START_GIF, {caption: help_text, reply_markup: help_submenu, parse_mode: "HTML"});
 }));
 
-composer.chatType("supergroup" || "group").command("help", (async(ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("help", (async(ctx: any) => {
     await ctx.reply("Need help?", {reply_parameters: {message_id: ctx.message.message_id}, reply_markup: helpButton, parse_mode: "HTML"});
 }));
 

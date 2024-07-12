@@ -121,11 +121,11 @@ async function reportHandler(ctx: any) {
     }
 }
 
-composer.chatType("supergroup" || "group").command("reports", elevatedUsersOnly((async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("reports", elevatedUsersOnly((async (ctx: any) => {
     await reportSettings(ctx);
 })));
 
-composer.chatType("supergroup" || "group").command("report", (async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("report", (async (ctx: any) => {
     await reportHandler(ctx);
 }));
 
