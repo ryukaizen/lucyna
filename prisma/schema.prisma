@@ -296,24 +296,33 @@ model nsfw_chats {
 }
 
 model permissions {
-  chat_id  String   @id @db.VarChar(14)
-  audio    Boolean?
-  voice    Boolean?
-  contact  Boolean?
-  video    Boolean?
-  document Boolean?
-  photo    Boolean?
-  sticker  Boolean?
-  gif      Boolean?
-  url      Boolean?
-  bots     Boolean?
-  forward  Boolean?
-  game     Boolean?
-  location Boolean?
-  rtl      Boolean?
-  button   Boolean?
-  egame    Boolean?
-  inline   Boolean?
+  chat_id      String   @id @db.VarChar(14)
+  audio        Boolean? @default(false)
+  voice        Boolean? @default(false)
+  document     Boolean? @default(false)
+  video        Boolean? @default(false)
+  contact      Boolean? @default(false)
+  photo        Boolean? @default(false)
+  url          Boolean? @default(false)
+  bots         Boolean? @default(false)
+  forward      Boolean? @default(false)
+  game         Boolean? @default(false)
+  location     Boolean? @default(false)
+  egame        Boolean? @default(false)
+  rtl          Boolean? @default(false)
+  button       Boolean? @default(false)
+  inline       Boolean? @default(false)
+  poll         Boolean? @default(false)
+  sticker      Boolean? @default(false)
+  animation    Boolean? @default(false)
+  videoNote    Boolean? @default(false)
+  messages     Boolean? @default(false)
+  media        Boolean? @default(false)
+  other        Boolean? @default(false)
+  previews     Boolean? @default(false)
+  info         Boolean? @default(false)
+  invite       Boolean? @default(false)
+  pin          Boolean? @default(false)
 }
 
 model restrictions {
