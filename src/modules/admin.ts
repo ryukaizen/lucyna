@@ -82,7 +82,7 @@ async function unpin(ctx: any) {
 
 async function unpinall(ctx: any) {
     await ctx.api.unpinAllChatMessages(ctx.chat.id)
-    .then(ctx.editMessageText("Unpinned all the messages successfully!"))
+    .then(ctx.reply("Unpinned all the messages successfully!", {reply_parameters: {message_id: ctx.message.message_id}}))
     .catch((GrammyError: any) => {ctx.editMessageText("Failed to unpin messages: invalid message / message probably does not exist.")});
 // let confirmUnpin = new InlineKeyboard()
     // .text("Yes", "yes-unpin")
