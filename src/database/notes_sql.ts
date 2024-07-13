@@ -10,7 +10,7 @@ export async function get_note(chatId: string, name: string) {
     return note;
 };
 
-export async function save_note(chatId: string, name: string, value: string | null, msgtype: number, file: string | null, is_reply: boolean, has_buttons: boolean) {
+export async function save_note(chatId: string, name: string, value: string | null, msgtype: number, file: string | null) {
     try {
         let note = await prisma.notes.upsert({
             where: {
@@ -20,8 +20,6 @@ export async function save_note(chatId: string, name: string, value: string | nu
                 value: value,
                 msgtype: msgtype,
                 file: file,
-                is_reply: is_reply,
-                has_buttons: has_buttons
             },
             create: {
                 chat_id: chatId.toString(),
@@ -29,8 +27,8 @@ export async function save_note(chatId: string, name: string, value: string | nu
                 value: value,
                 msgtype: msgtype,
                 file: file,
-                is_reply: is_reply,
-                has_buttons: has_buttons
+                is_reply: false,
+                has_buttons: false
             }
         });
         return true;

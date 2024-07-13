@@ -9,7 +9,7 @@ const composer = new Composer();
 
 // THIS CODE NEEDS TO BE UPDATED, ALSO BEFORE THAT THE SCHEMA NEEDS TO BE UPDATED FOR NEW DB STRUCTURE, CURRENTLY USING WHAT AKENO WAS USING
 // has_buttons, and BUTTON_TEXT message type are not being used in the current implementation
-async function saveNote(captionedcmd: boolean, ctx: any, note_name: string, value: string | null = null, is_reply: boolean = false, has_buttons: boolean = false) {
+async function saveNote(captionedcmd: boolean, ctx: any, note_name: string, value: string | null = null) {
     let message;
     let noted;
     let caption;
@@ -27,35 +27,35 @@ async function saveNote(captionedcmd: boolean, ctx: any, note_name: string, valu
         caption = value;
     } 
     if (message.text) {
-        noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.TEXT, null, is_reply, has_buttons)
+        noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.TEXT, null)
     }
     else if (message.sticker) {
         let file = message.sticker?.file_id;
-        noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.STICKER, file, is_reply, has_buttons)
+        noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.STICKER, file)
     }
     else if (message.document) {
         let file = message.document.file_id;
-        noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.DOCUMENT, file, is_reply, has_buttons)
+        noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.DOCUMENT, file)
     }
     else if (message.photo) {
         let file = message.photo?.slice(-1)[0]?.file_id;
-        noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.PHOTO, file, is_reply, has_buttons)
+        noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.PHOTO, file)
     }
     else if (message.audio) {
         let file = message.audio?.file_id;
-        noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.AUDIO, file, is_reply, has_buttons)
+        noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.AUDIO, file)
     }
     else if (message.voice) {
         let file = message.voice?.file_id;
-        noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.VOICE, file, is_reply, has_buttons)
+        noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.VOICE, file)
     }
     else if (message.video || message.animation) {
         let file = message.video?.file_id;
-        noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.VIDEO, file, is_reply, has_buttons)
+        noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.VIDEO, file)
     }
     else if (message.video_note) {
         let file = message.video_note?.file_id;
-        noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.VIDEO_NOTE, file, is_reply, has_buttons)
+        noted = await save_note(ctx.chat.id, note_name, caption, MessageTypes.VIDEO_NOTE, file)
     }
 
     if (noted) {
