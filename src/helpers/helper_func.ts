@@ -40,7 +40,7 @@ export function superusersOnly(handler: any) {
 
 export function elevatedUsersOnly(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.chatMembers.getChatMember();
+        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
         if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator" || chatMember.status == "administrator") {
             await handler(ctx);
         } 
@@ -52,7 +52,7 @@ export function elevatedUsersOnly(handler: any) {
 
 export function elevatedUsersCallbackOnly(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.chatMembers.getChatMember();
+        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
         if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator" || chatMember.status == "administrator") {
             await handler(ctx);
         } 
@@ -74,7 +74,7 @@ export function samePersonCallbackOnly(handler: any) {
 }
 
 export async function isUserAdmin(ctx: any, user_id: any) {
-    let user = await ctx.chatMembers.getChatMember(ctx.chat.id, user_id)
+    let user = await ctx.api.getChatMember(ctx.chat.id, user_id)
     if (user_id == constants.OWNER_ID || constants.SUPERUSERS.includes(user_id) || user.status == "creator" || user.status == "administrator" || user_id == "1087968824") {
         return true;
     }
@@ -84,7 +84,7 @@ export async function isUserAdmin(ctx: any, user_id: any) {
 }
 
 export async function isUserCreator(ctx: any, user_id: number) {
-    let user = await ctx.chatMembers.getChatMember(ctx.chat.id, user_id);
+    let user = await ctx.api.getChatMember(ctx.chat.id, user_id);
     if (user.status == "creator") {
         return true;
     }
@@ -95,7 +95,7 @@ export async function isUserCreator(ctx: any, user_id: number) {
 
 // future use maybe
 export async function isUserInChat(ctx: any, chat_id: string, user_id: number) {
-    let user = await ctx.chatMembers.getChatMember(chat_id, user_id);
+    let user = await ctx.api.getChatMember(chat_id, user_id);
     if (user.status == "member" || user.status == "restricted" || user.status == "creator" || user.status == "administrator") {
         return true;
     }
@@ -105,7 +105,7 @@ export async function isUserInChat(ctx: any, chat_id: string, user_id: number) {
 }
 
 export async function isUserRestricted(ctx: any, chat_id: string, user_id: number) {
-    let user = await ctx.chatMembers.getChatMember(chat_id, user_id);
+    let user = await ctx.api.getChatMember(chat_id, user_id);
     if (user.status == "restricted") {
         return true;
     }
@@ -115,7 +115,7 @@ export async function isUserRestricted(ctx: any, chat_id: string, user_id: numbe
 }
 
 export async function isUserBanned(ctx: any, chat_id: string, user_id: number) {
-    let user = await ctx.chatMembers.getChatMember(chat_id, user_id);
+    let user = await ctx.api.getChatMember(chat_id, user_id);
     if (user.status == "kicked") {
         return true;
     }
@@ -137,7 +137,7 @@ export async function isUserBanned(ctx: any, chat_id: string, user_id: number) {
 // ==================== ADMIN STUFF ====================
 export function adminCanRestrictUsers(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.chatMembers.getChatMember();
+        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
         if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
             await handler(ctx);
         }
@@ -161,7 +161,7 @@ export function adminCanRestrictUsers(handler: any) {
 
 export function adminCanRestrictUsersCallback(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.chatMembers.getChatMember();
+        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
         if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator" ) {
             await handler(ctx);
         }
@@ -184,7 +184,7 @@ export function adminCanRestrictUsersCallback(handler: any) {
 
 export function adminCanDeleteMessages(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.chatMembers.getChatMember();
+        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
         if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
             await handler(ctx);
         }
@@ -208,7 +208,7 @@ export function adminCanDeleteMessages(handler: any) {
 
 export function adminCanPinMessages(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.chatMembers.getChatMember();
+        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
         if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
             await handler(ctx);
         }
@@ -232,7 +232,7 @@ export function adminCanPinMessages(handler: any) {
 
 export function adminCanInviteUsers(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.chatMembers.getChatMember();
+        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
         if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
             await handler(ctx);
         }
@@ -256,7 +256,7 @@ export function adminCanInviteUsers(handler: any) {
 
 export function adminCanPromoteUsers(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.chatMembers.getChatMember();
+        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
         if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
             await handler(ctx);
         }
@@ -280,7 +280,7 @@ export function adminCanPromoteUsers(handler: any) {
 
 export function adminCanChangeInfo(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.chatMembers.getChatMember();
+        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
         if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
             await handler(ctx);
         }
@@ -309,7 +309,7 @@ export function isBotAdmin(hander: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = await ctx.chatMembers.getChatMember(chat_id, bot_id);
+        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
                 await hander(ctx);
         }
@@ -323,7 +323,7 @@ export function botCanRestrictUsers(hander: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = await ctx.chatMembers.getChatMember(chat_id, bot_id);
+        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
             if (bot_info.can_restrict_members == true) {
                 await hander(ctx);
@@ -342,7 +342,7 @@ export function botCanRestrictUsersCallback(hander: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = await ctx.chatMembers.getChatMember(chat_id, bot_id);
+        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
             if (bot_info.can_restrict_members == true) {
                 await hander(ctx);
@@ -361,7 +361,7 @@ export function botCanDeleteMessages(handler: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = await ctx.chatMembers.getChatMember(chat_id, bot_id);
+        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
             if (bot_info.can_delete_messages == true) {
                 await handler(ctx);
@@ -380,7 +380,7 @@ export function botCanPinMessages(handler: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = await ctx.chatMembers.getChatMember(chat_id, bot_id);
+        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
             if (bot_info.can_pin_messages == true) {
                 await handler(ctx);
@@ -399,7 +399,7 @@ export function botCanInviteUsers(handler: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = await ctx.chatMembers.getChatMember(chat_id, bot_id);
+        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
             if (bot_info.can_invite_users == true) {
                 await handler(ctx);
@@ -418,7 +418,7 @@ export function botCanPromoteMembers(handler: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = await ctx.chatMembers.getChatMember(chat_id, bot_id);
+        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
             if (bot_info.can_promote_members == true) {
                 await handler(ctx);
@@ -437,7 +437,7 @@ export function botCanChangeInfo(handler: any) {
     return async (ctx: any) => {
         let bot_id = ctx.me.id;
         let chat_id = ctx.chat.id;
-        let bot_info = await ctx.chatMembers.getChatMember(chat_id, bot_id);
+        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
         if (bot_info.status == "administrator") {
             if (bot_info.can_change_info == true) {
                 await handler(ctx);
