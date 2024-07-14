@@ -1,18 +1,12 @@
 import { prisma } from "./index";
 
-export async function get_clean_bluetext(chatId: string): Promise<boolean> {
-    try {
-        let setting = await prisma.cleaner_bluetext_chat_setting.findUnique({
-            where: {
-                chat_id: chatId
-            }
-        });
-        return setting?.is_enable ?? false;
-    } 
-    catch (e) {
-        console.error(e);
-        return false;
-    }
+export async function get_clean_bluetext(chatId: string) {
+    let setting = await prisma.cleaner_bluetext_chat_setting.findUnique({
+        where: {
+            chat_id: chatId
+        }
+    });
+    return setting;
 }
 
 export async function set_clean_bluetext(chatId: string, cleanBluetext: boolean) {
