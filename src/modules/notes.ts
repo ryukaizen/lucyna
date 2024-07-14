@@ -193,7 +193,7 @@ function createNoteButtonsMenu() {
 const { menu: noteButtonsMenu, setButtons, clearButtons } = createNoteButtonsMenu();
 bot.use(noteButtonsMenu);
 
-composer.chatType(["supergroup", "group"]).on("message").hears(/^#[^\s#]+(?:\s|$)/, async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).on("message").hears(/^#[^\s#]+(?:\s|$)/, async (ctx: any, next) => {
     clearButtons();
     if (ctx.message.text.startsWith('#')) {
         let args = ctx.message.text.slice(1).toLowerCase().split(" ")
@@ -248,6 +248,7 @@ composer.chatType(["supergroup", "group"]).on("message").hears(/^#[^\s#]+(?:\s|$
             await sendNote(ctx, message_type, text, file, reply_id, parseMode, keyboard, handlertype);     
         }        
     }
+    await next();
 });
 
 composer.chatType(["supergroup", "group"]).command(["get", "getnote"], (async (ctx: any) => {
@@ -373,7 +374,8 @@ composer.chatType(["supergroup", "group"]).command("save", (async (ctx: any) => 
 }));
 
 // this one's only for media messages containing "/save notename" in their captions
-composer.chatType(["supergroup", "group"]).on("message").hears(/^\/save\b/, (async (ctx: any) => {
+// TODO: use message:caption filter
+composer.chatType(["supergroup", "group"]).on("message").hears(/^\/save\b/, (async (ctx: any, next) => {
     if (ctx.message.caption) {
         let note = ctx.message.caption.split(" ");
         let note_name = note[1].toLowerCase();
@@ -389,6 +391,7 @@ composer.chatType(["supergroup", "group"]).on("message").hears(/^\/save\b/, (asy
             await saveNote(true, ctx, note_name, value);
         }
     }
+    await next();
 }));
 
 composer.chatType(["supergroup", "group"]).command(["notes", "saved"], (async (ctx: any) => {
