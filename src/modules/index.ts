@@ -2,6 +2,7 @@ import admin from './admin';
 import antiflood from './antiflood';
 import bans from './bans';
 import blacklists from './blacklists'
+import cleanbluetext from './cleanbluetext';
 import cleanservice from './cleanservice'
 import filters from './filters';
 import locks from './locks';
@@ -26,7 +27,6 @@ composer.use(
     antiflood,
     bans,
     blacklists,
-    cleanservice,
     filters,
     locks,
     misc,
@@ -39,7 +39,10 @@ composer.use(
     test,
     users,
     warns,
-    welcome
+    welcome,
+// keep these at the very bottom to avoid conflicts with other modules (TODO: handle reply_parameters exception (400: Bad Request) when there is no message to reply)
+    cleanservice,
+    cleanbluetext, 
 );
 
 export default composer;

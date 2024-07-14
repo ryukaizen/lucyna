@@ -1,6 +1,6 @@
-import { Composer } from "grammy";
+import { Composer, NextFunction } from "grammy";
 import { elevatedUsersOnly } from "../helpers/helper_func";
-import { set_clean_bluetext } from "../database/clean_bluetext_chat_setting_sql";
+import { get_clean_bluetext, set_clean_bluetext } from "../database/clean_bluetext_chat_setting_sql";
 
 const composer = new Composer();
 
@@ -15,7 +15,11 @@ async function cleanBluetextSwitch(ctx: any, chatId: string, cleanBluetext: bool
     }
 }
 
-composer.chatType("supergroup" || "group").command(["cleanbluetext", "cleanblue"], elevatedUsersOnly(async(ctx: any) => {
+function containsBotCommand(text: string): boolean {
+    return /^\/[a-z0-9_]+(@\w+)?(\s|$)/i.test(text);
+}
+
+composer.chatType(["supergroup", "group"]).command(["cleanbluetext", "cleanblue"], elevatedUsersOnly(async(ctx: any) => {
     let args = ctx.match.toLowerCase();
 
     if (args) {;
@@ -26,9 +30,32 @@ composer.chatType("supergroup" || "group").command(["cleanbluetext", "cleanblue"
             await cleanBluetextSwitch(ctx, ctx.chat.id, false);
         }
         else {
-            await ctx.reply("Invalid argument. Please use /cleanblue <code>on</code> or /cleanblue <code>off</code> to <b>enable</b> or <b>disable</b> deleting the bluetext (messages containing bot commands) respectively.", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+            await ctx.api.sendMessage(ctx.chat.id, "Invalid argument. Please use /cleanblue <code>on</code> or /cleanblue <code>off</code> to <b>enable</b> or <b>disable</b> deleting the bluetext (messages containing bot commands) respectively.", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
         }
     }
+    else {
+        let clean_blue = await get_clean_bluetext(ctx.chat.id.toString());
+        await ctx.reply(`Auto-deletion of bluetext messages is turned <b>${clean_blue?.is_enable ? "ON" : "OFF"}</b> as of now.`, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"})
+
+    }
+
 }));
+
+// composer.on(["message:text", "message:caption"], async(ctx: any, next) => {
+//     let chat_id = ctx.chat?.id.toString();
+//     if (!chat_id) return;
+
+//     let text = ctx.message?.text || ctx.message?.caption;
+//     if (!text) return;
+
+//     if (containsBotCommand(text)) {
+//         let cleanBluetext = await get_clean_bluetext(chat_id);
+//         if (cleanBluetext) {
+//             await ctx.deleteMessage().catch(() => {});
+//         }
+//     }
+
+//     await next()
+// });
 
 export default composer;
