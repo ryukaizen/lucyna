@@ -346,48 +346,21 @@ function createGreetButtonsMenu() {
 }
 
 const { menu: greetButtonsMenu, setButtons, clearButtons } = createGreetButtonsMenu();
-bot.use(greetButtonsMenu);
-
-// when the bot is added to a chat
-const added_to_chat_text = "Thank you for adding me to the group!\n<i>(Ensure that I've been made an <b>admin</b> & have <b>all the permissions.</b>)</i>\n\nExplore my functionalities by using the button below.";
-const help_inlinekeyboard = new InlineKeyboard()
-    .url("Usage Guide", `https://telegram.me/${constants.BOT_USERNAME}?start=help_me_im_dumb`)
-
-composer.on("message:new_chat_members:me", async (ctx: any) => {
-    let currentTime = new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true });
-    let log_message = (
-        `${bot.botInfo.first_name}\n` + 
-        `\#ADDED on ${currentTime}, ${new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}\n\n` +
-        `• Chat Title: <b>${ctx.chat?.title}</b>\n` +
-        `• Chat Type: <code>${ctx.chat?.type}</code>\n` +
-        `• Chat ID: <code>${ctx.chat?.id}</code>\n` +
-        `• Chat Members: <code>${await ctx.api.getChatMemberCount(ctx.chat?.id)}</code>\n` +
-        `• Invited By: <a href="tg://user?id=${ctx.from?.id}">${ctx.from?.first_name}</a>\n` 
-    );
-    if (ctx.chat.type != "undefined" && ctx.chat.username != undefined) {
-        log_message += `• Invite Link: <a href="https://telegram.me/${ctx.chat.username}">${ctx.chat.username}</a>\n` 
-        log_message += `• Service Message: <a href="https://telegram.me/${ctx.chat.username}/${ctx.message.message_id}">${ctx.message.message_id}</a>`
-    }
-    else {
-        let chat_id = ctx.chat?.id.toString().slice(4);
-        log_message += `• Link: Group's private (<a href="https://telegram.me/c/${chat_id}/${ctx.message.message_id}">Message Link</a>)`
-    }
-    await ctx.api.sendAnimation(ctx.chat.id, constants.ADDED_TO_CHAT_GIF, {caption: added_to_chat_text, reply_markup: help_inlinekeyboard, parse_mode: "HTML"});
-    channel_log(log_message) 
-});
+bot.use(greetButtonsMenu);  
 
 composer.on("chat_member", async (ctx: any, next) => {
+    clearButtons();
+
     if (ctx.chat?.type !== "group" && ctx.chat?.type !== "supergroup") {
         return await next();
     }
-  
+    
     let oldStatus = ctx.chatMember.old_chat_member.status;
     let newStatus = ctx.chatMember.new_chat_member.status;
-  
+    
     let chat = ctx.update.chat_member.chat;
-
-    if (oldStatus === "left" && (newStatus === "member" || newStatus === "restricted")) {
-        clearButtons();
+    
+    if ((oldStatus === "left" || oldStatus === "kicked" ) && (newStatus === "member" || newStatus === "restricted" || newStatus === "administrator")) {
 
         let greet = await get_welcome(ctx.chat.id);
         let greet_buttons = await get_greet_urls(ctx.chat.id);
@@ -404,71 +377,146 @@ composer.on("chat_member", async (ctx: any, next) => {
         let user = ctx.chatMember.new_chat_member.user;
 
         if (should_welcome) {
-            let message;
-    
-            if (greet_buttons && greet_buttons.length > 0) {
-                setButtons(greet_buttons);
-                keyboard = greetButtonsMenu;
+
+            if (user.is_bot && user.id !== ctx.me.id) {
+                await ctx.reply("Another bot...!? Am I not enough for you?", {parse_mode: "HTML"});
             } 
             else {
-                keyboard = undefined;
-            } 
-    
-            if (custom_welcome) {
-                let memberCount = await ctx.api.getChatMemberCount(ctx.chat.id);           
-                message = messageFillings(custom_welcome, user, chat, memberCount)
-            }
-    
-            if (!custom_content && !custom_welcome) {
-                await ctx.reply(`Welcome, new member ${user.first_name}!`);
-            }
-            else {
-                let current_message = await sendWelcome(ctx, welcome_type, message, custom_content, parseMode, keyboard);   
-    
-                if (clean_welcome) {
-                    await ctx.api.deleteMessage(ctx.chat.id, Number(previous_welcome)) 
-                    await set_clean_welcome(ctx.chat.id, current_message.message_id);
+
+                let message;
+                
+                if (greet_buttons && greet_buttons.length > 0) {
+                    setButtons(greet_buttons);
+                    keyboard = greetButtonsMenu;
+                } 
+                else {
+                    keyboard = undefined;
+                } 
+            
+                if (custom_welcome) {
+                    let memberCount = await ctx.api.getChatMemberCount(ctx.chat.id);           
+                    message = messageFillings(custom_welcome, user, chat, memberCount)
                 }
-    
+            
+                if (!custom_content && !custom_welcome) {
+                    await ctx.reply(`Welcome, new member ${user.first_name}!`);
+                }
+                else {
+                    let current_message = await sendWelcome(ctx, welcome_type, message, custom_content, parseMode, keyboard);   
+                
+                    if (clean_welcome) {
+                        await ctx.api.deleteMessage(ctx.chat.id, Number(previous_welcome)) 
+                        await set_clean_welcome(ctx.chat.id, current_message.message_id);
+                    }
+                
+                }
             }
         }
     }
-  
-    if ((oldStatus === "member" || oldStatus === "restricted") && newStatus === "left") {
-        let goodbye = await get_goodbye(ctx.chat.id);
 
+    if ((oldStatus === "member" || oldStatus === "restricted" || oldStatus === "administrator") && (newStatus === "left" || newStatus === "kicked")) {
+        let goodbye = await get_goodbye(ctx.chat.id);
         let should_goodbye = goodbye?.should_goodbye;
         let custom_leave = goodbye?.custom_leave;
         let leave_type = Number(goodbye?.leave_type);
         let parseMode = "MarkdownV2";
-
         let user = ctx.chatMember.old_chat_member.user;
-    
         if (should_goodbye) {
-            if (custom_leave) {
-                let memberCount = await ctx.api.getChatMemberCount(ctx.chat.id);           
-                let filledMessage = messageFillings(custom_leave, user, chat, memberCount)
-                await sendGoodbye(ctx, leave_type, filledMessage, parseMode);
-            }
+            if (user.is_bot && user.id !== ctx.me.id) {
+                await ctx.reply("That bot was useless anyways, nicely done.", {parse_mode: "HTML"});
+            } 
             else {
-                await ctx.reply(`See you again, ${user.first_name}! (<tg-spoiler>maybe never</tg-spoiler>)`, {parse_mode: "HTML"})
+                if (custom_leave) {
+                    let memberCount = await ctx.api.getChatMemberCount(ctx.chat.id);           
+                    let filledMessage = messageFillings(custom_leave, user, chat, memberCount)
+                    await sendGoodbye(ctx, leave_type, filledMessage, parseMode);
+                }
+                else {
+                    await ctx.reply(`See you again, ${user.first_name}! (<tg-spoiler>maybe never</tg-spoiler>)`, {parse_mode: "HTML"})
+                }
             }
         }
     }
+    
     await next();
 });
 
-// composer.on("message:new_chat_members", async (ctx: any) => {
+// when the bot is added to a chat
+const added_to_chat_text = "Thank you for adding me to the group!\n<i>(Ensure that I've been made an <b>admin</b> & have <b>all the permissions.</b>)</i>\n\nExplore my functionalities by using the button below.";
+const help_inlinekeyboard = new InlineKeyboard()
+    .url("Usage Guide", `https://telegram.me/${constants.BOT_USERNAME}?start=help_me_im_dumb`)
+
+composer.on("my_chat_member", async (ctx: any) => {
+    let oldStatus = ctx.update.my_chat_member.old_chat_member.status;
+    let newStatus = ctx.update.my_chat_member.new_chat_member.status;
+    let chat = ctx.update.my_chat_member.chat;
+    let from = ctx.update.my_chat_member.from;
+
     
-// });
+    let getCurrentTime = () => {
+        return new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true });
+    };
 
-composer.on("message:left_chat_member:is_bot", async (ctx: any) => {
-    await ctx.reply("That bot was useless anyways, nicely done.", {parse_mode: "HTML"})
+    let getCurrentDate = () => {
+        return new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    };
+
+    // bot is added
+    if ((oldStatus === "left" || oldStatus === "kicked") && (newStatus === "member" || newStatus === "administrator")) {
+        let log_message = (
+            `${ctx.me.first_name}\n` + 
+            `\#ADDED on ${getCurrentTime()}, ${getCurrentDate()}\n\n` +
+            `• Chat Title: <b>${chat.title}</b>\n` +
+            `• Chat Type: <code>${chat.type}</code>\n` +
+            `• Chat ID: <code>${chat.id}</code>\n`
+        );
+
+        try {
+            const memberCount = await ctx.api.getChatMemberCount(chat.id);
+            log_message += `• Chat Members: <code>${memberCount}</code>\n`;
+        } 
+        catch (error) {
+            console.error("Error getting member count:", error);
+            log_message += `• Chat Members: <code>Unable to retrieve</code>\n`;
+        }
+
+        log_message += `• Invited By: <a href="tg://user?id=${from.id}">${from.first_name}</a>\n`;
+
+        if (chat.username) {
+            log_message += `• Invite Link: <a href="https://telegram.me/${chat.username}">${chat.username}</a>\n`;
+        } 
+        else {
+            log_message += `• Link: Group's private\n`;
+        }
+
+        await ctx.api.sendAnimation(chat.id, constants.ADDED_TO_CHAT_GIF, {
+            caption: added_to_chat_text, 
+            reply_markup: help_inlinekeyboard, 
+            parse_mode: "HTML"
+        });
+
+        channel_log(log_message);
+    }
+
+    // bot was removed 
+    else if ((oldStatus === "member" || oldStatus === "administrator") && (newStatus === "left" || newStatus === "kicked")) {
+        let log_message = (
+            `${ctx.me.first_name}\n` + 
+            `\#REMOVED on ${getCurrentTime()}, ${getCurrentDate()}\n\n` +
+            `• Chat Title: <b>${chat.title}</b>\n` +
+            `• Chat Type: <code>${chat.type}</code>\n` +
+            `• Chat ID: <code>${chat.id}</code>\n` +
+            `• Removed By: <a href="tg://user?id=${from.id}">${from.first_name}</a>\n`
+        );
+
+        if (chat.username) {
+            log_message += `• Invite Link: <a href="https://telegram.me/${chat.username}">${chat.username}</a>\n`;
+        } else {
+            log_message += `• Link: Group's private\n`;
+        }
+        channel_log(log_message);
+    }
 });
-
-// composer.on("message:left_chat_member", async (ctx: any) => {
-
-// });
 
 composer.chatType(["supergroup", "group"]).command("welcome", elevatedUsersOnly((async (ctx: any) => {
     clearButtons();
