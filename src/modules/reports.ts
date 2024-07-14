@@ -129,8 +129,9 @@ composer.chatType(["supergroup", "group"]).command("report", (async (ctx: any) =
     await reportHandler(ctx);
 }));
 
-composer.on(':text').hears(/.*(\s|^)(@admins?)\b.*/g, (async (ctx: any) => {
+composer.on(':text').hears(/.*(\s|^)(@admins?)\b.*/g, (async (ctx: any, next) => {
     await reportHandler(ctx);
+    await next();
 }));
 
 // data format is like this: "d:<chat ID>_<user ID>_<message ID>" #L79
