@@ -161,6 +161,27 @@ model connection_history {
   @@id([user_id, chat_id])
 }
 
+model filter_urls {
+  id        BigInt   @default(autoincrement())
+  chat_id   String   @db.VarChar(14)
+  keyword   String
+  name      String
+  url       String
+  same_line Boolean?
+
+  @@id([id, chat_id, keyword])
+}
+
+model filters {
+  chat_id      String  @db.VarChar(14)
+  keyword      String
+  reply        String?
+  file         String?
+  msgtype      BigInt?
+
+  @@id([chat_id, keyword])
+}
+
 model cust_filter_urls {
   id        BigInt   @default(autoincrement())
   chat_id   String   @db.VarChar(14)
@@ -314,7 +335,7 @@ model permissions {
   inline       Boolean? @default(false)
   poll         Boolean? @default(false)
   sticker      Boolean? @default(false)
-  animation    Boolean? @default(false)
+  gif          Boolean? @default(false)
   videoNote    Boolean? @default(false)
   messages     Boolean? @default(false)
   media        Boolean? @default(false)
