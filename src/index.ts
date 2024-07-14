@@ -9,12 +9,12 @@ import { chatMembers } from "@grammyjs/chat-members";
 import { hydrateFiles } from '@grammyjs/files';
 import { LogLevel } from 'telegram/extensions/Logger';
 
-import Commands from "./modules/index";
+import modules from "./modules/index";
 
 const runner = run(bot, { 
     runner: { 
         fetch: { 
-            allowed_updates: ["message", "edited_message", "callback_query", "chat_member"] 
+            allowed_updates: ["message", "edited_message", "callback_query", "chat_member", "my_chat_member"] 
         } 
     } 
 });
@@ -32,7 +32,7 @@ bot.use(chatMembers(adapter, {
 }));
 bot.api.config.use(hydrateFiles(bot.token));
 
-bot.use(Commands);
+bot.use(modules);
 
 (async function () {
     await bot.api.deleteWebhook({ drop_pending_updates: true });
