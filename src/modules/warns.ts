@@ -613,7 +613,7 @@ composer.chatType(["supergroup", "group"]).command("nowarn", adminCanRestrictUse
     await nowarn(ctx); 
 })));
 
-composer.chatType(["supergroup", "group"]).command("resetallwarnfilters", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("resetallwarnfilters", ownerOnly(botCanRestrictUsers(async (ctx: any) => {
     await resetallwarnfilters(ctx); 
 })));
 
