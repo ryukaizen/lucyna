@@ -311,7 +311,7 @@ composer.chatType(["supergroup", "group"]).command(["filters", "listfilters"], (
     else {
         message = "There are <b>NO</b> filter triggers set in this chat yet!";
     }
-    await ctx.reply(message, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+    await ctx.reply(message, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML", link_preview_options: {is_disabled: true}});
 }));
 
 composer.chatType(["supergroup", "group"]).command(["stop", "stopfilter", "delfilter"], (async (ctx: any) => {

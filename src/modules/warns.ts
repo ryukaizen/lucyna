@@ -326,7 +326,7 @@ async function warnfilters(ctx: any) {
     else {
         message = "There are <b>NO</b> warn filters set in this chat yet!";
     }
-    await ctx.reply(message, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+    await ctx.reply(message, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML", link_preview_options: {is_disabled: true}});
 
 }
 
