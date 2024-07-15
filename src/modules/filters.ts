@@ -21,7 +21,8 @@ async function setFilter(captionedcmd: boolean, ctx: any, keyword: string, reply
     }
     if (message.caption && captionedcmd) {
         let text = await extractButtons(message.caption);
-        caption = text.text.replace(/^\/save\s*/, '') // remove the command from the caption
+        caption = text.text.replace(/^\/filter\s*/, '') // remove the command from the caption
+        caption = text.text.replace(/^\/addfilter\s*/, '')
     }
     else {
         caption = reply;
