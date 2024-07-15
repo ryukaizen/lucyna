@@ -433,7 +433,7 @@ composer.callbackQuery("yes-remove-all-chat-notes", ownerOnlyCallback(async(ctx:
         await ctx.editMessageText("All notes in this chat have been cleared!", { parse_mode: "HTML" });
     }
     else {
-        await ctx.editMessageText("Failed to reset all warnings of this chat!", { parse_mode: "HTML" });
+        await ctx.editMessageText("Failed to remove all the notes of this chat!", { parse_mode: "HTML" });
     }
 }));
 
