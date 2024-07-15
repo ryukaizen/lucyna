@@ -25,6 +25,7 @@ import {
     resolveUserhandle,
     getUserInstance
 } from "../helpers/helper_func";
+import { get_all_warn_filters, get_warn_filter, reset_all_warn_filters, reset_warn_filter, set_warn_filter } from "../database/warn_filters_sql";
 
 const composer = new Composer();
 
@@ -315,12 +316,77 @@ async function warnlimit(ctx: any) {
     }    
 }
 
+async function warnfilters(ctx: any) {
+    let warn_filters = await get_all_warn_filters(ctx.chat.id.toString());
+    let message;
+    if (warn_filters.length > 0) {
+        let warn_filter_triggers = warn_filters.map(filter => filter.keyword);
+        message = `Warn-filters set in <b>${ctx.message.chat.title}</b>:\n\n${warn_filter_triggers.map((filter, index) => `${index + 1}. <code>${filter}</code>`).join("\n")}`;
+    }
+    else {
+        message = "There are <b>NO</b> warn filters set in this chat yet!";
+    }
+    await ctx.reply(message, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+
+}
+
+async function addwarn(ctx: any) {
+    let args = ctx.match;
+    let split_args = args.split(" ");
+    let keyword = split_args[0].toLowerCase();
+    let reply = split_args.slice(1).join(" ");
+    if (!keyword) {
+        await ctx.reply("Please provide a trigger keyword first!", {reply_parameters: {message_id: ctx.message.message_id}});
+        
+    }
+    else if (!reply) {
+        await ctx.reply("Please provide a reply for your warning filter!\n\n(<i>Example: /warnfilter stupid Please be polite!</i>)", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+
+    }
+    else {
+        let warn_filter = await set_warn_filter(ctx.chat.id.toString(), keyword, reply);
+        if (warn_filter) {
+            await ctx.reply(`Warn filter for <code>${keyword}</code> has been set with reply: <i>${reply}</i>`, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+        }
+        else {
+            await ctx.reply("Failed to set the warn filter!", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+    }
+}
+
+async function nowarn(ctx: any) {
+    let args = ctx.match;
+    let split_args = args.split(" ");
+    let keyword = split_args[0].toLowerCase();
+    if (!keyword) {
+        await ctx.reply("Please provide the trigger keyword to remove!", {reply_parameters: {message_id: ctx.message.message_id}});  
+    }
+    else {
+        let warn_filter = await reset_warn_filter(ctx.chat.id.toString(), keyword);
+        if (warn_filter) {
+            await ctx.reply(`Stopped warning filter for <code>${keyword}</code>`, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+        }
+        else {
+            await ctx.reply("Failed to stop the warn filter!", {reply_parameters: {message_id: ctx.message.message_id}});
+        }
+    }
+}
+
+async function resetallwarnfilters(ctx: any) {
+    let confirmReset = new InlineKeyboard()
+    .text("Yes", "yes-reset-all-warn-filters")
+    .text("No", "no-reset")
+
+    await ctx.api.sendMessage(ctx.chat.id, "Are you sure you want to reset <b>ALL WARN FILTERS</b> in this chat?\n\n<i>This action cannot be undone.</i>", {reply_markup: confirmReset, reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});     
+
+}
+
 async function resetallwarns(ctx: any) {
     let confirmReset = new InlineKeyboard()
     .text("Yes", "yes-reset")
     .text("No", "no-reset")
 
-await ctx.api.sendMessage(ctx.chat.id, "Are you sure you want to reset <b>everyone's</b> warnings in this chat?\n\n<i>This action cannot be undone.</i>", {reply_markup: confirmReset, reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});     
+    await ctx.api.sendMessage(ctx.chat.id, "Are you sure you want to reset <b>everyone's</b> warnings in this chat?\n\n<i>This action cannot be undone.</i>", {reply_markup: confirmReset, reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});     
 }
 
 composer.chatType(["supergroup", "group"]).command("warns", (async (ctx: any) => {
@@ -535,9 +601,67 @@ composer.chatType(["supergroup", "group"]).command("warnlimit", adminCanRestrict
     await warnlimit(ctx); 
 })));
 
+composer.chatType(["supergroup", "group"]).command(["warnfilters", "warnlist"], adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+    await warnfilters(ctx); 
+})));
+
+composer.chatType(["supergroup", "group"]).command("addwarn", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+    await addwarn(ctx); 
+})));
+
+composer.chatType(["supergroup", "group"]).command("nowarn", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+    await nowarn(ctx); 
+})));
+
+composer.chatType(["supergroup", "group"]).command("resetallwarnfilters", adminCanRestrictUsers(botCanRestrictUsers(async (ctx: any) => {
+    await resetallwarnfilters(ctx); 
+})));
+
 composer.chatType(["supergroup", "group"]).command("resetallwarns", ownerOnly(botCanRestrictUsers(async (ctx: any) => {
     await resetallwarns(ctx);
 })));
+
+// composer.chatType(["supergroup", "group"]).on(["message"], async (ctx: any, next) => {
+//     let trigger_message = ctx.message.text || "";
+//     let all_warn_filters = await get_all_warn_filters(ctx.chat.id.toString());
+
+//     all_warn_filters.sort((a, b) => b.keyword.length - a.keyword.length);
+
+//     let matched_keywords = all_warn_filters
+//         .map(filter => ({
+//             keyword: filter.keyword,
+//             position: trigger_message.toLowerCase().indexOf(filter.keyword.toLowerCase())
+//         }))
+//         .filter(match => {
+//             if (match.position === -1) return false;
+
+//             let word_boundary_before = match.position === 0 || !/\w/.test(trigger_message[match.position - 1]);
+            
+//             let word_boundary_after = match.position + match.keyword.length === trigger_message.length || !/\w/.test(trigger_message[match.position + match.keyword.length]);
+            
+//             let exact_match = word_boundary_before && word_boundary_after;
+            
+//             let is_part_of_longer_match = all_warn_filters.some(f => 
+//                 f.keyword.length > match.keyword.length &&
+//                 f.keyword.toLowerCase().includes(match.keyword.toLowerCase()) &&
+//                 trigger_message.toLowerCase().indexOf(f.keyword.toLowerCase()) !== -1
+//             );
+
+//             return exact_match && !is_part_of_longer_match;
+//         })
+//         .sort((a, b) => a.position - b.position);
+    
+//     if (matched_keywords.length > 0) {
+//         let first_match_keyword = matched_keywords[0].keyword;
+//         let warn_filter = await get_warn_filter(ctx.chat.id, first_match_keyword);
+ 
+//         if (warn_filter) {
+//             let text = warn_filter?.reply;
+//             // Will implement this in future as we finish working on cache
+//         }
+//     }        
+//     await next();
+// }); 
 
 composer.callbackQuery("unwarn-once-my-beloved", adminCanRestrictUsersCallback(botCanRestrictUsersCallback(async(ctx: any) => {
     let text = ctx.callbackQuery.message?.text || "";
@@ -582,6 +706,16 @@ composer.callbackQuery("unwarn-once-my-beloved", adminCanRestrictUsersCallback(b
         }).catch((GrammyError: any) => {return})
     }
 })));
+
+composer.callbackQuery("yes-reset-all-warn-filters", ownerOnlyCallback(async(ctx: any) => {
+    let resetted = await reset_all_warn_filters(ctx.chat.id.toString()) 
+    if (resetted == true) {
+        await ctx.editMessageText("All warn filters in this chat have been resetted!", { parse_mode: "HTML" });
+    }
+    else {
+        await ctx.editMessageText("Failed to reset all warn filters of this chat!", { parse_mode: "HTML" });
+    }
+}));
 
 composer.callbackQuery("yes-reset", ownerOnlyCallback(async(ctx: any) => {
     let resetted = await reset_all_chat_warns(ctx.chat.id.toString()) 
