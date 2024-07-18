@@ -1,6 +1,6 @@
 import { Composer, FilterQuery, InlineKeyboard } from "grammy";
 import { get_blacklist, reset_all_blacklist, reset_blacklist, set_blacklist } from "../database/blacklist_sql";
-import { adminCanDeleteMessages, adminCanRestrictUsers, adminCanRestrictUsersCallback, botCanDeleteMessages, botCanRestrictUsers, botCanRestrictUsersCallback, convertUnixTime, extract_time, isUserAdmin, isUserRestricted, ownerOnlyCallback } from "../helpers/helper_func";
+import { adminCanDeleteMessages, adminCanRestrictUsers, adminCanRestrictUsersCallback, botCanDeleteMessages, botCanRestrictUsers, botCanRestrictUsersCallback, convertUnixTime, extract_time, isUserAdmin, isUserBanned, isUserRestricted, ownerOnlyCallback } from "../helpers/helper_func";
 import { get_blacklist_settings, set_blacklist_settings } from "../database/blacklist_settings_sql";
 import { get_warn_numbers, get_warn_settings, set_warn_numbers, set_warn_settings } from "../database/warns_sql";
 import { grammyErrorLog } from "../logger";
@@ -127,7 +127,7 @@ async function blacklist_mute(ctx: any, user_id: number | string, message: strin
 }
 
 const unbanButton = new InlineKeyboard()
-.text("🔘 Unban", "unban-the-dawg");
+.text("🔘 Unban", "unban-blacklisted-dawg");
 
 async function blacklist_ban(ctx: any, user_id: number | string, message: string) {
     await ctx.deleteMessage().catch(() => {})
@@ -218,7 +218,6 @@ const BLACKLIST_ACTIONS: { [key: number]: string } = {
 async function blacklistmode(ctx: any) {
     let chatId = ctx.chat.id.toString();
     let { blacklist_type: mode, value } = await get_blacklist_settings(chatId) || {};
-    console.log(mode, value); 
     if (mode === undefined) {
         mode = 2n;
         value = "0";
@@ -377,6 +376,13 @@ composer.chatType(["supergroup", "group"]).on(["message", "edited_message"], asy
     if (blacklistedWord) {
         let isAdmin = await isUserAdmin(ctx, ctx.from.id)
         if (!isAdmin) {
+            let mute_message = (
+                `<b>🔇 Stay quiet</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a> (<code>${ctx.from.id}</code>)<b>!</b>\n\n`  
+            );
+            let ban_message = (
+                `<b>🚷 Banned</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a> (<code>${ctx.from.id}</code>)<b>!</b>\n\n` 
+            );
+
             switch (cachedData.mode) {
                 case 0n:
                     return;
@@ -387,23 +393,33 @@ composer.chatType(["supergroup", "group"]).on(["message", "edited_message"], asy
                     await blacklist_warn(ctx, ctx.from.id, ctx.from.first_name, `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>`);
                     break;
                 case 3n:
+                    mute_message += `The message ${ctx.from.first_name} sent, contained a blacklisted word: <tg-spoiler><s>${blacklistedWord?.trigger}</s></tg-spoiler>`
                     await blacklist_mute(ctx, ctx.from.id, `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>`);
                     break;
                 case 4n:
                     await blacklist_kick(ctx, ctx.from.id, `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>`);
                     break;
                 case 5n:
+                    ban_message += `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>\n\n`
                     await blacklist_ban(ctx, ctx.from.id, `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>`);
                     break;
                 case 6n:
-                    await blacklist_tban(ctx, ctx.from.id, await extract_time(ctx, duration_value), `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>`)
+                    ban_message += `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>\n\n`
+                    let ban_duration = await extract_time(ctx, duration_value);
+                    if (ban_duration != false) {
+                        let converted_time = await convertUnixTime(Number(ban_duration));
+                        ban_message += `Ban duration: ${converted_time}`;
+                    }
+                    await blacklist_tban(ctx, ctx.from.id, ban_duration, ban_message)
                     break;
                 case 7n:
-                    let mute_message = (
-                        `<b>🔇 Stay quiet</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a> (<code>${ctx.from.id}</code>)<b>!</b>\n\n`  
-                    );
                     mute_message += `The message ${ctx.from.first_name} sent, contained a blacklisted word: <tg-spoiler><s>${blacklistedWord?.trigger}</s></tg-spoiler>`
-                    await blacklist_tmute(ctx, ctx.from.id, await extract_time(ctx, duration_value), mute_message)
+                    let mute_duration = await extract_time(ctx, duration_value);
+                    if (mute_duration != false) {
+                        let converted_time = await convertUnixTime(Number(mute_duration));
+                        mute_message += `Mute duration: ${converted_time}`;
+                    }
+                    await blacklist_tmute(ctx, ctx.from.id, mute_duration, mute_message)
                     break;
             }
         }
@@ -492,7 +508,7 @@ composer.chatType(["supergroup", "group"]).command(["unblacklist", "rmblacklist"
     }
 })))));
 
-composer.chatType(["supergroup", "group"]).command("blacklistmode", adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["blacklistmode", "setblacklistmode"], adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
     await blacklistmode(ctx);
 })))));
 
@@ -542,6 +558,38 @@ const unmutePermissions = {
     can_pin_messages: true,
     can_manage_topics: true
 }
+
+composer.callbackQuery("unban-blacklisted-dawg", adminCanRestrictUsersCallback(botCanRestrictUsersCallback(async(ctx: any) => {
+    let text = ctx.callbackQuery.message?.text || "";
+    let username = text.match(/(?<=🚷 Banned )\S+/);
+    let userid = text.match(/(?<=\()\d+(?=\))/);
+
+    if (username && userid) {
+        let userId = Number(userid[0]);
+        let userName = String(username[0]);
+        let is_user_in_chat = await isUserBanned(ctx, ctx.callbackQuery.message.chat.id, userId);
+        if (is_user_in_chat == false) {
+            await ctx.answerCallbackQuery({text: `The user is not banned here!`}).catch((GrammyError: any) => {return})
+        }
+        else {
+            await ctx.api.unbanChatMember(`${ctx.callbackQuery?.message?.chat?.id}`, userId)
+            .then(() => {
+                ctx.answerCallbackQuery({
+                    text: `Unbanned ${userName}!`,                
+                }).catch((GrammyError: any) => {return}) // will improve this later
+                let unban_message = `<b>🏳️ Unbanned</b> ${userName} (<code>${userid}</code>) <b>by</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a>\n`;
+                ctx.editMessageText(unban_message, { parse_mode: "HTML" });
+            })
+            .catch((GrammyError: any) => {
+                ctx.answerCallbackQuery({text: "Failed to unban user: invalid user / user probably does not exist."}).catch((GrammyError: any) => {return}) //catching errors in error handlers itself yeah
+                grammyErrorLog(ctx, GrammyError);
+            });     
+        }       
+    }
+    else {
+        await ctx.answerCallbackQuery({text: `Unable to extract ban information.`}).catch((GrammyError: any) => {return})
+    }       
+})));
 
 composer.callbackQuery("unmute-blacklisted-fella", adminCanRestrictUsersCallback(botCanRestrictUsersCallback(async(ctx: any) => {
     let text = ctx.callbackQuery.message?.text || "";
