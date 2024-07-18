@@ -114,9 +114,9 @@ const mutePermissions = {
 const unmuteButton = new InlineKeyboard()
 .text("🔊 Unmute", "unmute-blacklisted-fella");
 
-async function blacklist_mute(ctx: any, user_id: number | string, duration: any, message: string) {
+async function blacklist_mute(ctx: any, user_id: number | string, message: string) {
     await ctx.deleteMessage().catch(() => {})
-    await ctx.api.restrictChatMember(ctx.chat.id, user_id, mutePermissions, {until_date: duration})
+    await ctx.api.restrictChatMember(ctx.chat.id, user_id, mutePermissions)
     .then(() => {
         ctx.api.sendMessage(ctx.chat.id, message, {reply_markup: unmuteButton, parse_mode: "HTML"});
     })
@@ -387,7 +387,7 @@ composer.chatType(["supergroup", "group"]).on(["message", "edited_message"], asy
                     await blacklist_warn(ctx, ctx.from.id, ctx.from.first_name, `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>`);
                     break;
                 case 3n:
-                    await blacklist_mute(ctx, ctx.from.id, Math.floor(Date.now() / 1000) + 60, `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>`);
+                    await blacklist_mute(ctx, ctx.from.id, `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>`);
                     break;
                 case 4n:
                     await blacklist_kick(ctx, ctx.from.id, `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>`);
