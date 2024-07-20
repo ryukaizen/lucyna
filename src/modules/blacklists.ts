@@ -1,26 +1,17 @@
-import { Composer, FilterQuery, InlineKeyboard } from "grammy";
+import { Composer, InlineKeyboard } from "grammy";
 import { get_blacklist, reset_all_blacklist, reset_blacklist, set_blacklist } from "../database/blacklist_sql";
-import { adminCanDeleteMessages, adminCanRestrictUsers, adminCanRestrictUsersCallback, botCanDeleteMessages, botCanRestrictUsers, botCanRestrictUsersCallback, convertUnixTime, extract_time, isUserAdmin, isUserBanned, isUserRestricted, ownerOnlyCallback } from "../helpers/helper_func";
+import { adminCanDeleteMessages, adminCanRestrictUsers, adminCanRestrictUsersCallback, botCanDeleteMessages, botCanRestrictUsers, botCanRestrictUsersCallback, convertUnixTime, extract_time, format_json, isUserAdmin, isUserBanned, isUserRestricted, ownerOnlyCallback } from "../helpers/helper_func";
 import { get_blacklist_settings, set_blacklist_settings } from "../database/blacklist_settings_sql";
 import { get_warn_numbers, get_warn_settings, set_warn_numbers, set_warn_settings } from "../database/warns_sql";
 import { grammyErrorLog } from "../logger";
+import { del_all_blsticker, del_blsticker, get_all_blsticker, get_blsticker, is_blsticker, set_blsticker } from "../database/blacklist_stickers_sql";
+import { get_blsticker_settings, set_blsticker_settings } from "../database/blsticker_settings_sql";
 
 // TODO: 
 // something like this very suboptimal we need to fix this:
 // adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(
 
 const composer = new Composer();
-
-const stickerMessageTypes: FilterQuery[] = [
-    "message:sticker", 
-    "message:sticker:is_animated", 
-    "message:sticker:is_video", 
-    "message:sticker:premium_animation",
-    "edited_message:sticker",
-    "edited_message:sticker:is_animated",
-    "edited_message:sticker:is_video",
-    "edited_message:sticker:premium_animation",
-];
 
 async function blacklist(ctx: any) {
     let blacklist = await get_blacklist(ctx.chat.id);
@@ -41,6 +32,7 @@ const unwarnButton = new InlineKeyboard()
     .text("*️⃣ Remove Warn", "unwarn-once-my-beloved")
 
 async function blacklist_warn(ctx: any, user_id: bigint, first_name: string, inputReason: string) {
+    await ctx.deleteMessage().catch(() => {})
     let getWarnNumbers = await get_warn_numbers(ctx.chat.id, user_id);
     let getWarnSettings = await get_warn_settings(ctx.chat.id);
     let warnNumber = getWarnNumbers?.num_warns;
@@ -191,19 +183,6 @@ async function addblacklist(ctx: any, triggers: string[]) {
     return addedTriggers;
 }
 
-async function removeblacklist(ctx: any, triggers: string[]) {
-    let removedTriggers: string[] = [];
-
-    for (let trigger of triggers) {
-        let result = await reset_blacklist(ctx.chat.id.toString(), trigger);
-        if (result) {
-            removedTriggers.push(trigger);
-        }
-    }
-
-    return removedTriggers;
-}
-
 const BLACKLIST_ACTIONS: { [key: number]: string } = {
     0: "do nothing",
     1: "delete",
@@ -324,8 +303,168 @@ async function unblacklistall(ctx: any) {
     await ctx.api.sendMessage(ctx.chat.id, "Are you sure you want to <b>REMOVE ALL THE BLACKLISTED WORDS</b> from this chat?\n\n<i>This action cannot be undone.</i>", {reply_markup: confirmReset, reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});     
 }
 
+/* -------------- BLSTICKER PART ----------- */
+
+async function blsticker(ctx: any) {
+    let blsticker = await get_all_blsticker(ctx.chat.id);
+    let filter_list = `Current blacklisted stickerpacks in <b>${ctx.chat.title}</b>:\n\n`;
+    
+    if (blsticker && blsticker.length > 0) {
+        blsticker.forEach((item: { trigger: string }, index: number) => {
+            filter_list += `${index + 1}. <code>${item.trigger}</code>\n`;
+        });
+    } else {
+        filter_list = "There are <b>NO</b> blacklisted stickerpacks in this chat.";
+    }
+
+    await ctx.reply(filter_list, { reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML", link_preview_options: {is_disabled: true} });
+
+}
+
+async function addblsticker(ctx: any, triggers: string[]) {
+    let addedTriggers: string[] = [];
+
+    for (let trigger of triggers) {
+        let result = await set_blsticker(ctx.chat.id.toString(), trigger);
+        if (result) {
+            addedTriggers.push(trigger);
+        }
+    }
+
+    return addedTriggers;
+}
+
+async function blstickermode(ctx: any) {
+    let chatId = ctx.chat.id.toString();
+    let { blacklist_type: mode, value } = await get_blsticker_settings(chatId) || {};
+    if (mode === undefined) {
+        mode = 2n;
+        value = "0";
+        await set_blsticker_settings(chatId, mode, value);
+    }
+
+    let args = ctx.match ? ctx.match.trim().split(/\s+/) : [];
+
+    if (args.length === 0) {
+        let action = BLACKLIST_ACTIONS[Number(mode)] || "unknown";
+        let response;
+        if (mode === 6n || mode === 7n) {
+            if (value && !isNaN(parseInt(value))) {
+                let renderTime = await extract_time(ctx, value);
+                let humanReadableTime = convertUnixTime(parseInt(renderTime.toString()));
+                response = `Current blacklist sticker mode: *${action} for ${humanReadableTime}*`;
+            } else {
+                response = `Current blacklist sticker mode: *${action}* (invalid time value)`;
+            }
+        } else {
+            response = `Current blacklist sticker mode: *${action}*`;
+        }
+        await ctx.reply(response, { reply_parameters: { message_id: ctx.message.message_id }, parse_mode: "Markdown" });
+        return;
+    }
+
+    let newMode = args[0].toLowerCase();
+    let newValue = "0";
+    let settypeblacklist = "";
+
+    switch (newMode) {
+        case "off":
+        case "nothing":
+        case "no":
+            mode = 0n;
+            settypeblacklist = BLACKLIST_ACTIONS[0];
+            break;
+        case "del":
+        case "delete":
+            mode = 1n;
+            settypeblacklist = BLACKLIST_ACTIONS[1];
+            break;
+        case "warn":
+            mode = 2n;
+            settypeblacklist = BLACKLIST_ACTIONS[2];
+            break;
+        case "mute":
+            mode = 3n;
+            settypeblacklist = BLACKLIST_ACTIONS[3];
+            break;
+        case "kick":
+            mode = 4n;
+            settypeblacklist = BLACKLIST_ACTIONS[4];
+            break;
+        case "ban":
+            mode = 5n;
+            settypeblacklist = BLACKLIST_ACTIONS[5];
+            break;
+        case "tban":
+        case "tmute":
+            if (args.length === 1) {
+                await ctx.reply(`Please specify a time value. For example: /blstickermode ${newMode} 1d`, 
+                    { reply_parameters: { message_id: ctx.message.message_id } });
+                return;
+            }
+            newValue = args.slice(1).join(' ');
+            let extractedTime = await extract_time(ctx, newValue);
+            if (extractedTime === false) {
+                return;
+            }
+            mode = newMode === "tban" ? 6n : 7n;
+            let humanReadableTime = convertUnixTime(extractedTime);
+            settypeblacklist = `${BLACKLIST_ACTIONS[Number(mode)]} for ${humanReadableTime}`;
+            break;
+        default:
+            await ctx.reply("Invalid mode. Use: off/del/warn/mute/kick/ban/tban/tmute", 
+                { reply_parameters: { message_id: ctx.message.message_id }, parse_mode: "HTML" });
+            return;
+    }
+
+    let blsticker = await get_all_blsticker(chatId);
+    await set_blsticker_settings(chatId, mode, newValue);
+
+    let cachedData = blstickerCache.get(chatId);
+    let now = Date.now();
+
+    cachedData = {
+        mode: mode,
+        value: newValue ?? "0",
+        words: new Set(blsticker),
+        expiry: now + CACHE_DURATION
+    };
+
+    blstickerCache.set(chatId, cachedData);
+    await ctx.reply(`Changed blacklist sticker mode to: *${settypeblacklist}*`, 
+        { reply_parameters: { message_id: ctx.message.message_id }, parse_mode: "Markdown" });
+}
+
+async function unblstickerall(ctx: any) {
+    let confirmReset = new InlineKeyboard()
+    .text("Yes", "yes-unblacklist-sticker-all")
+    .text("No", "no-dont-unblacklist-all")
+
+    await ctx.api.sendMessage(ctx.chat.id, "Are you sure you want to <b>REMOVE ALL THE BLACKLISTED STICKER PACKS</b> from this chat?\n\n<i>This action cannot be undone.</i>", {reply_markup: confirmReset, reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});     
+
+}
+
+
 const blacklistCache = new Map<string, { mode: bigint, value: string, words: Set<{ chat_id: string; trigger: string; }>, expiry: number }>();
+const blstickerCache = new Map<string, { mode: bigint, value: string, words: Set<{ chat_id: string; trigger: string; }>, expiry: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+async function updateBlacklistCache(chatId: string) {
+    let [blacklist, settings] = await Promise.all([
+        get_blacklist(chatId),
+        get_blacklist_settings(chatId)
+    ]);
+
+    let now = Date.now();
+    let cachedData = {
+        mode: settings?.blacklist_type ?? 2n,
+        value: settings?.value ?? "0",
+        words: new Set(blacklist),
+        expiry: now + CACHE_DURATION
+    };
+
+    blacklistCache.set(chatId, cachedData);
+}
 
 composer.chatType(["supergroup", "group"]).on(["message", "edited_message"], async (ctx: any, next) => {
     let chatId = ctx.chat?.id.toString();
@@ -433,10 +572,16 @@ composer.chatType(["supergroup", "group"]).command(["blacklist", "blacklists"], 
 })))));
 
 composer.chatType(["supergroup", "group"]).command("addblacklist", adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
-    let triggers = ctx.match;
+    let triggers;
+    if (ctx.message.reply_to_message) {
+        triggers = ctx.message.reply_to_message.text;
+    }
+    else {
+        triggers = ctx.match
+    }
   
     if (!triggers) {
-        await ctx.reply("Please provide at least one trigger to add to the blacklist. Each line will be considered as a separate trigger.", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+        await ctx.reply("Please provide at least one word trigger to add to the blacklist. Each line will be considered as a separate trigger.", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
         return;
     }
 
@@ -448,9 +593,12 @@ composer.chatType(["supergroup", "group"]).command("addblacklist", adminCanRestr
     }
 
     let addedTriggers = await addblacklist(ctx, triggers);
-    let blacklist = await get_blacklist(ctx.chat.id);
-    let blacklist_settings = await get_blacklist_settings(ctx.chat.id);
-    let cachedData = blacklistCache.get(ctx.chat.id);
+    
+    await updateBlacklistCache(ctx.chat.id.toString());
+
+    let blacklist = await get_blacklist(ctx.chat.id.toString());
+    let blacklist_settings = await get_blacklist_settings(ctx.chat.id.toString());
+    let cachedData = blacklistCache.get(ctx.chat.id.toString());
     let now = Date.now();
 
     if (blacklist_settings !== null) {
@@ -483,24 +631,63 @@ composer.chatType(["supergroup", "group"]).command("addblacklist", adminCanRestr
 })))));
 
 composer.chatType(["supergroup", "group"]).command(["unblacklist", "rmblacklist"], adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
-    let input = ctx.match;
+    let triggers;
+    if (ctx.message.reply_to_message) {
+        triggers = ctx.message.reply_to_message.text;
+    }
+    else {
+        triggers = ctx.match
+    }
   
-    if (!input) {
-        await ctx.reply("Please provide at least one trigger to remove from the blacklist. You can provide multiple triggers separated by spaces or newlines.", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+    if (!triggers) {
+        await ctx.reply("Please provide at least one word trigger to remove from the blacklist. Each line will be considered as a separate trigger.", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
         return;
     }
 
-    let triggers = input.split(/[\n\s]+/).filter((trigger: string) => trigger.trim() !== '');
+    triggers = triggers.trim().split('\n').filter((trigger: string) => trigger.trim() !== '');
 
     if (triggers.length === 0) {
         await ctx.reply("No valid triggers found. Please provide at least one trigger to remove from the blacklist.", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
         return;
     }
 
-    let removedTriggers = await removeblacklist(ctx, triggers);
+    let removedTriggers: string[] = [];
+    for (let trigger of triggers) {
+        let success = await reset_blacklist(ctx.chat.id.toString(), trigger);
+        if (success) {
+            removedTriggers.push(trigger);
+        }
+    }
+
+    await updateBlacklistCache(ctx.chat.id.toString());
+
+    let blacklist = await get_blacklist(ctx.chat.id);
+    let blacklist_settings = await get_blacklist_settings(ctx.chat.id);
+    let cachedData = blacklistCache.get(ctx.chat.id);
+    let now = Date.now();
+
+    if (blacklist_settings !== null) {
+        cachedData = {
+            mode: blacklist_settings.blacklist_type ?? 2n,
+            value: blacklist_settings.value ?? "0",
+            words: new Set(blacklist),
+            expiry: now + CACHE_DURATION
+        };
+    }
+    else {
+        cachedData = {
+            mode: 2n,
+            value: "0",
+            words: new Set(blacklist),
+            expiry: now + CACHE_DURATION
+        };
+        await set_blacklist_settings(ctx.chat.id, 2n, "0");
+    }
+
+    blacklistCache.set(ctx.chat.id, cachedData);
 
     if (removedTriggers.length > 0) {
-        let response = `Removed ${removedTriggers.length} trigger${removedTriggers.length > 1 ? 's' : ''} from the blacklist:\n${removedTriggers.map(t => `- ${t}`).join('\n')}`;
+        let response = `Removed ${removedTriggers.length} trigger${removedTriggers.length > 1 ? 's' : ''} from the blacklist:\n${removedTriggers.map(t => `- <code>${t}</code>`).join('\n')}`;
         await ctx.reply(response, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
     } 
     else {
@@ -516,31 +703,265 @@ composer.chatType(["supergroup", "group"]).command(["unblacklistall", "rmblackli
     await unblacklistall(ctx);
 }));
 
-composer.chatType(["supergroup", "group"]).command(["blsticker", "blstickers"], adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
+async function updateBlstickerCache(chatId: string) {
+    let [blsticker, settings] = await Promise.all([
+        get_all_blsticker(chatId),
+        get_blsticker_settings(chatId)
+    ]);
+
+    let now = Date.now();
+    let cachedData = {
+        mode: settings?.blacklist_type ?? 2n,
+        value: settings?.value ?? "0",
+        words: new Set(blsticker),
+        expiry: now + CACHE_DURATION
+    };
+
+    blstickerCache.set(chatId, cachedData);
+    return cachedData;
+}
+
+composer.chatType(["supergroup", "group"]).on("message:sticker", async (ctx: any, next) => {
+    let chatId = ctx.chat?.id.toString();
     
+    let cachedData = blstickerCache.get(chatId);
+    let now = Date.now();
+
+    if (!cachedData || now > cachedData.expiry) {
+        let [blsticker, settings] = await Promise.all([
+            get_all_blsticker(chatId),
+            get_blsticker_settings(chatId)
+        ]);
+
+        if (!settings || settings.blacklist_type === null) {
+            cachedData = {
+                mode: 2n, // Default mode warn
+                value: "0",
+                words: new Set(blsticker),
+                expiry: now + CACHE_DURATION
+            };
+        } else {
+            cachedData = {
+                mode: settings.blacklist_type,
+                value: settings.value ?? "0",
+                words: new Set(blsticker),
+                expiry: now + CACHE_DURATION
+            };
+        }
+        blstickerCache.set(chatId, cachedData);
+    }
+
+    let stickerSetName = ctx.message.sticker?.set_name;
+    let blacklistedSticker = stickerSetName && [...cachedData.words].some(word => word.trigger === stickerSetName);
+
+    if (!blacklistedSticker) {
+        let isBlacklisted = await is_blsticker(chatId, stickerSetName);
+        if (isBlacklisted) {
+            cachedData = await updateBlstickerCache(chatId);
+            blacklistedSticker = true;
+        }
+    }
+
+    let duration_value = cachedData.value || "12h";
+
+    if (blacklistedSticker) {
+        let isAdmin = await isUserAdmin(ctx, ctx.from.id);
+        if (!isAdmin) {
+            let mute_message = `<b>🔇 Stay quiet</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a> (<code>${ctx.from.id}</code>)<b>!</b>\n\n`;
+            let ban_message = `<b>🚷 Banned</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a> (<code>${ctx.from.id}</code>)<b>!</b>\n\n`;
+
+            switch (cachedData.mode) {
+                case 0n:
+                    return;
+                case 1n:
+                    await ctx.deleteMessage().catch(() => {});
+                    break;
+                case 2n:
+                    await blacklist_warn(ctx, ctx.from.id, ctx.from.first_name, `${ctx.from.first_name} sent a sticker from a blacklisted set: <s>${stickerSetName}</s>`);
+                    break;
+                case 3n:
+                    mute_message += `${ctx.from.first_name} sent a sticker from a blacklisted set: <tg-spoiler><s>${stickerSetName}</s></tg-spoiler>`;
+                    await blacklist_mute(ctx, ctx.from.id, `${ctx.from.first_name} sent a sticker from a blacklisted set: <s>${stickerSetName}</s>`);
+                    break;
+                case 4n:
+                    await blacklist_kick(ctx, ctx.from.id, `${ctx.from.first_name} sent a sticker from a blacklisted set: <s>${stickerSetName}</s>`);
+                    break;
+                case 5n:
+                    ban_message += `${ctx.from.first_name} sent a sticker from a blacklisted set: <s>${stickerSetName}</s>\n\n`;
+                    await blacklist_ban(ctx, ctx.from.id, `${ctx.from.first_name} sent a sticker from a blacklisted set: <s>${stickerSetName}</s>`);
+                    break;
+                case 6n:
+                    ban_message += `${ctx.from.first_name} sent a sticker from a blacklisted set: <s>${stickerSetName}</s>\n\n`;
+                    let ban_duration = await extract_time(ctx, duration_value);
+                    if (ban_duration !== false) {
+                        let converted_time = await convertUnixTime(Number(ban_duration));
+                        ban_message += `Ban duration: ${converted_time}`;
+                    }
+                    await blacklist_tban(ctx, ctx.from.id, ban_duration, ban_message);
+                    break;
+                case 7n:
+                    mute_message += `${ctx.from.first_name} sent a sticker from a blacklisted set: <tg-spoiler><s>${stickerSetName}</s></tg-spoiler>`;
+                    let mute_duration = await extract_time(ctx, duration_value);
+                    if (mute_duration !== false) {
+                        let converted_time = await convertUnixTime(Number(mute_duration));
+                        mute_message += `Mute duration: ${converted_time}`;
+                    }
+                    await blacklist_tmute(ctx, ctx.from.id, mute_duration, mute_message);
+                    break;
+            }
+        }
+    }
+
+    await next();
+});
+
+
+composer.chatType(["supergroup", "group"]).command(["blsticker", "blstickers"], adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
+    await blsticker(ctx);
+    await updateBlacklistCache(ctx.chat.id.toString());
 })))));
 
 composer.chatType(["supergroup", "group"]).command("addblsticker", adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
-    
+    let triggers: string[] = [];
+
+    if (ctx.message?.reply_to_message?.sticker) {
+        triggers = [ctx.message.reply_to_message.sticker.set_name];
+    } else if (ctx.match) {
+        triggers = ctx.match.split('\n').map((trigger: string) => trigger.trim()).filter(Boolean);
+    }
+
+    if (triggers.length === 0) {
+        await ctx.reply("Please provide at least one stickerpack by replying to a sticker or using a stickerpack link to add it to the blacklist.", {
+            reply_to_message_id: ctx.message.message_id,
+            parse_mode: "HTML"
+        });
+        return;
+    }
+
+    triggers = triggers.map(trigger => {
+        let match = trigger.match(/(?:t\.me\/addstickers\/|telegram\.me\/addsticker\/|addstickers\/)(.*)/);
+        return match ? match[1] : trigger;
+    }).filter(Boolean);
+
+    if (triggers.length === 0) {
+        await ctx.reply("No valid stickerpack found. Please provide at least one valid stickerpack to add to the blacklist.", {
+            reply_to_message_id: ctx.message.message_id,
+            parse_mode: "HTML"
+        });
+        return;
+    }
+
+    let addedTriggers = await addblsticker(ctx, triggers);
+
+    await updateBlstickerCache(ctx.chat.id.toString());
+
+    let blsticker = await get_all_blsticker(ctx.chat.id.toString());
+    let blsticker_settings = await get_blsticker_settings(ctx.chat.id.toString());
+    let cachedData = blstickerCache.get(ctx.chat.id.toString());
+    let now = Date.now();
+
+    if (blsticker_settings !== null) {
+        cachedData = {
+            mode: blsticker_settings.blacklist_type ?? 2n,
+            value: blsticker_settings.value ?? "0",
+            words: new Set(blsticker),
+            expiry: now + CACHE_DURATION
+        };
+    } else {
+        cachedData = {
+            mode: 2n,
+            value: "0",
+            words: new Set(blsticker),
+            expiry: now + CACHE_DURATION
+        };
+        await set_blsticker_settings(ctx.chat.id, 2n, "0");
+    }
+
+    blstickerCache.set(ctx.chat.id, cachedData);
+
+    if (addedTriggers.length > 0) {
+        let response = `Added ${addedTriggers.length} stickerpack${addedTriggers.length > 1 ? 's' : ''} to the blacklist:\n${addedTriggers.map(t => `- ${t}`).join('\n')}`;
+        await ctx.reply(response, {
+            reply_to_message_id: ctx.message.message_id,
+            parse_mode: "HTML"
+        });
+    } else {
+        await ctx.reply("No new stickerpack(s) were added to the blacklist. They might already exist in the list.", {
+            reply_to_message_id: ctx.message.message_id,
+            parse_mode: "HTML"
+        });
+    }
 })))));
 
 composer.chatType(["supergroup", "group"]).command(["unblsticker", "rmblsticker"], adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
-    
+    let triggers: string[] = [];
+
+    if (ctx.message?.reply_to_message?.sticker) {
+        triggers = [ctx.message.reply_to_message.sticker.set_name];
+    } else if (ctx.match) {
+        triggers = ctx.match.split('\n').map((trigger: string) => trigger.trim()).filter(Boolean);
+    }
+
+    if (triggers.length === 0) {
+        await ctx.reply("Please provide at least one stickerpack by replying to a sticker or using a stickerpack link to remove it from the blacklist.", {
+            reply_to_message_id: ctx.message.message_id,
+            parse_mode: "HTML"
+        });
+        return;
+    }
+
+    triggers = triggers.map(trigger => {
+        let match = trigger.match(/(?:t\.me\/addstickers\/|telegram\.me\/addsticker\/|addstickers\/)(.*)/);
+        return match ? match[1] : trigger;
+    }).filter(Boolean);
+
+    if (triggers.length === 0) {
+        await ctx.reply("No valid stickerpack found. Please provide at least one valid stickerpack to remove from the blacklist.", {
+            reply_to_message_id: ctx.message.message_id,
+            parse_mode: "HTML"
+        });
+        return;
+    }
+
+    let removedTriggers: string[] = [];
+    for (let trigger of triggers) {
+        let success = await del_blsticker(ctx.chat.id.toString(), trigger);
+        if (success) {
+            removedTriggers.push(trigger);
+        }
+    }
+
+    let updatedCache = await updateBlstickerCache(ctx.chat.id.toString());
+
+    removedTriggers.forEach(trigger => {
+        updatedCache.words = new Set([...updatedCache.words].filter(word => word.trigger !== trigger));
+    });
+
+    blstickerCache.set(ctx.chat.id.toString(), updatedCache);
+
+    if (removedTriggers.length > 0) {
+        let response = `Removed ${removedTriggers.length} stickerpack${removedTriggers.length > 1 ? 's' : ''} from the blacklist:\n${removedTriggers.map(t => `- ${t}`).join('\n')}`;
+        await ctx.reply(response, {
+            reply_to_message_id: ctx.message.message_id,
+            parse_mode: "HTML"
+        });
+    } else {
+        await ctx.reply("No stickerpack(s) were removed from the blacklist. They might not exist in the list.", {
+            reply_to_message_id: ctx.message.message_id,
+            parse_mode: "HTML"
+        });
+    }
 })))));
+
+composer.chatType(["supergroup", "group"]).command(["unblstickerall", "rmblstickerall"], ownerOnlyCallback(async (ctx: any) => {
+    await unblstickerall(ctx);
+    await updateBlacklistCache(ctx.chat.id.toString());
+}));
 
 composer.chatType(["supergroup", "group"]).command("blstickermode", adminCanRestrictUsers(adminCanDeleteMessages(botCanRestrictUsers(botCanDeleteMessages(async (ctx: any) => {
-    
+    await blstickermode(ctx);
+    await updateBlacklistCache(ctx.chat.id.toString());
 })))));
-
-composer.on(["message", "edited_message"], (async (ctx: any, next) => {
-
-    await next();        
-}));
-
-composer.on(stickerMessageTypes, (async (ctx: any, next) => {
-        
-    await next();        
-}));
 
 const unmutePermissions = { 
     can_send_messages: true, 
@@ -639,6 +1060,16 @@ composer.callbackQuery("yes-unblacklist-all", ownerOnlyCallback(async(ctx: any) 
 
 composer.callbackQuery("no-dont-unblacklist-all", ownerOnlyCallback(async(ctx: any) => {
     await ctx.editMessageText("Okay fine. Tell me when you change your mind!", { parse_mode: "HTML" });
+}));
+
+composer.callbackQuery("yes-unblacklist-sticker-all", ownerOnlyCallback(async(ctx: any) => {
+    let resetted = await del_all_blsticker(ctx.chat.id.toString()) 
+    if (resetted == true) {
+        await ctx.editMessageText("All the blacklisted stickerpacks in this chat have been unblacklisted!", { parse_mode: "HTML" });
+    }
+    else {
+        await ctx.editMessageText("Failed to remove all blacklisted stickerpacks of this chat!", { parse_mode: "HTML" });
+    }
 }));
 
 export default composer;
