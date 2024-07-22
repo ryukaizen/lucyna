@@ -446,7 +446,7 @@ const added_to_chat_text = "Thank you for adding me to the group!\n<i>(Ensure th
 const help_inlinekeyboard = new InlineKeyboard()
     .url("Usage Guide", `https://telegram.me/${constants.BOT_USERNAME}?start=help_me_im_dumb`)
 
-composer.on("my_chat_member", async (ctx: any) => {
+composer.on("my_chat_member", async (ctx: any, next) => {
     let oldStatus = ctx.update.my_chat_member.old_chat_member.status;
     let newStatus = ctx.update.my_chat_member.new_chat_member.status;
     let chat = ctx.update.my_chat_member.chat;
@@ -516,6 +516,7 @@ composer.on("my_chat_member", async (ctx: any) => {
         }
         channel_log(log_message);
     }
+    await next();
 });
 
 composer.chatType(["supergroup", "group"]).command("welcome", elevatedUsersOnly((async (ctx: any) => {
