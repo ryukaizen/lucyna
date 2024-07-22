@@ -119,13 +119,11 @@ async function captureflood(ctx: any) {
         } else {
             flood.count = (flood.count || 0n) + 1n;
         }
-        console.log(`CNT: ${flood.count}`)
-        console.log(`LMT: ${flood.limit}`)
+
 
         CHAT_FLOOD[chatId] = flood;
 
         if (flood.count >= flood.limit) {
-            console.log("Flood limit reached")
             let flood_settings = await get_flood_settings(chatId);
             let isAdmin = await isUserAdmin(ctx, ctx.from.id)
             if (!isAdmin) {
