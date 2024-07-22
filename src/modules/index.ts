@@ -2,6 +2,7 @@ import admin from './admin';
 import antiflood from './antiflood';
 import bans from './bans';
 import blacklists from './blacklists'
+import extras from './extras';
 import cleanbluetext from './cleanbluetext';
 import cleanservice from './cleanservice'
 import filters from './filters';
@@ -27,6 +28,7 @@ composer.use(
     antiflood,
     bans,
     blacklists,
+    extras,
     filters,
     locks,
     misc,
