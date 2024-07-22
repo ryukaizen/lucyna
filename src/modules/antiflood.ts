@@ -1,9 +1,227 @@
-import { Composer } from "grammy";
-import { bot } from "../bot";
-import { get_flood, get_flood_settings, set_flood, set_flood_settings } from "../database/antiflood_sql";
-import { adminCanRestrictUsers, botCanRestrictUsers, convertUnixTime, extract_time } from "../helpers/helper_func";
+import { Composer, InlineKeyboard } from "grammy";
+import { get_flood as get_flood_db, set_flood as set_flood_db, update_flood as update_flood_db } from "../database/antiflood_sql";
+import { get_flood_settings, set_flood_settings } from "../database/antiflood_settings_sql"
+import { adminCanRestrictUsers, botCanRestrictUsers, convertUnixTime, extract_time, isUserAdmin } from "../helpers/helper_func";
+import { prisma } from "../database";
+import { grammyErrorLog } from "../logger";
 
 const composer = new Composer();
+
+type FloodControl = {
+    user_id: number | null;
+    count: bigint | null;
+    limit: bigint | null;
+};
+
+
+type ChatFloodMap = {
+    [chatId: string]: FloodControl;
+};
+
+const CHAT_FLOOD: ChatFloodMap = {};
+const DEF_COUNT = 0n;
+const DEF_LIMIT = 0n;
+const DEF_OBJ: FloodControl = { user_id: null, count: DEF_COUNT, limit: DEF_LIMIT };
+
+
+const mutePermissions = { 
+    can_send_messages: false, 
+    can_send_audios: false,
+    can_send_documents: false,
+    can_send_photos: false,
+    can_send_videos: false,
+    can_send_video_notes: false,
+    can_send_voice_notes: false,
+    can_send_polls: false,
+    can_send_other_messages: false,
+    can_add_web_page_previews: false,
+    can_change_info: false,
+    can_invite_users: false,
+    can_pin_messages: false,
+    can_manage_topics: false
+}
+
+const unmuteButton = new InlineKeyboard()
+.text("🔊 Unmute", "unmute-flooded-fella");
+
+async function antiflood_mute(ctx: any, user_id: number | string, message: string) {
+    await ctx.deleteMessage().catch(() => {})
+    await ctx.api.restrictChatMember(ctx.chat.id, user_id, mutePermissions)
+    .then(() => {
+        ctx.api.sendMessage(ctx.chat.id, message, {reply_markup: unmuteButton, parse_mode: "HTML"});
+    })
+    .catch((GrammyError: any) => {
+        ctx.reply("Failed to mute user: invalid user / user probably does not exist.");
+        grammyErrorLog(ctx, GrammyError);
+    });
+}
+
+const unbanButton = new InlineKeyboard()
+.text("🔘 Unban", "unban-blacklisted-dawg");
+
+async function antiflood_ban(ctx: any, user_id: number | string, message: string) {
+    await ctx.deleteMessage().catch(() => {})
+    await ctx.api.banChatMember(ctx.chat.id, user_id, {revoke_messages: true})
+    .then(() => {
+        ctx.api.sendMessage(ctx.chat.id, message, {reply_markup: unbanButton, parse_mode: "HTML"});
+    })
+    .catch((GrammyError: any) => {
+        ctx.reply("Failed to ban user: invalid user / user probably does not exist.");
+        grammyErrorLog(ctx, GrammyError);
+    });
+} 
+
+async function antiflood_kick(ctx: any, user_id: number | string, message: string) {
+    await ctx.deleteMessage().catch(() => {})
+    await ctx.api.unbanChatMember(ctx.chat.id, user_id)
+    .then(() => {
+        ctx.api.sendMessage(ctx.chat.id, message, {parse_mode: "HTML"});
+    })
+    .catch((GrammyError: any) => {
+        ctx.reply("Failed to kick user: invalid user / user probably does not exist.");
+        grammyErrorLog(ctx, GrammyError); 
+    });
+}
+
+async function antiflood_tban(ctx: any, user_id: number | string, duration: any, message: string) {
+    await ctx.deleteMessage().catch(() => {})
+    await ctx.api.banChatMember(ctx.chat.id, user_id, {until_date: duration, revoke_messages: true})
+    .then(() => {
+        ctx.api.sendMessage(ctx.chat.id, message, {reply_markup: unbanButton, parse_mode: "HTML"});
+    })
+    .catch((GrammyError: any) => {
+        ctx.reply("Failed to temp-ban user: invalid user / user probably does not exist.");
+        grammyErrorLog(ctx, GrammyError);
+    });
+
+}
+
+async function antiflood_tmute(ctx: any, user_id: number | string, duration: any, message: string) {
+    await ctx.deleteMessage().catch(() => {})
+    await ctx.api.restrictChatMember(ctx.chat.id, user_id, mutePermissions, {until_date: duration})
+    .then(() => {
+        ctx.api.sendMessage(ctx.chat.id, message, {reply_markup: unmuteButton, parse_mode: "HTML"});
+    })
+    .catch((GrammyError: any) => {
+        ctx.reply("Failed to tmute user: invalid user / user probably does not exist.");
+        grammyErrorLog(ctx, GrammyError);
+    });
+}
+
+async function captureflood(ctx: any) {
+    let chatId = ctx.chat.id.toString();
+    let flood = await get_flood(chatId);
+    
+    if (flood.limit !== null && flood.limit > 0n) {
+        if (flood.user_id !== ctx.from.id) {
+            flood.user_id = ctx.from.id;
+            flood.count = 1n;
+        } else {
+            flood.count = (flood.count || 0n) + 1n;
+        }
+        console.log(`CNT: ${flood.count}`)
+        console.log(`LMT: ${flood.limit}`)
+
+        CHAT_FLOOD[chatId] = flood;
+
+        if (flood.count >= flood.limit) {
+            console.log("Flood limit reached")
+            let flood_settings = await get_flood_settings(chatId);
+            let isAdmin = await isUserAdmin(ctx, ctx.from.id)
+            if (!isAdmin) {
+                let mute_message = (
+                    `<b>🔇 Stay quiet</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a> (<code>${ctx.from.id}</code>)<b>!</b>\n\n`  
+                );
+                let ban_message = (
+                    `<b>🚷 Banned</b> <a href="tg://user?id=${ctx.from.id}">${ctx.from.first_name}</a> (<code>${ctx.from.id}</code>)<b>!</b>\n\n` 
+                );
+
+                let duration_value;
+                if (flood_settings?.value) {
+                    duration_value = flood_settings?.value;
+                }
+                else {
+                    duration_value = "365d";
+                }
+                switch (flood_settings?.flood_type) {
+                    case 0n:
+                        return;
+                    case 1n:
+                        ban_message += `${ctx.from.first_name} spammed & hit flood limit of <code>${flood.limit}</code> consecutive messages!\n\n`
+                        await antiflood_ban(ctx, ctx.from.id, ban_message);
+                        break;
+                    case 2n:
+                        await antiflood_kick(ctx, ctx.from.id, `${ctx.from.first_name} spammed & hit flood limit of <code>${flood.limit}</code> consecutive messages!\n\n<b>Kicked outta the group.</b>`);
+                        break;
+                    case 3n:
+                        mute_message += `${ctx.from.first_name} spammed & hit flood limit of <code>${flood.limit}</code> consecutive messages!\n\n`
+                        await antiflood_mute(ctx, ctx.from.id, mute_message);
+                        break;
+                    case 4n:
+                        ban_message += `${ctx.from.first_name} spammed & hit flood limit of <code>${flood.limit}</code> consecutive messages!\n\n`
+                        let ban_duration = await extract_time(ctx, duration_value);
+                        if (ban_duration != false) {
+                            let converted_time = await convertUnixTime(Number(ban_duration));
+                            ban_message += `Ban duration: ${converted_time}`;
+                        }
+                        await antiflood_tban(ctx, ctx.from.id, ban_duration, ban_message)
+                        break;
+                    case 5n:
+                        mute_message += `${ctx.from.first_name} spammed & hit flood limit of <code>${flood.limit}</code> consecutive messages!\n\n`
+                        let mute_duration = await extract_time(ctx, duration_value);
+                        if (mute_duration != false) {
+                            let converted_time = await convertUnixTime(Number(mute_duration));
+                            mute_message += `Mute duration: ${converted_time}`;
+                        }
+                        await antiflood_tmute(ctx, ctx.from.id, mute_duration, mute_message)
+                        break;
+                }
+            }
+            flood.count = 0n;
+            flood.user_id = null;
+            CHAT_FLOOD[chatId] = flood;
+            await update_flood_db(chatId, flood.count, flood.user_id);
+        } 
+        else {
+
+            await update_flood_db(chatId, flood.count, flood.user_id);
+        }
+    }
+}
+
+async function get_flood(chat_id: string | number): Promise<FloodControl> {
+    let chatId = chat_id.toString();
+
+    if (Object.keys(CHAT_FLOOD).length === 0) {
+        const allChats = await prisma.antiflood.findMany();
+        for (const chat of allChats) {
+            CHAT_FLOOD[chat.chat_id] = {
+                user_id: null,
+                count: 0n, 
+                limit: chat.limit ?? DEF_LIMIT
+            };
+        }
+    }
+
+    if (!(chatId in CHAT_FLOOD)) {
+        let flood = await get_flood_db(chatId);
+        CHAT_FLOOD[chatId] = flood
+            ? { 
+                user_id: null, 
+                count: 0n, 
+                limit: flood.limit ?? DEF_LIMIT 
+              }
+            : { ...DEF_OBJ, count: 0n }; 
+    }
+
+    return CHAT_FLOOD[chatId];
+}
+
+async function set_flood(chat_id: string | number, count: bigint, limit: bigint): Promise<void> {
+    let chatId = chat_id.toString();
+    CHAT_FLOOD[chatId] = { user_id: null, count, limit };
+    await set_flood_db(chatId, count, limit);
+}
 
 async function flood_type_meaning(flood_type: bigint) {
     switch (flood_type) {
@@ -21,7 +239,7 @@ async function flood_type_meaning(flood_type: bigint) {
 }
 
 async function validateTimeValue(input: string): Promise<string | false> {
-    const regex = /^(\d+m|\d+h|\d+d)(\s+(\d+m|\d+h|\d+d))*$/i;
+    let regex = /^(\d+m|\d+h|\d+d)(\s+(\d+m|\d+h|\d+d))*$/i;
 
     if (regex.test(input)) {
         return input;
@@ -29,38 +247,6 @@ async function validateTimeValue(input: string): Promise<string | false> {
 
     return false;
 }
-
-// async function captureflood(ctx: any) {
-//     let flood = await get_flood(ctx.chat.id);
-//     let flood_settings = await get_flood_settings(ctx.chat.id);
-//     if (flood?.limit) {
-//         if (flood.count >= flood.limit) {
-//             switch (flood_settings?.flood_type) {
-//                 case 1n:
-//                     await ctx.kickChatMember(ctx.from.id);
-//                     break;
-//                 case 2n:
-//                     await ctx.kickChatMember(ctx.from.id);
-//                     break;
-//                 case 3n:
-//                     await ctx.restrictChatMember(ctx.from.id, {until_date: Math.floor(Date.now() / 1000) + 3600});
-//                     break;
-//                 case 4n:
-//                     await ctx.kickChatMember(ctx.from.id);
-//                     await ctx.restrictChatMember(ctx.from.id, {until_date: Math.floor(Date.now() / 1000) + convertUnixTime(flood_settings?.value || "0")});
-//                     break;
-//                 case 5n:
-//                     await ctx.restrictChatMember(ctx.from.id, {until_date: Math.floor(Date.now() / 1000) + convertUnixTime(flood_settings?.value || "0")});
-//                     break;
-//             }
-//             await ctx.deleteMessage(ctx.message.message_id);
-//             await ctx.reply(`You have exceeded the flood limit of <code>${flood.limit}</code> consecutive messages!`, {parse_mode: "HTML", reply_parameters: {message_id: ctx.message.message_id}});
-//         }
-//         else {
-//             await set_flood(ctx.chat.id.toString(), flood?.count + 1n, flood.limit);
-//         }
-//     }
-// }
 
 async function flood(ctx: any) {
     let flood = await get_flood(ctx.chat.id);
@@ -111,7 +297,7 @@ async function setflood(ctx: any) {
             await ctx.reply(`Anti-flood has been set to <code>${args}</code> consecutive messages!\n<b>Action on exceeding the limit</b>: <code>${await flood_type_meaning(flood_settings?.flood_type || 1n)}</code>`, {parse_mode: "HTML", reply_parameters: {message_id: ctx.message.message_id}});
         }
         else {
-            await ctx.reply(`Invalid argument please use a number to set flood limit <i>OR</i> use '<code>off</code>' or '<code>no</code>' to disable anti-flood.`, {parse_mode: "HTML", reply_parameters: {message_id: ctx.message.message_id}});
+            await ctx.reply(`Invalid argument. Please use a number to set flood limit or use '<code>off</code>' or '<code>no</code>' to disable anti-flood.`, {parse_mode: "HTML", reply_parameters: {message_id: ctx.message.message_id}});
         }
     }
     else { 
@@ -174,19 +360,10 @@ async function setfloodmode(ctx: any) {
     }
 }
 
-// var FLOODCOUNT: bigint = 0n;
-
-// composer.on(["message", "edited_message"], (async (ctx: any) => {
-//     // await captureflood(ctx);
-//     // FLOODCOUNT += 1n
-//     // let limit = 10n
-//     // console.log(`${FLOODCOUNT}/${limit}`)
-//     // if (FLOODCOUNT > limit) {
-//     //     FLOODCOUNT = 0n
-//     // }
-//     // await next();
-    
-// }));
+composer.on(["message", "edited_message"], async (ctx: any, next) => {
+    await captureflood(ctx);
+    await next();
+});
 
 composer.chatType(["supergroup", "group"]).command(["flood", "antiflood"], (async (ctx: any) => {
     await flood(ctx);

@@ -1,4 +1,4 @@
-import { prisma } from ".";
+import { prisma } from "./index";
 
 export async function get_flood(chatId: string) {
     let flood = await prisma.antiflood.findFirst({
@@ -7,15 +7,6 @@ export async function get_flood(chatId: string) {
         }
     })
     return flood;
-}
-
-export async function get_flood_settings(chatId: string) {
-    let flood_settings = await prisma.antiflood_settings.findUnique({
-        where: {
-            chat_id: chatId.toString()
-        }
-    })
-    return flood_settings;
 }
 
 export async function set_flood(chat_id: string, count: bigint, limit: bigint) {
@@ -42,44 +33,17 @@ export async function set_flood(chat_id: string, count: bigint, limit: bigint) {
     }
 }
 
-export async function set_flood_settings(chat_id: string, flood_type: bigint, value: string = "0") {
+export async function update_flood(chat_id: string, count: bigint, user_id: number | null) {
     try {
-        let flood_settings = await prisma.antiflood_settings.upsert({
-            where: {
-                chat_id: chat_id
+        let flood = await prisma.antiflood.update({
+            where: { 
+                chat_id: chat_id 
             },
-            update: {
-                flood_type: flood_type,
-                value: value
-            },
-            create: {
-                chat_id: chat_id,
-                flood_type: flood_type,
-                value: value 
+            data: { 
+                count: count, 
+                user_id: user_id 
             }
-        })
-        return true;
-    }
-    catch (e) {
-        console.error(e)
-        return false;
-    }
-}
-
-export async function update_flood(chat_id: string, count: bigint) {
-    try {
-        let flood = await prisma.antiflood.upsert({
-            where: {
-            chat_id: chat_id,
-            },
-            update: {
-                count: count,
-            },
-            create: {
-                chat_id: chat_id,
-                count: count,
-            }
-        })
+        });
         return true;
     }
     catch (e) {
