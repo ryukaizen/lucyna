@@ -7,6 +7,7 @@ import extras from './extras';
 import cleanbluetext from './cleanbluetext';
 import cleanservice from './cleanservice'
 import filters from './filters';
+import fun from './fun';
 import locks from './locks';
 import misc from './misc';
 import mutes from './mutes';
@@ -32,6 +33,7 @@ composer.use(
     blacklists,
     extras,
     filters,
+    fun,
     locks,
     misc,
     mutes,
