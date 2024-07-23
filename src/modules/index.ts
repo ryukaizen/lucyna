@@ -3,6 +3,7 @@ import anilist from "./anilist";
 import antiflood from './antiflood';
 import bans from './bans';
 import blacklists from './blacklists'
+import devtools from './devtools'
 import extras from './extras';
 import cleanbluetext from './cleanbluetext';
 import cleanservice from './cleanservice'
@@ -31,6 +32,7 @@ composer.use(
     antiflood,
     bans,
     blacklists,
+    devtools,
     extras,
     filters,
     fun,
