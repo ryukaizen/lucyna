@@ -1,5 +1,5 @@
 import admin from './admin';
-import anime from "./anime";
+import anilist from "./anilist";
 import antiflood from './antiflood';
 import bans from './bans';
 import blacklists from './blacklists'
@@ -26,7 +26,7 @@ const composer = new Composer();
 
 composer.use(
     admin,
-    anime,
+    anilist,
     antiflood,
     bans,
     blacklists,

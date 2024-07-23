@@ -50,11 +50,10 @@ composer.command("anime", (async (ctx: any) => {
 
     let { title, description, siteUrl, coverImage } = animeDetails;
     let message = `
-        *🎬 ${title.romaji}* (${title.native})
-    *English:* ${title.english}
-    *Description:* ${description}
-    [More Info](${siteUrl})
-    `;
+*🎬 ${title.romaji}* (${title.native})
+*English:* ${title.english}
+*Description:* ${description}
+[More Info](${siteUrl})`;
 
     let keyboard = new InlineKeyboard().url("View on AniList", siteUrl);
 
