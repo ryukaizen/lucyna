@@ -509,7 +509,7 @@ composer.chatType(["supergroup", "group"]).on(["message", "edited_message"], asy
         duration_value = cachedData.value;
     }
     else {
-        duration_value = "12h";
+        duration_value = "365d";
     }
 
     if (blacklistedWord) {
@@ -529,21 +529,21 @@ composer.chatType(["supergroup", "group"]).on(["message", "edited_message"], asy
                     await ctx.deleteMessage().catch(() => {})
                     break;
                 case 2n:
-                    await blacklist_warn(ctx, ctx.from.id, ctx.from.first_name, `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>`);
+                    await blacklist_warn(ctx, ctx.from.id, ctx.from.first_name, `The message ${ctx.from.first_name} sent, contained a blacklisted word: <tg-spoiler><s>${blacklistedWord?.trigger}</s></tg-spoiler>`);
                     break;
                 case 3n:
                     mute_message += `The message ${ctx.from.first_name} sent, contained a blacklisted word: <tg-spoiler><s>${blacklistedWord?.trigger}</s></tg-spoiler>`
-                    await blacklist_mute(ctx, ctx.from.id, `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>`);
+                    await blacklist_mute(ctx, ctx.from.id, mute_message);
                     break;
                 case 4n:
-                    await blacklist_kick(ctx, ctx.from.id, `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>`);
+                    await blacklist_kick(ctx, ctx.from.id, `The message ${ctx.from.first_name} sent, contained a blacklisted word: <tg-spoiler><s>${blacklistedWord?.trigger}</s></tg-spoiler>\n\n<b>Kicked outta the group!</b>`);
                     break;
                 case 5n:
-                    ban_message += `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>\n\n`
-                    await blacklist_ban(ctx, ctx.from.id, `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>`);
+                    ban_message += `The message ${ctx.from.first_name} sent, contained a blacklisted word: <tg-spoiler><s>${blacklistedWord?.trigger}</s></tg-spoiler>\n\n`
+                    await blacklist_ban(ctx, ctx.from.id, ban_message);
                     break;
                 case 6n:
-                    ban_message += `The message ${ctx.from.first_name} sent, contained a blacklisted word: <s>${blacklistedWord?.trigger}</s>\n\n`
+                    ban_message += `The message ${ctx.from.first_name} sent, contained a blacklisted word: <tg-spoiler><s>${blacklistedWord?.trigger}</s></tg-spoiler>\n\n`
                     let ban_duration = await extract_time(ctx, duration_value);
                     if (ban_duration != false) {
                         let converted_time = await convertUnixTime(Number(ban_duration));
@@ -772,7 +772,7 @@ composer.chatType(["supergroup", "group"]).on("message:sticker", async (ctx: any
 
             switch (cachedData.mode) {
                 case 0n:
-                    return;
+                    return await next();
                 case 1n:
                     await ctx.deleteMessage().catch(() => {});
                     break;
