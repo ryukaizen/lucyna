@@ -284,6 +284,37 @@ model locales {
   locale_name String?
 }
 
+model locks {
+  chat_id           String  @id
+  audio             Boolean @default(false)
+  bot               Boolean @default(false)
+  button            Boolean @default(false)
+  contact           Boolean @default(false)
+  document          Boolean @default(false)
+  emojigame         Boolean @default(false)
+  forward           Boolean @default(false)
+  game              Boolean @default(false)
+  gif               Boolean @default(false)
+  info              Boolean @default(false)
+  inline            Boolean @default(false)
+  invite            Boolean @default(false)
+  location          Boolean @default(false)
+  manage_topics     Boolean @default(false)
+  media             Boolean @default(false)
+  messages          Boolean @default(false)
+  other             Boolean @default(false)
+  photo             Boolean @default(false)
+  pin               Boolean @default(false)
+  poll              Boolean @default(false)
+  rtl               Boolean @default(false)
+  sticker           Boolean @default(false)
+  url               Boolean @default(false)
+  video             Boolean @default(false)
+  video_note        Boolean @default(false)
+  voice             Boolean @default(false)
+  web_page_preview  Boolean @default(false)
+}
+
 model log_channels {
   chat_id     String @id @db.VarChar(14)
   log_channel String @db.VarChar(14)
