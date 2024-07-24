@@ -1,4 +1,5 @@
 import { Composer } from "grammy";
+//import { translate } from '@vitalets/google-translate-api';
 import axios from "axios";
 
 const composer = new Composer();
@@ -74,5 +75,92 @@ composer.command("ud", async (ctx: any) => {
         await ctx.reply("An error occurred while fetching the definition. Please try again later.",  { reply_to_message_id: ctx.message.message_id, parse_mode: "HTML" });
     }
 });
+
+// composer.command("weather", async (ctx: any) => {
+//     let location = ctx.message.text.split(" ").slice(1).join(" ");
+
+//     if (!location) {
+//         await ctx.reply("Please enter a location to get the weather!",  { reply_to_message_id: ctx.message.message_id, parse_mode: "HTML" });
+//         return;
+//     }
+
+//     try {
+//         let response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(location)}&appid=${process.env.WEATHER_API_KEY}&units=metric`);
+//         let data = response.data;
+
+//         let weatherMessage = `
+// <b>Location:</b> ${data.name}, ${data.sys.country}
+// <b>Weather:</b> ${data.weather[0].description}
+// <b>Temperature:</b> ${data.main.temp}°C
+// <b>Feels Like:</b> ${data.main.feels_like}°C
+// <b>Humidity:</b> ${data.main.humidity}%
+// <b>Wind Speed:</b> ${data.wind.speed} m/s
+// <b>Visibility:</b> ${data.visibility} meters
+// <b>Cloudiness:</b> ${data.clouds.all}%
+// <b>Sunrise:</b> ${new Date(data.sys.sunrise * 1000).toLocaleTimeString()}
+// <b>Sunset:</b> ${new Date(data.sys.sunset * 1000).toLocaleTimeString()}
+//         `;
+
+//         await ctx.reply(weatherMessage, { reply_to_message_id: ctx.message.message_id, parse_mode: "HTML" });
+//     }
+//     catch (error) {
+//         console.error("Error fetching weather data:", error);
+//         await ctx.reply("An error occurred while fetching the weather data. Please try again later.",  { reply_to_message_id: ctx.message.message_id, parse_mode: "HTML" });
+//     }
+// });
+
+// const isValidLangCode = (code: string) => {
+//     const validCodes = ['en', 'hi', 'ru', 'es', 'fr', 'de', 'zh', 'ja', 'ko', 'ar', 'it', 'pt', 'tr', 'nl', 'sv', 'pl', 'da', 'fi', 'no'];
+//     return validCodes.includes(code);
+// };
+  
+ 
+// composer.command(['tr', 'tl', 'translate'], async (ctx: any) => {
+//     let args = ctx.match;
+//     let reply_to_message = ctx.message.reply_to_message.text;
+//     let text_to_translate = '';
+
+//     if (!args && !reply_to_message) {
+//         await ctx.reply('Please provide text to translate. You can reply to a message or provide text as an argument.');
+//         return;
+//     }
+
+//     if (reply_to_message) {
+//         text_to_translate = reply_to_message;
+//     }
+//     else {
+//         text_to_translate = args;
+//     }
+
+//     let sourceLang = 'auto';
+//     let targetLang = 'en';
+  
+//     let langMatch = args.match(/^([\w-]+)\s+([\w-]+)\s+(.*)$/);
+//     if (langMatch) {
+//       sourceLang = langMatch[1].trim();
+//       targetLang = langMatch[2].trim();
+//       text_to_translate = langMatch[3].trim();
+//     }
+  
+//     if (!isValidLangCode(targetLang) || (sourceLang !== 'auto' && !isValidLangCode(sourceLang))) {
+//       await ctx.reply('Invalid language code(s) provided. Please check and try again.');
+//       return;
+//     }
+  
+//     if (!text_to_translate) {
+//       await ctx.reply('No text provided for translation. Please reply to a message or provide text as an argument.');
+//       return;
+//     }
+  
+//     try {
+//         let { text } = await translate(text_to_translate, { from: sourceLang, to: targetLang });
+//         await ctx.reply(`Translated text: ${text}`);
+//     } 
+//     catch (error) {
+//       console.error('Translation error:', error);
+//       await ctx.reply('An error occurred during translation. Please try again later.');
+//     }
+// });
+
 
 export default composer;
