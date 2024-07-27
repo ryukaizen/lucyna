@@ -752,4 +752,35 @@ composer.chatType(["supergroup", "group"]).command("cleanwelcome", elevatedUsers
     }
 })));
 
+
+composer.chatType(["supergroup", "group"]).command("welcomehelp", ((async (ctx: any) => {
+    await ctx.reply("It's a long message, try to send this in my DM!", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+
+})));
+
+composer.chatType("private").command("welcomehelp", ((async (ctx: any) => {
+    let welcome_help: string = `
+Your group's welcome/goodbye messages can be personalised in multiple ways. If you want the messages to be individually generated, like the default welcome message is, you can use <b>these</b> variables:
+
+- <code>{first}</code>: this represents the user's <b>first</b> name
+- <code>{last}</code>: this represents the user's <b>last</b> name. Defaults to <b>first name</b> if user has no last name.
+- <code>{fullname}</code>: this represents the user's <b>full</b> name. Defaults to <b>first name</b> if user has no last name.
+- <code>{username}</code>: this represents the user's <b>username</b>. Defaults to a <b>mention</b> of the user's first name if has no username.
+- <code>{mention}</code>: this simply <b>mentions</b> a user - tagging them with their first name.
+- <code>{id}</code>: this represents the user's <b>id</b>
+- <code>{count}</code>: this represents the user's <b>member number</b>.
+- <code>{chatname}</code>: this represents the <b>current chat name</b>.
+
+Each variable MUST be surrounded by <code>{}</code> to be replaced.
+
+Welcome messages also support markdown, so you can make any elements bold/italic/code/links. Buttons are also supported, so you can make your welcomes look awesome with some nice intro buttons.
+
+To create a button linking to your rules, use this: <code>[Rules](buttonurl://t.me/${bot.botInfo.username}?start=group_id)</code>. Simply replace <code>group_id</code> with your group's id, which can be obtained via /id, and you're good to go. Note that group ids are usually preceded by a <code>-</code> sign; this is required, so please don't remove it.
+
+You can even set images/gifs/videos/voice messages as the welcome message by replying to the desired media, and calling <code>/setwelcome</code>.
+`;
+    await ctx.api.sendMessage(ctx.chat.id, welcome_help, { parse_mode: "HTML"});
+
+})));
+
 export default composer;

@@ -19,7 +19,8 @@ import {
     resolveUserhandle,
     getUserInstance,
     isUserAdmin,
-    isUserCreator
+    isUserCreator,
+    ownerOnly
 } from "../helpers/helper_func";
 
 const composer = new Composer();
@@ -225,7 +226,7 @@ composer.chatType(["supergroup", "group"]).command("unpin", adminCanPinMessages(
     await unpin(ctx);
 })));
 
-composer.chatType(["supergroup", "group"]).command("unpinall", adminCanPinMessages(botCanPinMessages(async(ctx: any) => {
+composer.chatType(["supergroup", "group"]).command("unpinall", ownerOnly(botCanPinMessages(async(ctx: any) => {
     await unpinall(ctx);
 })));
     
