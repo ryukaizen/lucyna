@@ -3,6 +3,8 @@ import constants from "../config"
 import { Menu } from "@grammyjs/menu";
 import { Composer, InlineKeyboard } from "grammy";
 import { get_rules } from "../database/rules_sql"
+import { get_users_count, register_user } from "../database/users_sql";
+import { get_chats_count } from "../database/chats_sql";
 
 const composer = new Composer();
 
@@ -383,7 +385,10 @@ help_submenu_2.register(news_feeds_submenu);
 bot.use(start_menu);  
 
 composer.chatType("private").command("start", (async(ctx: any) => { 
-    let pm_start_text: string = (`${greets[Math.floor(Math.random() * greets.length)]} ${ctx.from?.first_name}.\n\n${start_text}`);
+    let users = await get_users_count();
+    let chats = await get_chats_count();
+    let users_chats_count_message = `Currently serving <code>${users}</code> users across <code>${chats}</code> chats.`
+    let pm_start_text: string = (`${greets[Math.floor(Math.random() * greets.length)]} ${ctx.from?.first_name}.\n\n${start_text}\n\n${users_chats_count_message}`);
     let payload = ctx.match;
 
     // payload from the help button
@@ -413,6 +418,12 @@ composer.chatType("private").command("start", (async(ctx: any) => {
         await ctx.react("🎉");
         await ctx.api.sendAnimation(ctx.chat.id, constants.START_GIF, {caption: pm_start_text, reply_markup: start_menu, parse_mode: "HTML"});
     }
+
+    let username = null;
+    if (ctx.from.username) {
+        username = ctx.from.username;
+    }
+    await register_user(ctx.from.id, username); //todo: make this standalone
 }));
 
 composer.chatType(["supergroup", "group"]).command("start", (async(ctx: any) => {
@@ -424,6 +435,12 @@ composer.chatType(["supergroup", "group"]).command("start", (async(ctx: any) => 
     else {
         await ctx.api.sendMessage(ctx.chat.id, grp_start_text, {parse_mode: "HTML"});
     }
+
+    let username = null;
+    if (ctx.from.username) {
+        username = ctx.from.username;
+    }
+    await register_user(ctx.from.id, username); //todo: make this standalone
 }));
 
 composer.chatType("private").command("help", (async(ctx: any) => {

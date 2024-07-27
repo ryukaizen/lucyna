@@ -6,6 +6,7 @@ import { get_greet_urls, set_greet_urls, reset_greet_buttons } from "../database
 import { elevatedUsersOnly, extractButtons, messageFillings, format_json, iterateInlineKeyboard, MessageTypes } from "../helpers/helper_func";
 import { channel_log } from "../logger";
 import { Composer, InlineKeyboard } from "grammy";
+import { register_chat } from "../database/chats_sql";
 
 const composer = new Composer();
 
@@ -496,6 +497,7 @@ composer.on("my_chat_member", async (ctx: any, next) => {
         });
 
         channel_log(log_message);
+        await register_chat(chat.id, chat.title); // todo: make this standalone later
     }
 
     // bot was removed 
