@@ -1,7 +1,7 @@
-import { Composer, InlineKeyboard } from "grammy";
+import { Composer, InlineKeyboard, NextFunction } from "grammy";
 import { get_filter, set_filter, get_all_chat_filters, stop_filter, stop_all_chat_filters} from "../database/filters_sql";
 import { get_filter_urls, set_filter_urls } from "../database/filter_urls_sql";
-import { escapeMarkdownV2, extractButtons, iterateInlineKeyboard, format_json, ownerOnly, ownerOnlyCallback, MessageTypes } from "../helpers/helper_func"; 
+import { escapeMarkdownV2, extractButtons, iterateInlineKeyboard, format_json, ownerOnly, ownerOnlyCallback, MessageTypes, elevatedUsersOnly } from "../helpers/helper_func"; 
 import { Menu, MenuRange } from "@grammyjs/menu";
 import { bot } from "../bot";
 
@@ -223,8 +223,7 @@ composer.chatType(["supergroup", "group"]).on(["message"], async (ctx: any, next
     }        
     await next();
 }); 
-
-composer.chatType(["supergroup", "group"]).command(["filter", "addfilter"], (async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["filter", "addfilter"], elevatedUsersOnly(async (ctx: any) => {
     if (ctx.message.reply_to_message) {
         let keyword = ctx.match;
         if (!keyword) {
@@ -259,11 +258,30 @@ composer.chatType(["supergroup", "group"]).command(["filter", "addfilter"], (asy
     }
     else {
         let args = ctx.match;
-        let split_args = args.split(" ");
-        let keyword = split_args[0].toLowerCase();
-        let reply = split_args.slice(1).join(" ");
+        let keyword: string;
+        let reply: string;
+
+        // Check if the first character is a quote
+        if (args.startsWith('"')) {
+            // Find the closing quote
+            let endQuoteIndex = args.indexOf('"', 1);
+            if (endQuoteIndex !== -1) {
+                keyword = args.slice(1, endQuoteIndex).toLowerCase();
+                reply = args.slice(endQuoteIndex + 1).trim();
+            } else {
+                // If no closing quote is found, treat the whole string as the keyword
+                keyword = args.slice(1).toLowerCase();
+                reply = '';
+            }
+        } else {
+            // If no quotes, use the old method
+            let split_args = args.split(" ");
+            keyword = split_args[0].toLowerCase();
+            reply = split_args.slice(1).join(" ");
+        }
+
         if (!reply) {
-            await ctx.reply("Please provide some content for your filter trigger!\n\n(<i>Example: /filter apple I do like apples!</i>)", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
+            await ctx.reply("Please provide some content for your filter trigger!\n\n(<i>Example: /filter \"hey there\" How you doin?</i>)", {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML"});
         }
         else if (!keyword) {
             await ctx.reply("Please provide a trigger keyword first!", {reply_parameters: {message_id: ctx.message.message_id}});
@@ -282,7 +300,7 @@ composer.chatType(["supergroup", "group"]).command(["filter", "addfilter"], (asy
 }));
 
 // this one's only for media messages containing "/filter trigger" in their captions
-composer.chatType(["supergroup", "group"]).on("message").hears([/^\/filter\b/, /^\/addfilter\b/], (async (ctx: any, next) => {
+composer.chatType(["supergroup", "group"]).on("message").hears([/^\/filter\b/, /^\/addfilter\b/], elevatedUsersOnly(async (ctx: any, next: NextFunction) => {
     if (ctx.message.caption) {
         let caption = ctx.message.caption.split(" ");
         let keyword = caption[1].toLowerCase();
@@ -314,7 +332,7 @@ composer.chatType(["supergroup", "group"]).command(["filters", "listfilters"], (
     await ctx.reply(message, {reply_parameters: {message_id: ctx.message.message_id}, parse_mode: "HTML", link_preview_options: {is_disabled: true}});
 }));
 
-composer.chatType(["supergroup", "group"]).command(["stop", "stopfilter", "delfilter"], (async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["stop", "stopfilter", "delfilter"], elevatedUsersOnly(async (ctx: any) => {
     let args = ctx.match;
     let keyword = args.toLowerCase();
 
