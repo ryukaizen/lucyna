@@ -1,6 +1,6 @@
 import { Composer, InlineKeyboard } from "grammy";
 import { get_blacklist, reset_all_blacklist, reset_blacklist, set_blacklist } from "../database/blacklist_sql";
-import { adminCanDeleteMessages, adminCanRestrictUsers, adminCanRestrictUsersCallback, botCanDeleteMessages, botCanRestrictUsers, botCanRestrictUsersCallback, convertUnixTime, extract_time, format_json, isUserAdmin, isUserBanned, isUserRestricted, ownerOnlyCallback } from "../helpers/helper_func";
+import { adminCanDeleteMessages, adminCanRestrictUsers, adminCanRestrictUsersCallback, botCanDeleteMessages, botCanRestrictUsers, botCanRestrictUsersCallback, convertUnixTime, extract_time, format_json, isUserAdmin, isUserBanned, isUserRestricted, ownerOnly, ownerOnlyCallback } from "../helpers/helper_func";
 import { get_blacklist_settings, set_blacklist_settings } from "../database/blacklist_settings_sql";
 import { get_warn_numbers, get_warn_settings, set_warn_numbers, set_warn_settings } from "../database/warns_sql";
 import { grammyErrorLog } from "../logger";
@@ -699,7 +699,7 @@ composer.chatType(["supergroup", "group"]).command(["blacklistmode", "setblackli
     await blacklistmode(ctx);
 })))));
 
-composer.chatType(["supergroup", "group"]).command(["unblacklistall", "rmblacklistall"], ownerOnlyCallback(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["unblacklistall", "rmblacklistall"], ownerOnly(async (ctx: any) => {
     await unblacklistall(ctx);
 }));
 
@@ -953,7 +953,7 @@ composer.chatType(["supergroup", "group"]).command(["unblsticker", "rmblsticker"
     }
 })))));
 
-composer.chatType(["supergroup", "group"]).command(["unblstickerall", "rmblstickerall"], ownerOnlyCallback(async (ctx: any) => {
+composer.chatType(["supergroup", "group"]).command(["unblstickerall", "rmblstickerall"], ownerOnly(async (ctx: any) => {
     await unblstickerall(ctx);
     await updateBlacklistCache(ctx.chat.id.toString());
 }));
