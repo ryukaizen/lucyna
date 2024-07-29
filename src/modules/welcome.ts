@@ -3,7 +3,7 @@ import { bot } from "../bot";
 import constants from "../config";
 import { get_goodbye, get_welcome, reset_goodbye, reset_welcome, set_clean_welcome, set_clean_welcome_switch, set_goodbye, set_goodbye_switch, set_welcome, set_welcome_switch } from "../database/welcome_sql";
 import { get_greet_urls, set_greet_urls, reset_greet_buttons } from "../database/welcome_urls_sql";
-import { elevatedUsersOnly, extractButtons, messageFillings, format_json, iterateInlineKeyboard, MessageTypes } from "../helpers/helper_func";
+import { elevatedUsersOnly, extractButtons, messageFillings, format_json, iterateInlineKeyboard, MessageTypes, escapeMarkdownV2 } from "../helpers/helper_func";
 import { channel_log } from "../logger";
 import { Composer, InlineKeyboard } from "grammy";
 import { register_chat } from "../database/chats_sql";
@@ -397,6 +397,7 @@ composer.on("chat_member", async (ctx: any, next) => {
                 if (custom_welcome) {
                     let memberCount = await ctx.api.getChatMemberCount(ctx.chat.id);           
                     message = messageFillings(custom_welcome, user, chat, memberCount)
+                    message = await escapeMarkdownV2(message)
                 }
             
                 if (!custom_content && !custom_welcome) {
@@ -430,6 +431,7 @@ composer.on("chat_member", async (ctx: any, next) => {
                 if (custom_leave) {
                     let memberCount = await ctx.api.getChatMemberCount(ctx.chat.id);           
                     let filledMessage = messageFillings(custom_leave, user, chat, memberCount)
+                    filledMessage = await escapeMarkdownV2(custom_leave)
                     await sendGoodbye(ctx, leave_type, filledMessage, parseMode);
                 }
                 else {
