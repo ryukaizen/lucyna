@@ -496,7 +496,7 @@ composer.chatType(["supergroup", "group"]).on(["message", "edited_message"], asy
         blacklistCache.set(chatId, cachedData);
     }
 
-    let messageText = ctx.message.text;
+    let messageText = ctx.message.text || ctx.edited_message.text;
     let blacklistedWord = [...cachedData.words].find(word => {
         let escapedTrigger = word.trigger.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         let regex = new RegExp(`\\b${escapedTrigger}\\b`, 'i');
