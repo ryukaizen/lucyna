@@ -5,34 +5,49 @@ import { promisify } from 'util';
 // ==================== USER STUFF ====================
 export function ownerOnly(handler: any) {
     return async (ctx: any) => {
-        let user = await ctx.getAuthor();
-        if (ctx.from.id == constants.OWNER_ID || user.status == "creator") {
-            await handler(ctx);
+        try {
+            let user = await ctx.getAuthor();
+            if (ctx.from.id == constants.OWNER_ID || user.status == "creator") {
+                await handler(ctx);
+            }
+            else {
+                await ctx.reply("Only owner of this chat can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+            }
         }
-        else {
-            await ctx.reply("Only owner of this chat can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+        catch (error) {
+            return;
         }
     }
 }
 
 export function ownerOnlyCallback(handler: any) {
     return async (ctx: any) => {
-        let user = await ctx.getAuthor();
-        if (ctx.from.id == constants.OWNER_ID || user.status == "creator") {
-            await handler(ctx);
+        try {
+            let user = await ctx.getAuthor();
+            if (ctx.from.id == constants.OWNER_ID || user.status == "creator") {
+                await handler(ctx);
+            }
+            else {
+                await ctx.answerCallbackQuery({ text: "Only owner of this chat can use this button!"});
+            }
         }
-        else {
-            await ctx.answerCallbackQuery({ text: "Only owner of this chat can use this button!"});
+        catch (error) {
+            return;
         }
     };
 }
 
 export function superusersOnly(handler: any) {
     return async (ctx: any) => {
-        if (constants.SUPERUSERS.includes(ctx.from.id) || ctx.from.id == constants.OWNER_ID) {
-            await handler(ctx);
+        try {
+            if (constants.SUPERUSERS.includes(ctx.from.id) || ctx.from.id == constants.OWNER_ID) {
+                await handler(ctx);
+            }
+            else {
+                return;
+            }
         }
-        else {
+        catch (error) {
             return;
         }
     };
@@ -40,77 +55,112 @@ export function superusersOnly(handler: any) {
 
 export function elevatedUsersOnly(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
-        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator" || chatMember.status == "administrator") {
-            await handler(ctx);
-        } 
-        else {
-            await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+        try {
+            const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
+            if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator" || chatMember.status == "administrator") {
+                await handler(ctx);
+            } 
+            else {
+                await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+            }
+        }
+        catch (error) {
+            return;
         }
     };
 }
 
 export function elevatedUsersCallbackOnly(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
-        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator" || chatMember.status == "administrator") {
-            await handler(ctx);
-        } 
-        else {
-            await ctx.answerCallbackQuery({ text: "Only admins can use this button!"});
+        try {
+            const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
+            if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator" || chatMember.status == "administrator") {
+                await handler(ctx);
+            } 
+            else {
+                await ctx.answerCallbackQuery({ text: "Only admins can use this button!"});
+            }
+        }
+        catch (error) {
+            return;
         }
     };
 }
 
 export function samePersonCallbackOnly(handler: any) {
     return async (ctx: any) => {
-        if (ctx.callbackQuery.message.reply_to_message?.from?.id == ctx.callbackQuery?.from?.id) {
-            await handler(ctx);
+        try {
+            if (ctx.callbackQuery.message.reply_to_message?.from?.id == ctx.callbackQuery?.from?.id) {
+                await handler(ctx);
+            }
+            else {
+                await ctx.answerCallbackQuery({ text: "You can't use this button!"});
+            }
         }
-        else {
-            await ctx.answerCallbackQuery({ text: "You can't use this button!"});
+        catch (error) {
+            return;
         }
     };
 }
 
 export async function isUserAdmin(ctx: any, user_id: any) {
-    let user = await ctx.api.getChatMember(ctx.chat.id, user_id)
-    if (user_id == constants.OWNER_ID || constants.SUPERUSERS.includes(user_id) || user.status == "creator" || user.status == "administrator" || user_id == "1087968824") {
-        return true;
+    try {
+        let user = await ctx.api.getChatMember(ctx.chat.id, user_id)
+        if (user_id == constants.OWNER_ID || constants.SUPERUSERS.includes(user_id) || user.status == "creator" || user.status == "administrator" || user_id == "1087968824") {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
-    else {
-        return false;
+    catch (error) {
+        return;
     }
 }
 
 export async function isUserCreator(ctx: any, user_id: number) {
-    let user = await ctx.api.getChatMember(ctx.chat.id, user_id);
-    if (user.status == "creator") {
-        return true;
+    try {
+        let user = await ctx.api.getChatMember(ctx.chat.id, user_id);
+        if (user.status == "creator") {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
-    else {
-        return false;
+    catch (error) {
+        return;
     }
 }
 
 // future use maybe
 export async function isUserInChat(ctx: any, chat_id: string, user_id: number) {
-    let user = await ctx.api.getChatMember(chat_id, user_id);
-    if (user.status == "member" || user.status == "restricted" || user.status == "creator" || user.status == "administrator") {
-        return true;
+    try {
+        let user = await ctx.api.getChatMember(chat_id, user_id);
+        if (user.status == "member" || user.status == "restricted" || user.status == "creator" || user.status == "administrator") {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
-    else {
-        return false;
+    catch (error) {
+        return;
     }
 }
 
 export async function isUserRestricted(ctx: any, chat_id: string, user_id: number) {
-    let user = await ctx.api.getChatMember(chat_id, user_id);
-    if (user.status == "restricted") {
-        return true;
+    try {
+        let user = await ctx.api.getChatMember(chat_id, user_id);
+        if (user.status == "restricted") {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
-    else {
-        return false;
+    catch (error) {
+        return;
     }
 }
 
@@ -120,7 +170,7 @@ export async function isUserBanned(ctx: any, chat_id: string, user_id: number) {
         return true;
     }
     else {
-        return false;
+        return;
     }
 }
 // ====================================================
@@ -137,167 +187,202 @@ export async function isUserBanned(ctx: any, chat_id: string, user_id: number) {
 // ==================== ADMIN STUFF ====================
 export function adminCanRestrictUsers(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
-        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
-            await handler(ctx);
-        }
-        else if (chatMember.user.id == "1087968824") {
-            await handler(ctx);
-        }
-        else if (chatMember.status == "administrator") {
-            if (chatMember.can_restrict_members == true) {
+        try {
+            const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
+            if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
                 await handler(ctx);
             }
+            else if (chatMember.user.id == "1087968824") {
+                await handler(ctx);
+            }
+            else if (chatMember.status == "administrator") {
+                if (chatMember.can_restrict_members == true) {
+                    await handler(ctx);
+                }
+                else {
+                    await ctx.reply("You don't have enough rights to restrict / derestrict users!", {reply_parameters: {message_id: ctx.message.message_id}});
+                }  
+            }
             else {
-                await ctx.reply("You don't have enough rights to restrict / derestrict users!", {reply_parameters: {message_id: ctx.message.message_id}});
-            }  
-        }
-        else {
-            await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+                await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
 
+            }
+        }
+        catch (error) {
+            return;
         }
     };
 }
 
 export function adminCanRestrictUsersCallback(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
-        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator" ) {
-            await handler(ctx);
-        }
-        else if (chatMember.user.id == "1087968824") {
-            await handler(ctx);
-        }
-        else if (chatMember.status == "administrator") {
-            if (chatMember.can_restrict_members == true) {
+        try {
+            const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
+            if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator" ) {
                 await handler(ctx);
             }
+            else if (chatMember.user.id == "1087968824") {
+                await handler(ctx);
+            }
+            else if (chatMember.status == "administrator") {
+                if (chatMember.can_restrict_members == true) {
+                    await handler(ctx);
+                }
+                else {
+                    await ctx.answerCallbackQuery({ text: "You don't have enough rights to restrict / derestrict users!"}).catch((GrammyError: any) => {return})
+                }  
+            }
             else {
-                await ctx.answerCallbackQuery({ text: "You don't have enough rights to restrict / derestrict users!"}).catch((GrammyError: any) => {return})
-            }  
+                await ctx.answerCallbackQuery({ text: "Only admins can use this button!"}).catch((GrammyError: any) => {return})
+            }
         }
-        else {
-            await ctx.answerCallbackQuery({ text: "Only admins can use this button!"}).catch((GrammyError: any) => {return})
+        catch (error) {
+            return;
         }
     };
 }
 
 export function adminCanDeleteMessages(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
-        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
-            await handler(ctx);
-        }
-        else if (chatMember.user.id == "1087968824") {
-            await handler(ctx);
-        }
-        else if (chatMember.status == "administrator") {
-            if (chatMember.can_delete_messages == true) {
+        try {
+            const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
+            if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
                 await handler(ctx);
             }
+            else if (chatMember.user.id == "1087968824") {
+                await handler(ctx);
+            }
+            else if (chatMember.status == "administrator") {
+                if (chatMember.can_delete_messages == true) {
+                    await handler(ctx);
+                }
+                else {
+                    await ctx.reply("You don't have enough rights to delete messages!", {reply_parameters: {message_id: ctx.message.message_id}});
+                }  
+            }
             else {
-                await ctx.reply("You don't have enough rights to delete messages!", {reply_parameters: {message_id: ctx.message.message_id}});
-            }  
-        }
-        else {
-            await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+                await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
 
+            }
+        }
+        catch (error) {
+            return;
         }
     };
 }
 
 export function adminCanPinMessages(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
-        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
-            await handler(ctx);
-        }
-        else if (chatMember.user.id == "1087968824") {
-            await handler(ctx);
-        }
-        else if (chatMember.status == "administrator") {
-            if (chatMember.can_pin_messages == true) {
+        try {
+            const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
+            if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
                 await handler(ctx);
             }
+            else if (chatMember.user.id == "1087968824") {
+                await handler(ctx);
+            }
+            else if (chatMember.status == "administrator") {
+                if (chatMember.can_pin_messages == true) {
+                    await handler(ctx);
+                }
+                else {
+                    await ctx.reply("You don't have enough rights to pin / unpin messages!", {reply_parameters: {message_id: ctx.message.message_id}});
+                }  
+            }
             else {
-                await ctx.reply("You don't have enough rights to pin / unpin messages!", {reply_parameters: {message_id: ctx.message.message_id}});
-            }  
-        }
-        else {
-            await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+                await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
 
+            }
+        }
+        catch (error) {
+            return;
         }
     };
 }
 
 export function adminCanInviteUsers(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
-        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
-            await handler(ctx);
-        }
-        else if (chatMember.user.id == "1087968824") {
-            await handler(ctx);
-        }
-        else if (chatMember.status == "administrator") {
-            if (chatMember.can_invite_users == true) {
+        try {
+            const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
+            if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
                 await handler(ctx);
             }
+            else if (chatMember.user.id == "1087968824") {
+                await handler(ctx);
+            }
+            else if (chatMember.status == "administrator") {
+                if (chatMember.can_invite_users == true) {
+                    await handler(ctx);
+                }
+                else {
+                    await ctx.reply("You don't have enough rights to use invitelinks!", {reply_parameters: {message_id: ctx.message.message_id}});
+                }  
+            }
             else {
-                await ctx.reply("You don't have enough rights to use invitelinks!", {reply_parameters: {message_id: ctx.message.message_id}});
-            }  
-        }
-        else {
-            await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+                await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
 
+            }
+        }
+        catch (error) {
+            return;
         }
     };
 }
 
 export function adminCanPromoteUsers(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
-        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
-            await handler(ctx);
-        }
-        else if (chatMember.user.id == "1087968824") {
-            await handler(ctx);
-        }
-        else if (chatMember.status == "administrator") {
-            if (chatMember.can_promote_members == true) {
+        try {
+            const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
+            if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
                 await handler(ctx);
             }
+            else if (chatMember.user.id == "1087968824") {
+                await handler(ctx);
+            }
+            else if (chatMember.status == "administrator") {
+                if (chatMember.can_promote_members == true) {
+                    await handler(ctx);
+                }
+                else {
+                    await ctx.reply("You don't have enough rights to promote / demote members!", {reply_parameters: {message_id: ctx.message.message_id}});
+                }  
+            }
             else {
-                await ctx.reply("You don't have enough rights to promote / demote members!", {reply_parameters: {message_id: ctx.message.message_id}});
-            }  
-        }
-        else {
-            await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+                await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
 
+            }
+        }
+        catch (error) { 
+            return;
         }
     };
 }
 
 export function adminCanChangeInfo(handler: any) {
     return async (ctx: any) => {
-        const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
-        if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
-            await handler(ctx);
-        }
-        else if (chatMember.user.id == "1087968824") {
-            await handler(ctx);
-        }
-        else if (chatMember.status == "administrator") {
-            if (chatMember.can_change_info == true) {
+        try {
+            const chatMember = await ctx.api.getChatMember(ctx.chat.id, ctx.from.id);
+            if (chatMember.user.id == constants.OWNER_ID || constants.SUPERUSERS.includes(chatMember.user.id) || chatMember.status == "creator") {
                 await handler(ctx);
             }
+            else if (chatMember.user.id == "1087968824") {
+                await handler(ctx);
+            }
+            else if (chatMember.status == "administrator") {
+                if (chatMember.can_change_info == true) {
+                    await handler(ctx);
+                }
+                else {
+                    await ctx.reply("You don't have enough rights to change group information!", {reply_parameters: {message_id: ctx.message.message_id}});
+                }  
+            }
             else {
-                await ctx.reply("You don't have enough rights to change group information!", {reply_parameters: {message_id: ctx.message.message_id}});
-            }  
-        }
-        else {
-            await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
+                await ctx.reply("Only admins can use this command.", {reply_parameters: {message_id: ctx.message.message_id}});
 
+            }
+        }
+        catch (error) {
+            return;
         }
     };  
 }
@@ -307,147 +392,187 @@ export function adminCanChangeInfo(handler: any) {
 // ==================== BOT STUFF ====================
 export function isBotAdmin(hander: any) {
     return async (ctx: any) => {
-        let bot_id = ctx.me.id;
-        let chat_id = ctx.chat.id;
-        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
-        if (bot_info.status == "administrator") {
-                await hander(ctx);
+        try {
+            let bot_id = ctx.me.id;
+            let chat_id = ctx.chat.id;
+            let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+            if (bot_info.status == "administrator") {
+                    await hander(ctx);
+            }
+            else {
+                await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
+            }
         }
-        else {
-            await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
+        catch (error) {
+            return;
         }
     }
 }
 
 export function botCanRestrictUsers(hander: any) {
     return async (ctx: any) => {
-        let bot_id = ctx.me.id;
-        let chat_id = ctx.chat.id;
-        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
-        if (bot_info.status == "administrator") {
-            if (bot_info.can_restrict_members == true) {
-                await hander(ctx);
+        try {
+            let bot_id = ctx.me.id;
+            let chat_id = ctx.chat.id;
+            let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+            if (bot_info.status == "administrator") {
+                if (bot_info.can_restrict_members == true) {
+                    await hander(ctx);
+                }
+                else {
+                    await ctx.reply("I don't have enough admin rights to ban users!", {reply_parameters: {message_id: ctx.message.message_id}});
+                }  
             }
             else {
-                await ctx.reply("I don't have enough admin rights to ban users!", {reply_parameters: {message_id: ctx.message.message_id}});
-            }  
+                await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
+            }
         }
-        else {
-            await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
+        catch (error) {
+            return;
         }
     }
 }
 
 export function botCanRestrictUsersCallback(hander: any) {
     return async (ctx: any) => {
-        let bot_id = ctx.me.id;
-        let chat_id = ctx.chat.id;
-        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
-        if (bot_info.status == "administrator") {
-            if (bot_info.can_restrict_members == true) {
-                await hander(ctx);
+        try {
+            let bot_id = ctx.me.id;
+            let chat_id = ctx.chat.id;
+            let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+            if (bot_info.status == "administrator") {
+                if (bot_info.can_restrict_members == true) {
+                    await hander(ctx);
+                }
+                else {
+                    await ctx.answerCallbackQuery("I don't have enough admin rights to ban users!");
+                }  
             }
             else {
-                await ctx.answerCallbackQuery("I don't have enough admin rights to ban users!");
-            }  
+                await ctx.answerCallbackQuery("I need to be admin for this!");
+            }
         }
-        else {
-            await ctx.answerCallbackQuery("I need to be admin for this!");
+        catch (error) {
+            return;
         }
     }
 }
 
 export function botCanDeleteMessages(handler: any) {
     return async (ctx: any) => {
-        let bot_id = ctx.me.id;
-        let chat_id = ctx.chat.id;
-        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
-        if (bot_info.status == "administrator") {
-            if (bot_info.can_delete_messages == true) {
-                await handler(ctx);
+        try {
+            let bot_id = ctx.me.id;
+            let chat_id = ctx.chat.id;
+            let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+            if (bot_info.status == "administrator") {
+                if (bot_info.can_delete_messages == true) {
+                    await handler(ctx);
+                }
+                else {
+                    await ctx.reply("I don't have enough admin rights to delete messages!", {reply_parameters: {message_id: ctx.message.message_id}});
+                }
             }
             else {
-                await ctx.reply("I don't have enough admin rights to delete messages!", {reply_parameters: {message_id: ctx.message.message_id}});
+                await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
             }
         }
-        else {
-            await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
+        catch (error) {
+            return;
         }
     }
 }
 
 export function botCanPinMessages(handler: any) {
     return async (ctx: any) => {
-        let bot_id = ctx.me.id;
-        let chat_id = ctx.chat.id;
-        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
-        if (bot_info.status == "administrator") {
-            if (bot_info.can_pin_messages == true) {
-                await handler(ctx);
+        try {
+            let bot_id = ctx.me.id;
+            let chat_id = ctx.chat.id;
+            let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+            if (bot_info.status == "administrator") {
+                if (bot_info.can_pin_messages == true) {
+                    await handler(ctx);
+                }
+                else {
+                    await ctx.reply("I don't have enough admin rights to pin messages!", {reply_parameters: {message_id: ctx.message.message_id}});     
+                }
             }
             else {
-                await ctx.reply("I don't have enough admin rights to pin messages!", {reply_parameters: {message_id: ctx.message.message_id}});     
+                await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
             }
         }
-        else {
-            await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
+        catch (error) {
+            return;
         }
     }
 }
 
 export function botCanInviteUsers(handler: any) {
     return async (ctx: any) => {
-        let bot_id = ctx.me.id;
-        let chat_id = ctx.chat.id;
-        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
-        if (bot_info.status == "administrator") {
-            if (bot_info.can_invite_users == true) {
-                await handler(ctx);
+        try {
+            let bot_id = ctx.me.id;
+            let chat_id = ctx.chat.id;
+            let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+            if (bot_info.status == "administrator") {
+                if (bot_info.can_invite_users == true) {
+                    await handler(ctx);
+                }
+                else {
+                    await ctx.reply("I don't have enough admin rights to generate invitelinks!", {reply_parameters: {message_id: ctx.message.message_id}});     
+                }
             }
             else {
-                await ctx.reply("I don't have enough admin rights to generate invitelinks!", {reply_parameters: {message_id: ctx.message.message_id}});     
+                await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
             }
         }
-        else {
-            await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
+        catch (error) {
+            return;
         }
     }
 }
 
 export function botCanPromoteMembers(handler: any) {
     return async (ctx: any) => {
-        let bot_id = ctx.me.id;
-        let chat_id = ctx.chat.id;
-        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
-        if (bot_info.status == "administrator") {
-            if (bot_info.can_promote_members == true) {
-                await handler(ctx);
+        try {
+            let bot_id = ctx.me.id;
+            let chat_id = ctx.chat.id;
+            let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+            if (bot_info.status == "administrator") {
+                if (bot_info.can_promote_members == true) {
+                    await handler(ctx);
+                }
+                else {
+                    await ctx.reply("I don't have enough admin rights to promote members!", {reply_parameters: {message_id: ctx.message.message_id}});     
+                }
             }
             else {
-                await ctx.reply("I don't have enough admin rights to promote members!", {reply_parameters: {message_id: ctx.message.message_id}});     
+                await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
             }
         }
-        else {
-            await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}});
+        catch (error) {
+            return;
         }
     }
 }
 
 export function botCanChangeInfo(handler: any) {
     return async (ctx: any) => {
-        let bot_id = ctx.me.id;
-        let chat_id = ctx.chat.id;
-        let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
-        if (bot_info.status == "administrator") {
-            if (bot_info.can_change_info == true) {
-                await handler(ctx);
+        try {
+            let bot_id = ctx.me.id;
+            let chat_id = ctx.chat.id;
+            let bot_info = await ctx.api.getChatMember(chat_id, bot_id);
+            if (bot_info.status == "administrator") {
+                if (bot_info.can_change_info == true) {
+                    await handler(ctx);
+                }
+                else {
+                    await ctx.reply("I don't have enough admin rights to change group information!", {reply_parameters: {message_id: ctx.message.message_id}}); 
+                }
             }
             else {
-                await ctx.reply("I don't have enough admin rights to change group information!", {reply_parameters: {message_id: ctx.message.message_id}}); 
+                await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}})
             }
         }
-        else {
-            await ctx.reply("I need to be admin for this!", {reply_parameters: {message_id: ctx.message.message_id}})
+        catch (error) {
+            return;
         }
     }
 }
