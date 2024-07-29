@@ -4,6 +4,8 @@
 
 <h3 align="center">Built using <a href="https://grammy.dev">grammY</a> & <a href="https://gram.js.org/">GramJS</a></h3>
 
+<h3 align="center"> 🎀 Can be found on Telegram as <a href="https://telegram.me/LucynaBot">LucynaBot</a></h3>
+
 <h2>Features</h2>
 <p>This bot offers a variety of chat management features to help you keep your Telegram groups organized and secure. Below is a list of available modules:</p>
 
