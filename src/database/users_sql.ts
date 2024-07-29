@@ -14,6 +14,11 @@ export async function get_user(id: bigint) {
     return user;
 };
 
+export async function get_all_users() {
+    let users = await prisma.users.findMany();
+    return users;
+}
+
 export async function register_user(id: bigint, username: string) {
     try {
         let user = await prisma.users.upsert({
