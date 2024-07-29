@@ -114,7 +114,7 @@ export async function isUserAdmin(ctx: any, user_id: any) {
         }
     }
     catch (error) {
-        return;
+        return false;
     }
 }
 
@@ -129,7 +129,7 @@ export async function isUserCreator(ctx: any, user_id: number) {
         }
     }
     catch (error) {
-        return;
+        return false;
     }
 }
 
@@ -145,7 +145,7 @@ export async function isUserInChat(ctx: any, chat_id: string, user_id: number) {
         }
     }
     catch (error) {
-        return;
+        return false;
     }
 }
 
@@ -160,17 +160,22 @@ export async function isUserRestricted(ctx: any, chat_id: string, user_id: numbe
         }
     }
     catch (error) {
-        return;
+        return false;
     }
 }
 
 export async function isUserBanned(ctx: any, chat_id: string, user_id: number) {
-    let user = await ctx.api.getChatMember(chat_id, user_id);
-    if (user.status == "kicked") {
-        return true;
+    try {
+        let user = await ctx.api.getChatMember(chat_id, user_id);
+        if (user.status == "kicked") {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
-    else {
-        return;
+    catch (error) {
+        return false;
     }
 }
 // ====================================================

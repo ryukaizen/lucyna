@@ -1,4 +1,4 @@
-import { Composer, InlineKeyboard, NextFunction, NextFunction } from "grammy";
+import { Composer, InlineKeyboard, NextFunction } from "grammy";
 import { clear_note, get_all_chat_notes, get_note, remove_all_chat_notes, save_note } from "../database/notes_sql";
 import { get_note_urls, set_note_urls } from "../database/note_urls_sql";
 import { escapeMarkdownV2, extractButtons, iterateInlineKeyboard, format_json, ownerOnly, ownerOnlyCallback, MessageTypes, elevatedUsersOnly } from "../helpers/helper_func"; 
