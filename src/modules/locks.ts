@@ -384,7 +384,7 @@ composer.chatType(["supergroup", "group"]).on(["message", "edited_message"], asy
         return;
     }
 
-    let message = ctx.message;
+    let message = ctx.message || ctx.edited_message;
 
     let deleteAndReturn = async () => {
         await ctx.deleteMessage().catch(() => {})
