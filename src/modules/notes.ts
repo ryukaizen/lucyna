@@ -1,7 +1,7 @@
-import { Composer, InlineKeyboard } from "grammy";
+import { Composer, InlineKeyboard, NextFunction, NextFunction } from "grammy";
 import { clear_note, get_all_chat_notes, get_note, remove_all_chat_notes, save_note } from "../database/notes_sql";
 import { get_note_urls, set_note_urls } from "../database/note_urls_sql";
-import { escapeMarkdownV2, extractButtons, iterateInlineKeyboard, format_json, ownerOnly, ownerOnlyCallback, MessageTypes } from "../helpers/helper_func"; 
+import { escapeMarkdownV2, extractButtons, iterateInlineKeyboard, format_json, ownerOnly, ownerOnlyCallback, MessageTypes, elevatedUsersOnly } from "../helpers/helper_func"; 
 import { Menu, MenuRange } from "@grammyjs/menu";
 import { bot } from "../bot";
 
@@ -375,7 +375,7 @@ composer.chatType(["supergroup", "group"]).command("save", (async (ctx: any) => 
 
 // this one's only for media messages containing "/save notename" in their captions
 // TODO: use message:caption filter
-composer.chatType(["supergroup", "group"]).on("message").hears(/^\/save\b/, (async (ctx: any, next) => {
+composer.chatType(["supergroup", "group"]).on("message").hears(/^\/save\b/, elevatedUsersOnly(async (ctx: any, next: NextFunction) => {
     if (ctx.message.caption) {
         let note = ctx.message.caption.split(" ");
         let note_name = note[1].toLowerCase();
