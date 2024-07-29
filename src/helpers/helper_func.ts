@@ -714,8 +714,81 @@ export async function format_json(json: any) {
     return JSON.stringify(json, null, 2);
 }
 
-export async function escapeMarkdownV2(text: string): Promise<string> {
-    return text.replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
+export function escapeMarkdownV2(text: string): string {
+    const specialCharacters = '_[]()~`>#+=|{}.!-';
+    let escaped = '';
+    let inCode = false;
+    let inPre = false;
+    let inBlockQuote = false;
+    let formattingStack: string[] = [];
+
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const nextChar = text[i + 1] || '';
+        const prevChar = text[i - 1] || '';
+
+        if (char === '`' && nextChar === '`' && prevChar === '`' && !inCode) {
+            inPre = !inPre;
+            escaped += '```';
+            i += 2;
+            continue;
+        }
+
+        if (char === '`' && !inPre) {
+            inCode = !inCode;
+            escaped += '`';
+            continue;
+        }
+
+        if (inCode || inPre) {
+            escaped += char;
+            continue;
+        }
+
+        if (char === '>' && (i === 0 || prevChar === '\n')) {
+            inBlockQuote = true;
+            escaped += '>';
+            continue;
+        }
+
+        if (inBlockQuote && char === '\n') {
+            inBlockQuote = false;
+        }
+
+        if (inBlockQuote) {
+            escaped += char;
+            continue;
+        }
+
+        if (char === '*' || char === '_' || char === '~' || char === '|') {
+            const formattingChar = char === '|' ? '||' : char;
+            if (formattingStack[formattingStack.length - 1] === formattingChar) {
+                formattingStack.pop();
+            } else {
+                formattingStack.push(formattingChar);
+            }
+            escaped += char;
+            continue;
+        }
+
+        if (char === '[' && text.indexOf('](', i) !== -1) {
+            const closeBracket = text.indexOf('](', i);
+            const closeParenthesis = text.indexOf(')', closeBracket);
+            if (closeParenthesis !== -1) {
+                escaped += text.slice(i, closeParenthesis + 1);
+                i = closeParenthesis;
+                continue;
+            }
+        }
+
+        if (specialCharacters.includes(char)) {
+            escaped += '\\';
+        }
+
+        escaped += char;
+    }
+
+    return escaped;
 }
 
 export async function extractButtons(text: string | undefined) {
