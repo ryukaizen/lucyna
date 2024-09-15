@@ -83,7 +83,7 @@
 - [x] GramJS as utility
 - [ ] Pagination buttons for /notes so it wont cover entire screen
 - [ ] Refactor everything since there's A LOT of repeated code
-- [ ] Command prefixes !, ?
+- [x] Command prefixes !, ?
 - [ ] Autodelete "Only admins can use this command" type of messages
 - [ ] Hydration plugin (change every ctx and bot method)
 - [ ] Make use of all invitelink methods given by Telegram API, make a separate module for it
