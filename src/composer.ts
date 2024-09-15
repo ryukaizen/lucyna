@@ -107,7 +107,6 @@ class Composer<C extends Context> extends LibComposer<C> {
       prefixes = handler.prefixes ? handler.prefixes : prefixes;
     } else {
       commandStr = Array.isArray(handler) ? handler.join("|") : handler;
-      prefixes = ["/", "!"];
     }
 
     const prefixStr = prefixes.map((prefix: any) => `\\${prefix}`).join("|");
